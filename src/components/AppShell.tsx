@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { BOOKS, getBook, getVerseCount } from "@/data/bible";
 import { getLexiconEntry, getVerseWords, DEFAULT_LOCATION } from "@/lib/verse-data";
 import type { BookData, BookId, PaneId, PersonalTranslation, VerseWord } from "@/types";
@@ -177,6 +178,15 @@ export function AppShell() {
         </h1>
         <div className="flex items-center gap-3">
           <DataBackupMenu onImported={refreshTranslations} />
+          <Link
+            href="/about"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded px-2 py-1 text-xs text-primary-foreground/60 hover:text-primary-foreground hover:bg-white/10 transition-colors"
+            title="使用資料について"
+          >
+            資料
+          </Link>
           <AuthButton />
         </div>
       </header>
