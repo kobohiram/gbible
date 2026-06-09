@@ -1,5 +1,6 @@
 import { auth, signIn } from "@/auth";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 
 export default async function Home() {
@@ -9,10 +10,8 @@ export default async function Home() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       {/* ヘッダー */}
-      <header className="flex items-center justify-between border-b border-primary/20 bg-primary px-6 py-3 text-primary-foreground">
-        <h1 className="text-lg font-extrabold tracking-tight">
-          <span className="text-accent">G</span>bible
-        </h1>
+      <header className="flex items-center border-b border-primary/20 bg-primary px-6 py-3">
+        <Image src="/logo.png" alt="Gbible" width={120} height={40} className="h-8 w-auto" />
       </header>
 
       {/* メイン */}
@@ -28,10 +27,15 @@ export default async function Home() {
         </div>
 
         {/* スクリーンショット */}
-        <div className="w-full max-w-3xl overflow-hidden rounded-xl border border-border shadow-lg">
-          <div className="flex h-64 items-center justify-center bg-muted text-sm text-muted-foreground">
-            スクリーンショット（準備中）
-          </div>
+        <div className="w-full max-w-4xl overflow-hidden rounded-xl border border-border shadow-lg">
+          <Image
+            src="/screenshot.png"
+            alt="Gbible 画面イメージ"
+            width={1400}
+            height={900}
+            className="w-full"
+            priority
+          />
         </div>
 
         {/* ボタン */}
