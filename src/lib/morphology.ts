@@ -165,8 +165,17 @@ type VerbMorphContext = {
   lemma?: string;
 };
 
-function parseVerbMorph(code: string) {
-  return code.trim().match(/^V-([PIAFXY])([IDSONP])([AMPENDO])-(\d)([SP])$/);
+type VerbMorphParsed = { tense: string; mood: string; voice: string; person: string; number: string };
+
+function parseVerbMorph(code: string): VerbMorphParsed | null {
+  const s = code.trim();
+  // TMV: V-[Tense][Mood][Voice]-[Person][Number]
+  const tmv = s.match(/^V-([PIAFXY])([IDSONP])([AMPENDO])-(\d)([SP])$/);
+  if (tmv) return { tense: tmv[1], mood: tmv[2], voice: tmv[3], person: tmv[4], number: tmv[5] };
+  // TVM: V-[Tense][Voice][Mood]-[Person][Number]
+  const tvm = s.match(/^V-([PIAFXY])([AMPENDO])([IDSONP])-(\d)([SP])$/);
+  if (tvm) return { tense: tvm[1], voice: tvm[2], mood: tvm[3], person: tvm[4], number: tvm[5] };
+  return null;
 }
 
 export function isVerbMorph(code: string): boolean {
@@ -254,7 +263,7 @@ export function explainVerbMorphologyJa(
   const match = parseVerbMorph(code);
   if (!match) return null;
 
-  const [, tense, mood, voice, person, number] = match;
+  const { tense, mood, voice, person, number } = match;
   const morph = `${TENSE_JA[tense]}${VOICE_JA[voice]}${MOOD_JA[mood]}`;
 
   return {
@@ -369,7 +378,7 @@ type NounMorphContext = {
 };
 
 function parseInflectedMorph(code: string) {
-  return code.trim().match(/^([A-Z]+)-([NGDAV])([SP])([MFN])$/);
+  return code.trim().match(/^([A-Z]+)-([NGDAV])([SP])([MFN]?)$/);
 }
 
 export function isNounLikeMorph(code: string): boolean {
@@ -465,7 +474,7 @@ export function explainNounMorphologyJa(
   const [, pos, case_, number, gender] = match;
   if (!INFLECTED_POS.has(pos)) return null;
 
-  const morph = `${CASE_JA[case_]}${GENDER_JA[gender]}`;
+  const morph = `${CASE_JA[case_]}${gender ? GENDER_JA[gender] : ""}`;
   const posAbbr = POS_JA[pos] ?? pos;
 
   return {
@@ -481,9 +490,9 @@ export function explainNounMorphologyJa(
       detail: CASE_DETAIL[case_] ?? "",
     },
     gender: {
-      label: GENDER_LABEL[gender] ?? gender,
-      abbr: GENDER_JA[gender] ?? gender,
-      detail: GENDER_DETAIL[gender] ?? "",
+      label: gender ? (GENDER_LABEL[gender] ?? gender) : "",
+      abbr: gender ? (GENDER_JA[gender] ?? gender) : "",
+      detail: gender ? (GENDER_DETAIL[gender] ?? "") : "",
     },
     number: {
       label: NUMBER_LABEL[number] ?? number,
@@ -548,7 +557,7 @@ export function expandMorphologyJa(code: string): string {
 
   const verbMatch = parseVerbMorph(compact);
   if (verbMatch) {
-    const [, tense, mood, voice, person, number] = verbMatch;
+    const { tense, mood, voice, person, number } = verbMatch;
     const morph = `${TENSE_JA[tense]}${VOICE_JA[voice]}${MOOD_JA[mood]}`;
     return `${POS_JA.V}-${morph}-${personJa(person)}${numberSuffix(number)}`;
   }
@@ -556,7 +565,7 @@ export function expandMorphologyJa(code: string): string {
   const inflectedMatch = parseInflectedMorph(compact);
   if (inflectedMatch) {
     const [, pos, case_, number, gender] = inflectedMatch;
-    const morph = `${CASE_JA[case_]}${GENDER_JA[gender]}`;
+    const morph = `${CASE_JA[case_]}${gender ? GENDER_JA[gender] : ""}`;
     return `${POS_JA[pos] ?? pos}-${morph}-${numberSuffix(number)}`;
   }
 
@@ -575,7 +584,7 @@ export function expandMorphologyJaVerbose(code: string): string {
 
   const verbMatch = parseVerbMorph(compact);
   if (verbMatch) {
-    const [, tense, mood, voice, person, number] = verbMatch;
+    const { tense, mood, voice, person, number } = verbMatch;
     const personNumber =
       PERSON_NUMBER_LABEL[person]?.[number] ?? `${person}${number}`;
     return [
@@ -591,12 +600,10 @@ export function expandMorphologyJaVerbose(code: string): string {
   if (inflectedMatch) {
     const [, pos, case_, number, gender] = inflectedMatch;
     const posLabel = POS_LABEL[pos] ?? POS_JA[pos] ?? pos;
-    return [
-      posLabel,
-      CASE_LABEL[case_] ?? case_,
-      GENDER_LABEL[gender] ?? gender,
-      NUMBER_LABEL[number] ?? number,
-    ].join("-");
+    const parts = [posLabel, CASE_LABEL[case_] ?? case_];
+    if (gender) parts.push(GENDER_LABEL[gender] ?? gender);
+    parts.push(NUMBER_LABEL[number] ?? number);
+    return parts.join("-");
   }
 
   return POS_LABEL[compact] ?? POS_JA[compact] ?? compact;
