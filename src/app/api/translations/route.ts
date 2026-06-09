@@ -1,5 +1,9 @@
 import { auth } from "@/auth";
-import { sql } from "@vercel/postgres";
+import { neon } from "@neondatabase/serverless";
+
+function db() {
+  return neon(process.env.DATABASE_URL!);
+}
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -15,7 +19,8 @@ export async function GET(request: Request) {
     return Response.json({ error: "Missing params" }, { status: 400 });
   }
 
-  const result = await sql`
+  const sql = db();
+  const rows = await sql`
     SELECT book_id AS "bookId", chapter, verse, translation, memo, updated_at AS "updatedAt"
     FROM translations
     WHERE user_id = ${session.user.email}
@@ -24,7 +29,7 @@ export async function GET(request: Request) {
     ORDER BY verse
   `;
 
-  return Response.json(result.rows);
+  return Response.json(rows);
 }
 
 export async function PUT(request: Request) {
@@ -42,6 +47,7 @@ export async function PUT(request: Request) {
       memo: string;
     };
 
+  const sql = db();
   await sql`
     INSERT INTO translations (user_id, book_id, chapter, verse, translation, memo, updated_at)
     VALUES (${session.user.email}, ${bookId}, ${chapter}, ${verse}, ${translation}, ${memo}, NOW())
