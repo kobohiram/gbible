@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { LexiconEntry, VerseWord } from "@/types";
 import {
   explainNounMorphologyJa,
@@ -14,6 +14,23 @@ import { MorphLabels } from "./MorphLabels";
 import { NounMorphDetail } from "./NounMorphDetail";
 import { VerbMorphDetail } from "./VerbMorphDetail";
 import { LlmContextSection } from "./LlmContextSection";
+
+type ConcordanceIndex = Record<string, { total: number; books: Record<string, number> }>;
+
+// モジュールレベルキャッシュ（再フェッチ防止）
+let concordanceIndexCache: ConcordanceIndex | null = null;
+let concordanceIndexPromise: Promise<ConcordanceIndex> | null = null;
+
+function loadConcordanceIndex(): Promise<ConcordanceIndex> {
+  if (concordanceIndexCache) return Promise.resolve(concordanceIndexCache);
+  if (!concordanceIndexPromise) {
+    concordanceIndexPromise = fetch('/data/nt/concordance.json')
+      .then(r => r.ok ? r.json() as Promise<ConcordanceIndex> : {})
+      .then(data => { concordanceIndexCache = data; return data; })
+      .catch(() => ({}));
+  }
+  return concordanceIndexPromise;
+}
 
 type Occurrence = {
   verseKey: string;
@@ -84,6 +101,14 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
   const [llmOpen, setLlmOpen] = useState(false);
   const [shown, setShown] = useState(20);
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+  const [concordanceIndex, setConcordanceIndex] = useState<ConcordanceIndex | null>(null);
+  const loadedRef = useRef(false);
+
+  useEffect(() => {
+    if (loadedRef.current) return;
+    loadedRef.current = true;
+    void loadConcordanceIndex().then(setConcordanceIndex);
+  }, []);
 
   useEffect(() => {
     setLlmOpen(false);
@@ -233,6 +258,11 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                     出現箇所
                     <span className="ml-2 font-normal normal-case text-muted-foreground">
                       {bookName.replace("による福音書", "書").replace("への手紙", "書")} {concordance.length}回
+                      {concordanceIndex && word && (concordanceIndex[word.strongs]?.total ?? 0) > concordance.length && (
+                        <span className="ml-1 text-muted-foreground/60">
+                          / 新約 {concordanceIndex[word.strongs]?.total}回
+                        </span>
+                      )}
                     </span>
                   </h3>
                   <ul className="mt-2 divide-y divide-border/30">
