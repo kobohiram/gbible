@@ -73,7 +73,7 @@ export function PaneLexicon({ word, entry, reference, verseWords }: Props) {
         <div className="space-y-4">
           {!word ? (
             <p className="text-sm text-muted-foreground">
-              ペイン2の単語をクリックしてください。
+              原文の単語をクリックしてください。
             </p>
           ) : (
             <article className="space-y-4">

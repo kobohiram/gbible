@@ -21,7 +21,7 @@ export function PaneVerse({
     <div className="flex h-full flex-col">
       <header className="pane-header px-4 py-3 text-center">
         <h2 className="text-lg font-bold text-foreground">{reference}</h2>
-        <p className="text-xs text-muted-foreground">単語をクリックすると辞書ペインに表示</p>
+        <p className="text-xs text-muted-foreground">単語をクリックすると辞書に表示</p>
       </header>
       <MorphLegend />
       <div className="flex-1 overflow-x-auto overflow-y-auto p-4">

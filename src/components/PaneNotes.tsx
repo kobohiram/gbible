@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { BookId } from "@/types";
 import { getTranslation, saveTranslation } from "@/lib/storage";
+import { LoginGate } from "./LoginGate";
 
 type Props = {
   bookId: BookId;
@@ -44,6 +45,7 @@ export function PaneNotes({
   }
 
   return (
+    <LoginGate>
     <div className="flex h-full flex-col">
       <header className="pane-header px-4 py-3">
         <h2 className="pane-header-label">私訳・メモ</h2>
@@ -81,5 +83,6 @@ export function PaneNotes({
         </button>
       </div>
     </div>
+    </LoginGate>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSession, signIn } from "next-auth/react";
 import type { ContextApiRequest } from "@/lib/context-llm";
 import {
   clearLlmApiKey,
@@ -141,7 +142,24 @@ export function LlmContextSection({ contextRequest, open, onClose }: Props) {
     }
   }
 
+  const { status } = useSession();
+
   if (!open) return null;
+
+  if (status === "unauthenticated") {
+    return (
+      <section className="rounded-lg border border-dashed border-border bg-card/80 p-3">
+        <p className="mb-2 text-xs text-muted-foreground">文脈補足（LLM）を使うにはログインが必要です。</p>
+        <button
+          type="button"
+          onClick={() => signIn("google")}
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+        >
+          Googleでログイン
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-lg border border-dashed border-border bg-card/80 p-3">
@@ -280,7 +298,7 @@ export function LlmContextSection({ contextRequest, open, onClose }: Props) {
 
       {configured && !editing && !contextRequest && (
         <p className="mt-3 text-sm text-muted-foreground">
-          原文ペインで単語をクリックすると、文脈補足を生成します。
+          原文の単語をクリックすると、文脈補足を生成します。
         </p>
       )}
     </section>
