@@ -70,11 +70,7 @@ export function DataBackupMenu({ onImported }: Props) {
           />
           <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded-lg border border-border bg-card p-3 text-sm text-foreground shadow-lg">
             <p className="text-xs leading-relaxed text-muted-foreground">
-              私訳・メモはこのブラウザの localStorage に保存されています。別ブラウザや端末では
-              <strong className="font-semibold text-foreground">
-                書き出し → 読み込み
-              </strong>
-              で移せます（ログイン同期は今後対応予定）。
+              私訳・メモはログイン中のアカウントに保存されます。バックアップや移行のために JSON で書き出し・読み込みができます。
             </p>
 
             <div className="mt-3 space-y-2">

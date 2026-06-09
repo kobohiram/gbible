@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { BOOKS, getBook, getVerseCount } from "@/data/bible";
 import { getLexiconEntry, getVerseWords, DEFAULT_LOCATION } from "@/lib/verse-data";
-import { getTranslationsForChapter } from "@/lib/storage";
 import type { BookId, PaneId, PersonalTranslation, VerseWord } from "@/types";
 import {
   ResizableHandle,
@@ -45,6 +45,7 @@ function PaneFrame({
 }
 
 export function AppShell() {
+  const { data: session } = useSession();
   const [bookId, setBookId] = useState<BookId>(DEFAULT_LOCATION.bookId);
   const [chapter, setChapter] = useState(DEFAULT_LOCATION.chapter);
   const [selectedVerse, setSelectedVerse] = useState(DEFAULT_LOCATION.verse);
@@ -58,9 +59,18 @@ export function AppShell() {
     ? getLexiconEntry(selectedWord.strongs)
     : null;
 
-  const refreshTranslations = useCallback(() => {
-    setTranslations(getTranslationsForChapter(bookId, chapter));
-  }, [bookId, chapter]);
+  const refreshTranslations = useCallback(async () => {
+    if (!session?.user) {
+      setTranslations([]);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/translations?bookId=${bookId}&chapter=${chapter}`);
+      if (res.ok) setTranslations(await res.json() as PersonalTranslation[]);
+    } catch {
+      // ネットワーク断などは無視
+    }
+  }, [bookId, chapter, session]);
 
   useEffect(() => {
     refreshTranslations();
@@ -128,13 +138,17 @@ export function AppShell() {
     />
   );
 
+  const currentTranslation = translations.find((t) => t.verse === selectedVerse);
+
   const notesPane = (
     <PaneNotes
       bookId={bookId}
       bookName={book.name}
       chapter={chapter}
       verse={selectedVerse}
-      onSaved={refreshTranslations}
+      savedTranslation={currentTranslation?.translation ?? ""}
+      savedMemo={currentTranslation?.memo ?? ""}
+      onSaved={() => { void refreshTranslations(); }}
     />
   );
 

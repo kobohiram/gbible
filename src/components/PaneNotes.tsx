@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 import type { BookId } from "@/types";
-import { getTranslation, saveTranslation } from "@/lib/storage";
 
 type Props = {
   bookId: BookId;
   bookName: string;
   chapter: number;
   verse: number;
+  savedTranslation: string;
+  savedMemo: string;
   onSaved: () => void;
 };
 
@@ -18,27 +19,41 @@ export function PaneNotes({
   bookName,
   chapter,
   verse,
+  savedTranslation,
+  savedMemo,
   onSaved,
 }: Props) {
   const { status } = useSession();
   const isLoggedIn = status === "authenticated";
-  const [translation, setTranslation] = useState("");
-  const [memo, setMemo] = useState("");
-  const [saved, setSaved] = useState(false);
+  const [translation, setTranslation] = useState(savedTranslation);
+  const [memo, setMemo] = useState(savedMemo);
+  const [saving, setSaving] = useState(false);
+  const [saveResult, setSaveResult] = useState<"saved" | "error" | null>(null);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
-    const existing = getTranslation(bookId, chapter, verse);
-    setTranslation(existing?.translation ?? "");
-    setMemo(existing?.memo ?? "");
-    setSaved(false);
-  }, [bookId, chapter, verse, isLoggedIn]);
+    setTranslation(savedTranslation);
+    setMemo(savedMemo);
+    setSaveResult(null);
+  }, [savedTranslation, savedMemo, bookId, chapter, verse]);
 
-  function handleSave() {
-    saveTranslation({ bookId, chapter, verse, translation, memo });
-    setSaved(true);
-    onSaved();
-    setTimeout(() => setSaved(false), 2000);
+  async function handleSave() {
+    setSaving(true);
+    setSaveResult(null);
+    try {
+      const res = await fetch("/api/translations", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId, chapter, verse, translation, memo }),
+      });
+      if (!res.ok) throw new Error();
+      setSaveResult("saved");
+      onSaved();
+      setTimeout(() => setSaveResult(null), 2000);
+    } catch {
+      setSaveResult("error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -52,7 +67,7 @@ export function PaneNotes({
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {!isLoggedIn && (
           <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-            <p className="mb-2 text-foreground font-medium">
+            <p className="mb-2 font-medium text-foreground">
               Googleでログインすると入力・保存できます。
             </p>
             <button
@@ -84,13 +99,16 @@ export function PaneNotes({
             className="min-h-24 flex-1 resize-none rounded-lg border border-input bg-card p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
           />
         </label>
+        {saveResult === "error" && (
+          <p className="text-xs text-red-600">保存に失敗しました。もう一度お試しください。</p>
+        )}
         <button
           type="button"
-          onClick={handleSave}
-          disabled={!isLoggedIn}
+          onClick={() => { void handleSave(); }}
+          disabled={!isLoggedIn || saving}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {saved ? "保存しました" : "保存"}
+          {saving ? "保存中…" : saveResult === "saved" ? "保存しました" : "保存"}
         </button>
       </div>
     </div>
