@@ -21,27 +21,22 @@ export function PaneNotes({
   onSaved,
 }: Props) {
   const { status } = useSession();
+  const isLoggedIn = status === "authenticated";
   const [translation, setTranslation] = useState("");
   const [memo, setMemo] = useState("");
   const [saved, setSaved] = useState(false);
-  const [loginPrompt, setLoginPrompt] = useState(false);
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     const existing = getTranslation(bookId, chapter, verse);
     setTranslation(existing?.translation ?? "");
     setMemo(existing?.memo ?? "");
     setSaved(false);
-    setLoginPrompt(false);
-  }, [bookId, chapter, verse]);
+  }, [bookId, chapter, verse, isLoggedIn]);
 
   function handleSave() {
-    if (status !== "authenticated") {
-      setLoginPrompt(true);
-      return;
-    }
     saveTranslation({ bookId, chapter, verse, translation, memo });
     setSaved(true);
-    setLoginPrompt(false);
     onSaved();
     setTimeout(() => setSaved(false), 2000);
   }
@@ -55,27 +50,11 @@ export function PaneNotes({
         </p>
       </header>
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="section-label">私訳</span>
-          <textarea
-            value={translation}
-            onChange={(e) => setTranslation(e.target.value)}
-            placeholder="この節の自分の訳を書く…"
-            className="min-h-24 flex-1 resize-none rounded-lg border border-input bg-card p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </label>
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="section-label">メモ（感想・調べたこと）</span>
-          <textarea
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-            placeholder="文法の気づき、参考書、祈りなど…"
-            className="min-h-24 flex-1 resize-none rounded-lg border border-input bg-card p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </label>
-        {loginPrompt && (
+        {!isLoggedIn && (
           <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-            <p className="mb-2 text-foreground">保存するにはGoogleでログインしてください。</p>
+            <p className="mb-2 text-foreground font-medium">
+              Googleでログインすると入力・保存できます。
+            </p>
             <button
               type="button"
               onClick={() => signIn("google")}
@@ -85,10 +64,31 @@ export function PaneNotes({
             </button>
           </div>
         )}
+        <label className="flex flex-1 flex-col gap-1">
+          <span className="section-label">私訳</span>
+          <textarea
+            value={translation}
+            onChange={(e) => setTranslation(e.target.value)}
+            placeholder="この節の自分の訳を書く…"
+            disabled={!isLoggedIn}
+            className="min-h-24 flex-1 resize-none rounded-lg border border-input bg-card p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
+          />
+        </label>
+        <label className="flex flex-1 flex-col gap-1">
+          <span className="section-label">メモ（感想・調べたこと）</span>
+          <textarea
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            placeholder="文法の気づき、参考書、祈りなど…"
+            disabled={!isLoggedIn}
+            className="min-h-24 flex-1 resize-none rounded-lg border border-input bg-card p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
+          />
+        </label>
         <button
           type="button"
           onClick={handleSave}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          disabled={!isLoggedIn}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {saved ? "保存しました" : "保存"}
         </button>
