@@ -13,6 +13,7 @@ type Props = {
   chapter: number;
   selectedVerse: number;
   translations: PersonalTranslation[];
+  bookDataLoaded: boolean;
   onBookChange: (bookId: BookId) => void;
   onChapterChange: (chapter: number) => void;
   onSelectVerse: (verse: number) => void;
@@ -24,6 +25,7 @@ export function PaneNav({
   chapter,
   selectedVerse,
   translations,
+  bookDataLoaded,
   onBookChange,
   onChapterChange,
   onSelectVerse,
@@ -74,7 +76,7 @@ export function PaneNav({
           const translation = translationMap.get(verse);
           const hasTranslation = Boolean(translation?.trim());
           const isSelected = verse === selectedVerse;
-          const hasData = hasVerseData(bookId, chapter, verse);
+          const hasData = bookDataLoaded || hasVerseData(bookId, chapter, verse);
 
           return (
             <li key={verse}>

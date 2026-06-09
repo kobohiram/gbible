@@ -1,4 +1,11 @@
-export type BookId = "john";
+export type BookId =
+  | "matthew" | "mark" | "luke" | "john"
+  | "acts"
+  | "romans" | "1corinthians" | "2corinthians" | "galatians" | "ephesians"
+  | "philippians" | "colossians" | "1thessalonians" | "2thessalonians"
+  | "1timothy" | "2timothy" | "titus" | "philemon"
+  | "hebrews" | "james" | "1peter" | "2peter"
+  | "1john" | "2john" | "3john" | "jude" | "revelation";
 
 export type Book = {
   id: BookId;
@@ -29,6 +36,14 @@ export type PersonalTranslation = {
   translation: string;
   memo: string;
   updatedAt: string;
+};
+
+export type BookData = {
+  version: number;
+  book: BookId;
+  chapters: number[];
+  words: Record<string, VerseWord[]>;   // key: "chapter:verse" e.g. "1:1"
+  lexicon: Record<string, LexiconEntry>;
 };
 
 export type PaneId = "nav" | "verse" | "lexicon" | "notes";

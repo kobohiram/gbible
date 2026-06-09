@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { BOOKS, getBook, getVerseCount } from "@/data/bible";
 import { getLexiconEntry, getVerseWords, DEFAULT_LOCATION } from "@/lib/verse-data";
-import type { BookId, PaneId, PersonalTranslation, VerseWord } from "@/types";
+import type { BookData, BookId, PaneId, PersonalTranslation, VerseWord } from "@/types";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -52,11 +52,25 @@ export function AppShell() {
   const [selectedWord, setSelectedWord] = useState<VerseWord | null>(null);
   const [activePane, setActivePane] = useState<PaneId>("verse");
   const [translations, setTranslations] = useState<PersonalTranslation[]>([]);
+  const [bookData, setBookData] = useState<BookData | null>(null);
+
+  // 書が変わったら JSON をフェッチ
+  useEffect(() => {
+    setBookData(null);
+    let cancelled = false;
+    fetch(`/data/nt/${bookId}.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: BookData | null) => { if (!cancelled) setBookData(d); })
+      .catch(() => { /* データなし — 静的フォールバックを使う */ });
+    return () => { cancelled = true; };
+  }, [bookId]);
 
   const book = getBook(bookId);
-  const words = getVerseWords(bookId, chapter, selectedVerse);
+  const words =
+    bookData?.words[`${chapter}:${selectedVerse}`] ??
+    getVerseWords(bookId, chapter, selectedVerse);
   const lexiconEntry = selectedWord
-    ? getLexiconEntry(selectedWord.strongs)
+    ? (bookData?.lexicon[selectedWord.strongs] ?? getLexiconEntry(selectedWord.strongs))
     : null;
 
   const refreshTranslations = useCallback(async () => {
@@ -114,6 +128,7 @@ export function AppShell() {
       chapter={chapter}
       selectedVerse={selectedVerse}
       translations={translations}
+      bookDataLoaded={bookData !== null}
       onBookChange={handleBookChange}
       onChapterChange={handleChapterChange}
       onSelectVerse={setSelectedVerse}
