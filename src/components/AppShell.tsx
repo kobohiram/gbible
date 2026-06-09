@@ -16,6 +16,7 @@ import { PaneNav } from "./PaneNav";
 import { PaneNotes } from "./PaneNotes";
 import { PaneVerse } from "./PaneVerse";
 import { DataBackupMenu } from "./DataBackupMenu";
+import { AuthButton } from "./AuthButton";
 
 const PANES: { id: PaneId; label: string }[] = [
   { id: "nav", label: "目次" },
@@ -145,9 +146,7 @@ export function AppShell() {
         </h1>
         <div className="flex items-center gap-3">
           <DataBackupMenu onImported={refreshTranslations} />
-          <p className="text-xs text-primary-foreground/85">
-            v0.1 プロトタイプ · {book.name}
-          </p>
+          <AuthButton />
         </div>
       </header>
 
