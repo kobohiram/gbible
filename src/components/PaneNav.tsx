@@ -1,6 +1,7 @@
 "use client";
 
 import { getChapterCount, getVerseCount } from "@/data/bible";
+import { hasVerseData } from "@/lib/verse-data";
 import type { Book, BookId, PersonalTranslation } from "@/types";
 
 const selectClassName =
@@ -73,6 +74,7 @@ export function PaneNav({
           const translation = translationMap.get(verse);
           const hasTranslation = Boolean(translation?.trim());
           const isSelected = verse === selectedVerse;
+          const hasData = hasVerseData(bookId, chapter, verse);
 
           return (
             <li key={verse}>
@@ -85,7 +87,9 @@ export function PaneNav({
                   className={`shrink-0 rounded px-1 font-mono text-sm font-semibold tabular-nums transition-colors ${
                     isSelected
                       ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                      : "text-foreground"
+                      : hasData
+                        ? "text-foreground"
+                        : "text-muted-foreground/50"
                   }`}
                 >
                   {verse}
