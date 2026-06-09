@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { LexiconEntry, VerseWord } from "@/types";
 import {
   explainNounMorphologyJa,
@@ -15,19 +15,81 @@ import { NounMorphDetail } from "./NounMorphDetail";
 import { VerbMorphDetail } from "./VerbMorphDetail";
 import { LlmContextSection } from "./LlmContextSection";
 
+type Occurrence = {
+  verseKey: string;
+  chapter: number;
+  verse: number;
+  allWords: VerseWord[];
+  matchIds: Set<string>;
+};
+
 type Props = {
   word: VerseWord | null;
   entry: LexiconEntry | null;
   reference: string;
   verseWords: VerseWord[];
+  allVerseWords: Record<string, VerseWord[]> | null;
+  bookName: string;
 };
 
-export function PaneLexicon({ word, entry, reference, verseWords }: Props) {
+function ConcordanceItem({ occ, isExpanded, onToggle }: {
+  occ: Occurrence;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const matchingWords = occ.allWords.filter(w => occ.matchIds.has(w.id));
+
+  return (
+    <li className="border-b border-border/50 last:border-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full py-2 text-left hover:bg-accent/10 transition-colors px-1 rounded"
+      >
+        <div className="flex items-baseline gap-2">
+          <span className="shrink-0 font-mono text-xs font-semibold text-primary tabular-nums">
+            {occ.chapter}:{occ.verse}
+          </span>
+          <p className="font-greek text-sm leading-relaxed text-foreground min-w-0">
+            {occ.allWords.map((w, i) => (
+              <span key={w.id}>
+                {i > 0 && " "}
+                {occ.matchIds.has(w.id) ? (
+                  <strong className="font-bold text-foreground">{w.greek}</strong>
+                ) : (
+                  <span className="text-muted-foreground/80">{w.greek}</span>
+                )}
+              </span>
+            ))}
+          </p>
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div className="pb-2 pt-1 px-1 space-y-2">
+          {matchingWords.map(w => (
+            <div key={w.id} className="rounded-md bg-accent/15 px-3 py-2 space-y-1">
+              <p className="font-greek text-base font-bold text-foreground">{w.greek}</p>
+              <p className="text-sm font-medium text-[var(--gloss)]">{w.glossJa}</p>
+              <MorphLabels morph={w.morph} size="sm" variant="verbose" />
+            </div>
+          ))}
+        </div>
+      )}
+    </li>
+  );
+}
+
+export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords, bookName }: Props) {
   const [llmOpen, setLlmOpen] = useState(false);
+  const [shown, setShown] = useState(20);
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setLlmOpen(false);
-  }, [word?.id]);
+    setShown(20);
+    setExpandedKeys(new Set());
+  }, [word?.strongs]);
 
   const verbExplanation =
     word && isVerbMorph(word.morph)
@@ -64,6 +126,37 @@ export function PaneLexicon({ word, entry, reference, verseWords }: Props) {
       }
     : null;
 
+  const concordance = useMemo((): Occurrence[] => {
+    if (!word || !allVerseWords) return [];
+    const results: Occurrence[] = [];
+    for (const [verseKey, words] of Object.entries(allVerseWords)) {
+      const matchIds = new Set(words.filter(w => w.strongs === word.strongs).map(w => w.id));
+      if (matchIds.size === 0) continue;
+      const [chStr, vStr] = verseKey.split(":");
+      results.push({
+        verseKey,
+        chapter: Number(chStr),
+        verse: Number(vStr),
+        allWords: words,
+        matchIds,
+      });
+    }
+    results.sort((a, b) => a.chapter !== b.chapter ? a.chapter - b.chapter : a.verse - b.verse);
+    return results;
+  }, [word?.strongs, allVerseWords]);
+
+  function toggleExpand(key: string) {
+    setExpandedKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  const visibleOccurrences = concordance.slice(0, shown);
+  const remaining = concordance.length - shown;
+
   return (
     <div className="flex h-full flex-col">
       <header className="pane-header px-4 py-3">
@@ -86,24 +179,16 @@ export function PaneLexicon({ word, entry, reference, verseWords }: Props) {
               </div>
 
               <section>
-                <h3 className="section-label">
-                  文法
-                </h3>
+                <h3 className="section-label">文法</h3>
                 <div className="mt-1">
                   <MorphLabels morph={word.morph} size="md" variant="verbose" />
-                  {verbExplanation && (
-                    <VerbMorphDetail explanation={verbExplanation} />
-                  )}
-                  {nounExplanation && (
-                    <NounMorphDetail explanation={nounExplanation} />
-                  )}
+                  {verbExplanation && <VerbMorphDetail explanation={verbExplanation} />}
+                  {nounExplanation && <NounMorphDetail explanation={nounExplanation} />}
                 </div>
               </section>
 
               <section>
-                <h3 className="section-label">
-                  意味（この語）
-                </h3>
+                <h3 className="section-label">意味（この語）</h3>
                 <p className="mt-1 text-base font-medium text-[var(--gloss)]">
                   {word.glossJa}
                 </p>
@@ -126,7 +211,7 @@ export function PaneLexicon({ word, entry, reference, verseWords }: Props) {
               ) : (
                 <section>
                   <p className="text-sm text-muted-foreground">
-                    辞書エントリは準備中です（TBESG → AI日本語化 → DB格納）。
+                    辞書エントリは準備中です。
                   </p>
                 </section>
               )}
@@ -140,6 +225,36 @@ export function PaneLexicon({ word, entry, reference, verseWords }: Props) {
                 >
                   文脈補足（LLM）を表示
                 </Button>
+              )}
+
+              {concordance.length > 0 && (
+                <section>
+                  <h3 className="section-label">
+                    出現箇所
+                    <span className="ml-2 font-normal normal-case text-muted-foreground">
+                      {bookName.replace("による福音書", "書").replace("への手紙", "書")} {concordance.length}回
+                    </span>
+                  </h3>
+                  <ul className="mt-2 divide-y divide-border/30">
+                    {visibleOccurrences.map(occ => (
+                      <ConcordanceItem
+                        key={occ.verseKey}
+                        occ={occ}
+                        isExpanded={expandedKeys.has(occ.verseKey)}
+                        onToggle={() => toggleExpand(occ.verseKey)}
+                      />
+                    ))}
+                  </ul>
+                  {remaining > 0 && (
+                    <button
+                      type="button"
+                      className="mt-2 w-full rounded-md border border-border py-1.5 text-xs text-muted-foreground hover:bg-accent/10 transition-colors"
+                      onClick={() => setShown(s => s + 20)}
+                    >
+                      さらに表示（残り{remaining}件）
+                    </button>
+                  )}
+                </section>
               )}
             </article>
           )}

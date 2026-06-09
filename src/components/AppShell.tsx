@@ -150,6 +150,8 @@ export function AppShell() {
       entry={lexiconEntry}
       reference={reference}
       verseWords={words}
+      allVerseWords={bookData?.words ?? null}
+      bookName={book.name}
     />
   );
 
