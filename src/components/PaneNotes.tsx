@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession, signIn } from "next-auth/react";
 import type { BookId } from "@/types";
 import { getTranslation, saveTranslation } from "@/lib/storage";
-import { LoginGate } from "./LoginGate";
 
 type Props = {
   bookId: BookId;
@@ -20,32 +20,33 @@ export function PaneNotes({
   verse,
   onSaved,
 }: Props) {
+  const { status } = useSession();
   const [translation, setTranslation] = useState("");
   const [memo, setMemo] = useState("");
   const [saved, setSaved] = useState(false);
+  const [loginPrompt, setLoginPrompt] = useState(false);
 
   useEffect(() => {
     const existing = getTranslation(bookId, chapter, verse);
     setTranslation(existing?.translation ?? "");
     setMemo(existing?.memo ?? "");
     setSaved(false);
+    setLoginPrompt(false);
   }, [bookId, chapter, verse]);
 
   function handleSave() {
-    saveTranslation({
-      bookId,
-      chapter,
-      verse,
-      translation,
-      memo,
-    });
+    if (status !== "authenticated") {
+      setLoginPrompt(true);
+      return;
+    }
+    saveTranslation({ bookId, chapter, verse, translation, memo });
     setSaved(true);
+    setLoginPrompt(false);
     onSaved();
     setTimeout(() => setSaved(false), 2000);
   }
 
   return (
-    <LoginGate>
     <div className="flex h-full flex-col">
       <header className="pane-header px-4 py-3">
         <h2 className="pane-header-label">私訳・メモ</h2>
@@ -64,9 +65,7 @@ export function PaneNotes({
           />
         </label>
         <label className="flex flex-1 flex-col gap-1">
-          <span className="section-label">
-            メモ（感想・調べたこと）
-          </span>
+          <span className="section-label">メモ（感想・調べたこと）</span>
           <textarea
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
@@ -74,6 +73,18 @@ export function PaneNotes({
             className="min-h-24 flex-1 resize-none rounded-lg border border-input bg-card p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </label>
+        {loginPrompt && (
+          <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+            <p className="mb-2 text-foreground">保存するにはGoogleでログインしてください。</p>
+            <button
+              type="button"
+              onClick={() => signIn("google")}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+            >
+              Googleでログイン
+            </button>
+          </div>
+        )}
         <button
           type="button"
           onClick={handleSave}
@@ -83,6 +94,5 @@ export function PaneNotes({
         </button>
       </div>
     </div>
-    </LoginGate>
   );
 }
