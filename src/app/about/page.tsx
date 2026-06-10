@@ -131,9 +131,20 @@ export default function AboutPage() {
           </table>
         </Section>
 
-        <p className="text-xs text-muted-foreground border-t border-border pt-6">
-          誤りや改善点があればフィードバックをお寄せください。
-        </p>
+        <div className="border-t border-border pt-6 space-y-1 text-xs text-muted-foreground">
+          <p>
+            運営:{" "}
+            <a
+              href="https://hiram.tokyo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              工房ヒラム
+            </a>
+          </p>
+          <p>誤りや改善点があればフィードバックをお寄せください。</p>
+        </div>
       </main>
     </div>
   );
