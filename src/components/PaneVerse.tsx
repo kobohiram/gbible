@@ -9,6 +9,7 @@ type Props = {
   words: VerseWord[];
   selectedWordId: string | null;
   onSelectWord: (word: VerseWord) => void;
+  stacked?: boolean;
 };
 
 export function PaneVerse({
@@ -16,15 +17,16 @@ export function PaneVerse({
   words,
   selectedWordId,
   onSelectWord,
+  stacked,
 }: Props) {
   return (
-    <div className="flex h-full flex-col">
+    <div className={stacked ? "flex flex-col" : "flex h-full flex-col"}>
       <header className="pane-header px-4 py-3 text-center">
         <h2 className="text-lg font-bold text-foreground">{reference}</h2>
-        <p className="text-xs text-muted-foreground">単語をクリックすると辞書に表示</p>
+        <p className="text-xs text-muted-foreground">単語をタップすると辞書に表示</p>
       </header>
       <MorphLegend />
-      <div className="flex-1 overflow-x-auto overflow-y-auto p-4">
+      <div className={stacked ? "overflow-x-auto p-4" : "flex-1 overflow-x-auto overflow-y-auto p-4"}>
         {words.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             この節の原文データは準備中です。

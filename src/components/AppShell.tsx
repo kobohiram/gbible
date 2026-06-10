@@ -1,29 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import { ChevronDown } from "lucide-react";
 import { BOOKS, getBook, getVerseCount } from "@/data/bible";
 import { getLexiconEntry, getVerseWords, loadLastLocation, saveLastLocation } from "@/lib/verse-data";
-import type { BookData, BookId, PaneId, PersonalTranslation, VerseWord } from "@/types";
+import type { BookData, BookId, PersonalTranslation, VerseWord } from "@/types";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaneLexicon } from "./PaneLexicon";
 import { PaneNav } from "./PaneNav";
 import { PaneNotes } from "./PaneNotes";
 import { PaneVerse } from "./PaneVerse";
 import { DataBackupMenu } from "./DataBackupMenu";
 import { AuthButton } from "./AuthButton";
-
-const PANES: { id: PaneId; label: string }[] = [
-  { id: "nav", label: "目次" },
-  { id: "verse", label: "原文" },
-  { id: "lexicon", label: "辞書" },
-  { id: "notes", label: "私訳" },
-];
 
 type PaneKind = "nav" | "verse" | "lexicon" | "notes";
 
@@ -50,9 +43,10 @@ export function AppShell() {
   const [chapter, setChapter] = useState(() => loadLastLocation().chapter);
   const [selectedVerse, setSelectedVerse] = useState(() => loadLastLocation().verse);
   const [selectedWord, setSelectedWord] = useState<VerseWord | null>(null);
-  const [activePane, setActivePane] = useState<PaneId>("verse");
+  const [navOpen, setNavOpen] = useState(false);
   const [translations, setTranslations] = useState<PersonalTranslation[]>([]);
   const [bookData, setBookData] = useState<BookData | null>(null);
+  const mobileLexiconRef = useRef<HTMLDivElement>(null);
 
   // 位置をローカルに記憶
   useEffect(() => {
@@ -121,7 +115,9 @@ export function AppShell() {
 
   function handleSelectWord(word: VerseWord) {
     setSelectedWord(word);
-    setActivePane("lexicon");
+    setTimeout(() => {
+      mobileLexiconRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   }
 
   const reference = `${book.name} ${chapter}:${selectedVerse}`;
@@ -241,52 +237,84 @@ export function AppShell() {
         </ResizablePanel>
       </ResizablePanelGroup>
 
-      {/* Mobile: tabs */}
-      <Tabs
-        value={activePane}
-        onValueChange={(value) => setActivePane(value as PaneId)}
-        className="flex min-h-0 flex-1 flex-col md:hidden"
-      >
-        <TabsList
-          variant="line"
-          className="h-auto w-full shrink-0 rounded-none border-b border-primary/30 bg-primary p-0"
-        >
-          {PANES.map((pane) => (
-            <TabsTrigger
-              key={pane.id}
-              value={pane.id}
-              className="flex-1 rounded-none py-2.5 font-medium text-primary-foreground/75 after:bg-primary-foreground after:bottom-0 data-active:text-primary-foreground data-active:font-semibold"
-            >
-              {pane.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {/* Mobile: vertically stacked */}
+      <div className="flex flex-1 flex-col overflow-y-auto md:hidden">
 
-        <TabsContent
-          value="nav"
-          className="mt-0 min-h-0 flex-1 overflow-hidden data-hidden:hidden"
-        >
-          <PaneFrame pane="nav">{navPane}</PaneFrame>
-        </TabsContent>
-        <TabsContent
-          value="verse"
-          className="mt-0 min-h-0 flex-1 overflow-hidden data-hidden:hidden"
-        >
-          <PaneFrame pane="verse">{versePane}</PaneFrame>
-        </TabsContent>
-        <TabsContent
-          value="lexicon"
-          className="mt-0 min-h-0 flex-1 overflow-hidden data-hidden:hidden"
-        >
-          <PaneFrame pane="lexicon">{lexiconPane}</PaneFrame>
-        </TabsContent>
-        <TabsContent
-          value="notes"
-          className="mt-0 min-h-0 flex-1 overflow-hidden data-hidden:hidden"
-        >
-          <PaneFrame pane="notes">{notesPane}</PaneFrame>
-        </TabsContent>
-      </Tabs>
+        {/* 目次（折りたたみ） */}
+        <div className="border-b border-border">
+          <button
+            type="button"
+            onClick={() => setNavOpen((v) => !v)}
+            className="pane-header flex w-full items-center justify-between px-4 py-3"
+          >
+            <div className="flex items-center gap-2">
+              <span className="pane-header-label">目次</span>
+              <span className="text-sm font-medium text-foreground">{reference}</span>
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 text-muted-foreground/70 transition-transform duration-200 ${navOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {navOpen && (
+            <div className="pane-surface" data-pane="nav">
+              <PaneNav
+                stacked
+                books={BOOKS}
+                bookId={bookId}
+                chapter={chapter}
+                selectedVerse={selectedVerse}
+                translations={translations}
+                bookDataLoaded={bookData !== null}
+                onBookChange={handleBookChange}
+                onChapterChange={handleChapterChange}
+                onSelectVerse={(verse) => {
+                  setSelectedVerse(verse);
+                  setNavOpen(false);
+                }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 原文 */}
+        <div className="pane-surface border-b border-border" data-pane="verse">
+          <PaneVerse
+            stacked
+            reference={reference}
+            words={words}
+            selectedWordId={selectedWord?.id ?? null}
+            onSelectWord={handleSelectWord}
+          />
+        </div>
+
+        {/* 辞書・解説 */}
+        <div ref={mobileLexiconRef} className="pane-surface border-b border-border" data-pane="lexicon">
+          <PaneLexicon
+            stacked
+            word={selectedWord}
+            entry={lexiconEntry}
+            reference={reference}
+            verseWords={words}
+            allVerseWords={bookData?.words ?? null}
+            bookName={book.name}
+          />
+        </div>
+
+        {/* 私訳・メモ */}
+        <div className="pane-surface" data-pane="notes">
+          <PaneNotes
+            stacked
+            bookId={bookId}
+            bookName={book.name}
+            chapter={chapter}
+            verse={selectedVerse}
+            savedTranslation={currentTranslation?.translation ?? ""}
+            savedMemo={currentTranslation?.memo ?? ""}
+            savedMemoIsPublic={currentTranslation?.memoIsPublic ?? false}
+            onSaved={() => { void refreshTranslations(); }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

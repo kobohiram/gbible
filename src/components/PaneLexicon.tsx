@@ -47,6 +47,7 @@ type Props = {
   verseWords: VerseWord[];
   allVerseWords: Record<string, VerseWord[]> | null;
   bookName: string;
+  stacked?: boolean;
 };
 
 function ConcordanceItem({ occ, isExpanded, onToggle }: {
@@ -97,7 +98,7 @@ function ConcordanceItem({ occ, isExpanded, onToggle }: {
   );
 }
 
-export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords, bookName }: Props) {
+export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords, bookName, stacked }: Props) {
   const [llmOpen, setLlmOpen] = useState(false);
   const [shown, setShown] = useState(20);
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
@@ -183,11 +184,11 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
   const remaining = concordance.length - shown;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className={stacked ? "flex flex-col" : "flex h-full flex-col"}>
       <header className="pane-header px-4 py-3">
         <h2 className="pane-header-label">辞書・解説</h2>
       </header>
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className={stacked ? "p-4" : "flex-1 overflow-y-auto p-4"}>
         <div className="space-y-4">
           {!word ? (
             <p className="text-sm text-muted-foreground">

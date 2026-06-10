@@ -13,6 +13,7 @@ type Props = {
   savedMemo: string;
   savedMemoIsPublic: boolean;
   onSaved: () => void;
+  stacked?: boolean;
 };
 
 function timeAgo(iso: string): string {
@@ -32,6 +33,7 @@ export function PaneNotes({
   savedMemo,
   savedMemoIsPublic,
   onSaved,
+  stacked,
 }: Props) {
   const { data: session, status } = useSession();
   const isLoggedIn = status === "authenticated";
@@ -84,7 +86,7 @@ export function PaneNotes({
   const myName = session?.user?.name ?? null;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className={stacked ? "flex flex-col" : "flex h-full flex-col"}>
       <header className="pane-header px-4 py-3">
         <h2 className="pane-header-label">私訳・メモ</h2>
         <p className="mt-1 font-bold text-foreground">
@@ -92,7 +94,7 @@ export function PaneNotes({
         </p>
       </header>
 
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+      <div className={stacked ? "flex flex-col gap-3 p-4" : "flex flex-1 flex-col gap-3 overflow-y-auto p-4"}>
         {!isLoggedIn && (
           <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
             <p className="mb-2 font-medium text-foreground">

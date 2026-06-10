@@ -17,6 +17,7 @@ type Props = {
   onBookChange: (bookId: BookId) => void;
   onChapterChange: (chapter: number) => void;
   onSelectVerse: (verse: number) => void;
+  stacked?: boolean;
 };
 
 export function PaneNav({
@@ -29,6 +30,7 @@ export function PaneNav({
   onBookChange,
   onChapterChange,
   onSelectVerse,
+  stacked,
 }: Props) {
   const chapterCount = getChapterCount(bookId);
   const verseCount = getVerseCount(bookId, chapter);
@@ -38,7 +40,7 @@ export function PaneNav({
   );
 
   return (
-    <div className="flex h-full flex-col">
+    <div className={stacked ? "flex flex-col" : "flex h-full flex-col"}>
       <header className="pane-header space-y-2 px-4 py-3">
         <h2 className="pane-header-label">書・章・節</h2>
         <label className="block">
@@ -71,7 +73,7 @@ export function PaneNav({
           <span className="text-sm font-medium text-foreground">章</span>
         </label>
       </header>
-      <ul className="flex-1 overflow-y-auto px-3 py-2">
+      <ul className={stacked ? "max-h-64 overflow-y-auto px-3 py-2" : "flex-1 overflow-y-auto px-3 py-2"}>
         {Array.from({ length: verseCount }, (_, i) => i + 1).map((verse) => {
           const translation = translationMap.get(verse);
           const hasTranslation = Boolean(translation?.trim());
