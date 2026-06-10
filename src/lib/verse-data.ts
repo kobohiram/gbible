@@ -5,6 +5,7 @@ import type { BookId, LexiconEntry, VerseWord } from "@/types";
 /** 全節データが揃っている書のID（generate-nt-data.mjs 実行後に追加していく） */
 export const BOOKS_WITH_FULL_DATA = new Set<BookId>([
   "john",
+  "mark",
 ]);
 
 const legacyLexicon: Record<string, LexiconEntry> = {
