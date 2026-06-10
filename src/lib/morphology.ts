@@ -156,6 +156,8 @@ export type VerbMorphExplanation = {
   mood: { label: string; abbr: string; detail: string };
   voice: { label: string; abbr: string; detail: string };
   personNumber: { label: string; abbr: string; detail: string };
+  /** 分詞の格・性・数（定形動詞では空） */
+  participleForm?: { label: string; abbr: string };
   notes: string[];
 };
 
@@ -166,6 +168,8 @@ type VerbMorphContext = {
 };
 
 type VerbMorphParsed = { tense: string; mood: string; voice: string; person: string; number: string };
+type ParticipleParseResult = { tense: string; voice: string; case_: string; number: string; gender: string };
+type InfinitiveParseResult  = { tense: string; voice: string };
 
 function parseVerbMorph(code: string): VerbMorphParsed | null {
   const s = code.trim();
@@ -178,8 +182,24 @@ function parseVerbMorph(code: string): VerbMorphParsed | null {
   return null;
 }
 
+function parseParticiple(code: string): ParticipleParseResult | null {
+  // V-[Tense][Voice]P-[Case][Number][Gender]
+  const m = code.trim().match(/^V-([PIAFXY])([AMPENDO])P-([NGDAV])([SP])([MFN])$/);
+  if (m) return { tense: m[1], voice: m[2], case_: m[3], number: m[4], gender: m[5] };
+  return null;
+}
+
+function parseInfinitive(code: string): InfinitiveParseResult | null {
+  // V-[Tense][Voice]N
+  const m = code.trim().match(/^V-([PIAFXY])([AMPENDO])N$/);
+  if (m) return { tense: m[1], voice: m[2] };
+  return null;
+}
+
 export function isVerbMorph(code: string): boolean {
-  return parseVerbMorph(code) !== null;
+  return parseVerbMorph(code) !== null ||
+    parseParticiple(code) !== null ||
+    parseInfinitive(code) !== null;
 }
 
 function verbSpecialNotes(
@@ -260,6 +280,38 @@ export function explainVerbMorphologyJa(
   code: string,
   ctx: VerbMorphContext = {},
 ): VerbMorphExplanation | null {
+  // 分詞
+  const ptc = parseParticiple(code);
+  if (ptc) {
+    const { tense, voice, case_, number, gender } = ptc;
+    const formLabel = `${CASE_LABEL[case_] ?? case_}・${NUMBER_LABEL[number] ?? number}・${GENDER_LABEL[gender] ?? gender}`;
+    const formAbbr = `${CASE_JA[case_] ?? case_}${GENDER_JA[gender] ?? gender}-${numberSuffix(number)}`;
+    return {
+      compact: `${POS_JA.V}-${TENSE_JA[tense]}${VOICE_JA[voice]}分-${formAbbr}`,
+      tense: { label: TENSE_LABEL[tense] ?? tense, abbr: TENSE_JA[tense] ?? tense, detail: TENSE_DETAIL[tense] ?? "" },
+      mood:  { label: "分詞", abbr: "分", detail: MOOD_DETAIL["P"] },
+      voice: { label: VOICE_LABEL[voice] ?? voice, abbr: VOICE_JA[voice] ?? voice, detail: VOICE_DETAIL[voice] ?? "" },
+      personNumber: { label: "", abbr: "", detail: "" },
+      participleForm: { label: formLabel, abbr: formAbbr },
+      notes: verbSpecialNotes(tense, "P", voice, ctx),
+    };
+  }
+
+  // 不定詞
+  const inf = parseInfinitive(code);
+  if (inf) {
+    const { tense, voice } = inf;
+    return {
+      compact: `${POS_JA.V}-${TENSE_JA[tense]}${VOICE_JA[voice]}不定`,
+      tense: { label: TENSE_LABEL[tense] ?? tense, abbr: TENSE_JA[tense] ?? tense, detail: TENSE_DETAIL[tense] ?? "" },
+      mood:  { label: "不定詞", abbr: "不定", detail: MOOD_DETAIL["N"] },
+      voice: { label: VOICE_LABEL[voice] ?? voice, abbr: VOICE_JA[voice] ?? voice, detail: VOICE_DETAIL[voice] ?? "" },
+      personNumber: { label: "", abbr: "", detail: "" },
+      notes: verbSpecialNotes(tense, "N", voice, ctx),
+    };
+  }
+
+  // 定形動詞
   const match = parseVerbMorph(code);
   if (!match) return null;
 
@@ -555,6 +607,17 @@ export function expandMorphologyJa(code: string): string {
   if (compact === "Conj" || compact === "C") return POS_JA.Conj;
   if (compact === "PREP" || compact === "P") return POS_JA.PREP;
 
+  const ptc = parseParticiple(compact);
+  if (ptc) {
+    const { tense, voice, case_, number, gender } = ptc;
+    return `${POS_JA.V}-${TENSE_JA[tense]}${VOICE_JA[voice]}分-${CASE_JA[case_]}${GENDER_JA[gender]}-${numberSuffix(number)}`;
+  }
+
+  const inf = parseInfinitive(compact);
+  if (inf) {
+    return `${POS_JA.V}-${TENSE_JA[inf.tense]}${VOICE_JA[inf.voice]}不定`;
+  }
+
   const verbMatch = parseVerbMorph(compact);
   if (verbMatch) {
     const { tense, mood, voice, person, number } = verbMatch;
@@ -581,6 +644,18 @@ export function expandMorphologyJaVerbose(code: string): string {
 
   if (compact === "Conj" || compact === "C") return "接続詞";
   if (compact === "PREP" || compact === "P") return "前置詞";
+
+  const ptc = parseParticiple(compact);
+  if (ptc) {
+    const { tense, voice, case_, number, gender } = ptc;
+    return ["動詞", TENSE_LABEL[tense] ?? tense, "分詞", VOICE_LABEL[voice] ?? voice,
+      CASE_LABEL[case_] ?? case_, GENDER_LABEL[gender] ?? gender, NUMBER_LABEL[number] ?? number].join("-");
+  }
+
+  const inf = parseInfinitive(compact);
+  if (inf) {
+    return ["動詞", TENSE_LABEL[inf.tense] ?? inf.tense, "不定詞", VOICE_LABEL[inf.voice] ?? inf.voice].join("-");
+  }
 
   const verbMatch = parseVerbMorph(compact);
   if (verbMatch) {
