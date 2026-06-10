@@ -183,59 +183,61 @@ export function AppShell() {
         </div>
       </header>
 
-      {/* Desktop: 4-pane resizable */}
-      <ResizablePanelGroup
-        className="hidden min-h-0 flex-1 md:flex"
-        id="gbible-desktop-panes"
-        orientation="horizontal"
-      >
-        <ResizablePanel
-          className="min-w-0"
-          collapsible={false}
-          defaultSize="18%"
-          id="nav"
-          maxSize="28%"
-          minSize="12%"
+      {/* Desktop: 4-pane resizable (wrapper controls visibility — ResizablePanelGroup applies inline display:flex which overrides Tailwind hidden) */}
+      <div className="hidden min-h-0 flex-1 md:flex">
+        <ResizablePanelGroup
+          className="min-h-0 flex-1"
+          id="gbible-desktop-panes"
+          orientation="horizontal"
         >
-          <PaneFrame pane="nav">{navPane}</PaneFrame>
-        </ResizablePanel>
+          <ResizablePanel
+            className="min-w-0"
+            collapsible={false}
+            defaultSize="18%"
+            id="nav"
+            maxSize="28%"
+            minSize="12%"
+          >
+            <PaneFrame pane="nav">{navPane}</PaneFrame>
+          </ResizablePanel>
 
-        <ResizableHandle withHandle />
+          <ResizableHandle withHandle />
 
-        <ResizablePanel
-          className="min-w-0"
-          collapsible={false}
-          defaultSize="28%"
-          id="verse"
-          minSize="18%"
-        >
-          <PaneFrame pane="verse">{versePane}</PaneFrame>
-        </ResizablePanel>
+          <ResizablePanel
+            className="min-w-0"
+            collapsible={false}
+            defaultSize="28%"
+            id="verse"
+            minSize="18%"
+          >
+            <PaneFrame pane="verse">{versePane}</PaneFrame>
+          </ResizablePanel>
 
-        <ResizableHandle withHandle />
+          <ResizableHandle withHandle />
 
-        <ResizablePanel
-          className="min-w-0"
-          collapsible={false}
-          defaultSize="28%"
-          id="lexicon"
-          minSize="18%"
-        >
-          <PaneFrame pane="lexicon">{lexiconPane}</PaneFrame>
-        </ResizablePanel>
+          <ResizablePanel
+            className="min-w-0"
+            collapsible={false}
+            defaultSize="28%"
+            id="lexicon"
+            minSize="18%"
+          >
+            <PaneFrame pane="lexicon">{lexiconPane}</PaneFrame>
+          </ResizablePanel>
 
-        <ResizableHandle withHandle />
+          <ResizableHandle withHandle />
 
-        <ResizablePanel
-          className="min-w-0"
-          collapsible={false}
-          defaultSize="26%"
-          id="notes"
-          minSize="15%"
-        >
-          <PaneFrame pane="notes">{notesPane}</PaneFrame>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          <ResizablePanel
+            className="min-w-0"
+            collapsible={false}
+            defaultSize="26%"
+            id="notes"
+            minSize="15%"
+          >
+            <PaneFrame pane="notes">{notesPane}</PaneFrame>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
 
       {/* Mobile: vertically stacked */}
       <div className="flex flex-1 flex-col overflow-y-auto md:hidden">
