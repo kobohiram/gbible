@@ -148,19 +148,16 @@ export default async function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-border bg-background px-6 py-5 text-center text-xs text-muted-foreground space-y-1">
-        <p>
-          運営:{" "}
-          <a
-            href="https://hiram.tokyo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-2 hover:text-foreground"
-          >
-            工房ヒラム
-          </a>
-        </p>
-        <p>© Gbible · <Link href="/about" className="underline underline-offset-2 hover:text-foreground">使用資料について</Link></p>
+      <footer className="border-t border-border bg-background px-6 py-4 text-center text-xs text-muted-foreground">
+        © Gbible · 運営:{" "}
+        <a
+          href="https://hiram.tokyo"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2 hover:text-foreground"
+        >
+          工房ヒラム
+        </a>
       </footer>
     </div>
   );
