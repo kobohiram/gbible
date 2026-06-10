@@ -56,9 +56,9 @@ export default function AboutPage() {
           <Ref href="https://github.com/morphgnt/sblgnt">github.com/morphgnt/sblgnt</Ref>
         </Section>
 
-        <Section title="Strong's 番号">
+        <Section title="Strong&apos;s 番号">
           <p>
-            単語の同定に使用している Strong's 番号（G1234 形式）は、
+            単語の同定に使用している Strong&apos;s 番号（G1234 形式）は、
             MorphGNT プロジェクトが公開している{" "}
             <strong>Strong&apos;s Dictionary XML</strong>（morphgnt/strongs-dictionary-xml）
             のギリシャ語見出し語との照合によって付与しています。
@@ -73,7 +73,7 @@ export default function AboutPage() {
           <p>
             各単語の日本語語義（語形ごとの訳語）と辞書定義は{" "}
             <strong>AI（Claude by Anthropic）によって生成したドラフト</strong>
-            です。ギリシャ語の見出し語・文脈・Strong's 番号をもとに生成しており、
+            です。ギリシャ語の見出し語・文脈・Strong&apos;s 番号をもとに生成しており、
             神学者・言語学者による査読は行っていません。
           </p>
           <p>
