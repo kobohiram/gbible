@@ -44,3 +44,27 @@ export const DEFAULT_LOCATION = {
   chapter: 1,
   verse: 14,
 };
+
+const LAST_LOCATION_KEY = "gbible-last-location";
+
+export function loadLastLocation(): { bookId: BookId; chapter: number; verse: number } {
+  if (typeof window === "undefined") return DEFAULT_LOCATION;
+  try {
+    const raw = localStorage.getItem(LAST_LOCATION_KEY);
+    if (!raw) return DEFAULT_LOCATION;
+    const parsed = JSON.parse(raw) as { bookId: BookId; chapter: number; verse: number };
+    if (parsed.bookId && parsed.chapter && parsed.verse) return parsed;
+  } catch {
+    // ignore
+  }
+  return DEFAULT_LOCATION;
+}
+
+export function saveLastLocation(bookId: BookId, chapter: number, verse: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(LAST_LOCATION_KEY, JSON.stringify({ bookId, chapter, verse }));
+  } catch {
+    // ignore
+  }
+}

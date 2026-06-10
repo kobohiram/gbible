@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { BOOKS, getBook, getVerseCount } from "@/data/bible";
-import { getLexiconEntry, getVerseWords, DEFAULT_LOCATION } from "@/lib/verse-data";
+import { getLexiconEntry, getVerseWords, loadLastLocation, saveLastLocation } from "@/lib/verse-data";
 import type { BookData, BookId, PaneId, PersonalTranslation, VerseWord } from "@/types";
 import {
   ResizableHandle,
@@ -46,13 +46,18 @@ function PaneFrame({
 
 export function AppShell() {
   const { data: session } = useSession();
-  const [bookId, setBookId] = useState<BookId>(DEFAULT_LOCATION.bookId);
-  const [chapter, setChapter] = useState(DEFAULT_LOCATION.chapter);
-  const [selectedVerse, setSelectedVerse] = useState(DEFAULT_LOCATION.verse);
+  const [bookId, setBookId] = useState<BookId>(() => loadLastLocation().bookId);
+  const [chapter, setChapter] = useState(() => loadLastLocation().chapter);
+  const [selectedVerse, setSelectedVerse] = useState(() => loadLastLocation().verse);
   const [selectedWord, setSelectedWord] = useState<VerseWord | null>(null);
   const [activePane, setActivePane] = useState<PaneId>("verse");
   const [translations, setTranslations] = useState<PersonalTranslation[]>([]);
   const [bookData, setBookData] = useState<BookData | null>(null);
+
+  // 位置をローカルに記憶
+  useEffect(() => {
+    saveLastLocation(bookId, chapter, selectedVerse);
+  }, [bookId, chapter, selectedVerse]);
 
   // 書が変わったら JSON をフェッチ
   useEffect(() => {
