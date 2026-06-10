@@ -6,14 +6,14 @@
 
 :root {
   /* パーソナルカラー・サマー — 視認性重視（コントラスト強め） */
-  --mist: oklch(0.97 0.01 250);
+  --mist: oklch(0.987 0.004 250);
   --blue: oklch(0.38 0.11 250);
   --sky: oklch(0.88 0.04 245);
   --ink: oklch(0.22 0.05 260);
 
   --background: var(--mist);
   --foreground: var(--ink);
-  --card: oklch(0.99 0.008 250);
+  --card: oklch(1 0 0);
   --card-foreground: var(--ink);
   --popover: var(--card);
   --popover-foreground: var(--ink);
