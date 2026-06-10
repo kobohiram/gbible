@@ -165,6 +165,7 @@ export function AppShell() {
       verse={selectedVerse}
       savedTranslation={currentTranslation?.translation ?? ""}
       savedMemo={currentTranslation?.memo ?? ""}
+      savedMemoIsPublic={currentTranslation?.memoIsPublic ?? false}
       onSaved={() => { void refreshTranslations(); }}
     />
   );

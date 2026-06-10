@@ -35,6 +35,14 @@ export type PersonalTranslation = {
   verse: number;
   translation: string;
   memo: string;
+  memoIsPublic: boolean;
+  updatedAt: string;
+};
+
+export type CommunityMemo = {
+  id: number;
+  userName: string;
+  memo: string;
   updatedAt: string;
 };
 

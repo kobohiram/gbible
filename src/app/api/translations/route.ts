@@ -21,7 +21,14 @@ export async function GET(request: Request) {
 
   const sql = db();
   const rows = await sql`
-    SELECT book_id AS "bookId", chapter, verse, translation, memo, updated_at AS "updatedAt"
+    SELECT
+      book_id       AS "bookId",
+      chapter,
+      verse,
+      translation,
+      memo,
+      memo_is_public AS "memoIsPublic",
+      updated_at    AS "updatedAt"
     FROM translations
     WHERE user_id = ${session.user.email}
       AND book_id = ${bookId}
@@ -38,24 +45,29 @@ export async function PUT(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { bookId, chapter, verse, translation, memo } =
+  const { bookId, chapter, verse, translation, memo, memoIsPublic } =
     (await request.json()) as {
       bookId: string;
       chapter: number;
       verse: number;
       translation: string;
       memo: string;
+      memoIsPublic: boolean;
     };
+
+  const userName = session.user.name ?? session.user.email;
 
   const sql = db();
   await sql`
-    INSERT INTO translations (user_id, book_id, chapter, verse, translation, memo, updated_at)
-    VALUES (${session.user.email}, ${bookId}, ${chapter}, ${verse}, ${translation}, ${memo}, NOW())
+    INSERT INTO translations (user_id, book_id, chapter, verse, translation, memo, memo_is_public, user_name, updated_at)
+    VALUES (${session.user.email}, ${bookId}, ${chapter}, ${verse}, ${translation}, ${memo}, ${memoIsPublic}, ${userName}, NOW())
     ON CONFLICT (user_id, book_id, chapter, verse)
     DO UPDATE SET
-      translation = EXCLUDED.translation,
-      memo        = EXCLUDED.memo,
-      updated_at  = NOW()
+      translation    = EXCLUDED.translation,
+      memo           = EXCLUDED.memo,
+      memo_is_public = EXCLUDED.memo_is_public,
+      user_name      = EXCLUDED.user_name,
+      updated_at     = NOW()
   `;
 
   return Response.json({ ok: true });

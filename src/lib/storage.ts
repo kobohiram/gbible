@@ -65,11 +65,12 @@ export function getTranslation(
 }
 
 export function saveTranslation(
-  entry: Omit<PersonalTranslation, "updatedAt">,
+  entry: Omit<PersonalTranslation, "updatedAt"> & { memoIsPublic?: boolean },
 ): PersonalTranslation {
   const items = loadAll();
   const updated: PersonalTranslation = {
     ...entry,
+    memoIsPublic: entry.memoIsPublic ?? false,
     updatedAt: new Date().toISOString(),
   };
   const index = items.findIndex(
