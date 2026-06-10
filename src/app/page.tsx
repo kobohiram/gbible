@@ -1,7 +1,17 @@
+import type { Metadata } from "next";
 import { auth, signIn } from "@/auth";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Gbible — 新約聖書をギリシャ語原典で読む",
+  description:
+    "新約聖書のギリシャ語原典（SBLGNT）を語形解析・日本語辞書・私訳メモと一緒に読めるツール。コイネーギリシャ語の学習・聖書研究に。工房ヒラム運営。",
+  openGraph: {
+    url: "https://gbible.online",
+  },
+};
 
 const SOURCES = [
   {

@@ -13,7 +13,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-/** Bible Hub 系 interlinear に近いギリシャ語書体（Cardo → Gentium 系） */
 const cardo = Cardo({
   variable: "--font-cardo",
   subsets: ["greek", "greek-ext", "latin", "latin-ext"],
@@ -29,8 +28,55 @@ const gentiumPlus = Gentium_Plus({
 });
 
 export const metadata: Metadata = {
-  title: "Gbible",
-  description: "ギリシャ語で聖書を読みたい人のためのツール",
+  metadataBase: new URL("https://gbible.online"),
+  title: {
+    default: "Gbible — 新約聖書をギリシャ語原典で読む",
+    template: "%s — Gbible",
+  },
+  description:
+    "新約聖書のギリシャ語原典（SBLGNT）を、語形解析・日本語辞書・私訳メモと一緒に読めるツール。工房ヒラム運営。",
+  keywords: [
+    "新約聖書",
+    "ギリシャ語",
+    "原典",
+    "コイネーギリシャ語",
+    "聖書研究",
+    "語形解析",
+    "SBLGNT",
+    "MorphGNT",
+    "聖書",
+    "原文",
+  ],
+  authors: [{ name: "工房ヒラム", url: "https://hiram.tokyo" }],
+  creator: "工房ヒラム",
+  openGraph: {
+    type: "website",
+    locale: "ja_JP",
+    url: "https://gbible.online",
+    siteName: "Gbible",
+    title: "Gbible — 新約聖書をギリシャ語原典で読む",
+    description:
+      "新約聖書のギリシャ語原典を、語形解析・日本語辞書・私訳メモと一緒に読めるツール。工房ヒラム運営。",
+    images: [
+      {
+        url: "/screenshot.png",
+        width: 1400,
+        height: 900,
+        alt: "Gbible — ギリシャ語原典と語形解析の画面",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Gbible — 新約聖書をギリシャ語原典で読む",
+    description:
+      "新約聖書のギリシャ語原典を、語形解析・日本語辞書・私訳メモと一緒に読めるツール。",
+    images: ["/screenshot.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

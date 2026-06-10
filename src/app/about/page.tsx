@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "使用資料について — Gbible",
-  description: "Gbible が使用しているギリシャ語本文・形態論データ・日本語訳の出典と方法論",
+  title: "使用資料について",
+  description:
+    "Gbible が使用するギリシャ語本文（SBLGNT）・形態論データ（MorphGNT）・Strong's 番号・日本語語義の出典とライセンス。工房ヒラム運営。",
+  openGraph: {
+    url: "https://gbible.online/about",
+  },
 };
 
 export default function AboutPage() {
