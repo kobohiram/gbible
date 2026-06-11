@@ -39,6 +39,7 @@ function PaneFrame({
 
 export function AppShell() {
   const { data: session } = useSession();
+  const [userCount, setUserCount] = useState<number | null>(null);
   const [bookId, setBookId] = useState<BookId>(() => loadLastLocation().bookId);
   const [chapter, setChapter] = useState(() => loadLastLocation().chapter);
   const [selectedVerse, setSelectedVerse] = useState(() => loadLastLocation().verse);
@@ -47,6 +48,12 @@ export function AppShell() {
   const [translations, setTranslations] = useState<PersonalTranslation[]>([]);
   const [bookData, setBookData] = useState<BookData | null>(null);
   const mobileLexiconRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/stats').then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.users != null) setUserCount(d.users);
+    }).catch(() => {});
+  }, []);
 
   // 位置をローカルに記憶
   useEffect(() => {
@@ -176,6 +183,9 @@ export function AppShell() {
       <header className="flex shrink-0 items-center justify-between border-b border-primary/30 bg-primary px-4 py-2.5 text-primary-foreground">
         <h1 className="text-lg font-bold tracking-tight">
           <span className="font-extrabold text-accent">G</span>bible
+          {userCount != null && userCount > 0 && (
+            <span className="ml-2 text-xs font-normal opacity-70">{userCount}人が利用中</span>
+          )}
         </h1>
         <div className="flex items-center gap-3">
           <DataBackupMenu onImported={refreshTranslations} />
