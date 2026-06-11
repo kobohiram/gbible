@@ -26,6 +26,7 @@ export type LexiconEntry = {
   strongs: string;
   lemma: string;
   definitionJa: string;
+  detailJa?: string;
   reviewed: boolean;
 };
 

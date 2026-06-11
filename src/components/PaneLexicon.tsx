@@ -16,10 +16,13 @@ import { VerbMorphDetail } from "./VerbMorphDetail";
 import { LlmContextSection } from "./LlmContextSection";
 
 type ConcordanceIndex = Record<string, { total: number; books: Record<string, number> }>;
+type GlobalLexicon = Record<string, LexiconEntry>;
 
 // モジュールレベルキャッシュ（再フェッチ防止）
 let concordanceIndexCache: ConcordanceIndex | null = null;
 let concordanceIndexPromise: Promise<ConcordanceIndex> | null = null;
+let globalLexiconCache: GlobalLexicon | null = null;
+let globalLexiconPromise: Promise<GlobalLexicon> | null = null;
 
 function loadConcordanceIndex(): Promise<ConcordanceIndex> {
   if (concordanceIndexCache) return Promise.resolve(concordanceIndexCache);
@@ -30,6 +33,17 @@ function loadConcordanceIndex(): Promise<ConcordanceIndex> {
       .catch(() => ({}));
   }
   return concordanceIndexPromise;
+}
+
+function loadGlobalLexicon(): Promise<GlobalLexicon> {
+  if (globalLexiconCache) return Promise.resolve(globalLexiconCache);
+  if (!globalLexiconPromise) {
+    globalLexiconPromise = fetch('/data/nt/lexicon.json')
+      .then(r => r.ok ? r.json() as Promise<GlobalLexicon> : {})
+      .then(data => { globalLexiconCache = data; return data; })
+      .catch(() => ({}));
+  }
+  return globalLexiconPromise;
 }
 
 type Occurrence = {
@@ -103,12 +117,14 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
   const [shown, setShown] = useState(20);
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [concordanceIndex, setConcordanceIndex] = useState<ConcordanceIndex | null>(null);
+  const [globalLexicon, setGlobalLexicon] = useState<GlobalLexicon | null>(null);
   const loadedRef = useRef(false);
 
   useEffect(() => {
     if (loadedRef.current) return;
     loadedRef.current = true;
     void loadConcordanceIndex().then(setConcordanceIndex);
+    void loadGlobalLexicon().then(setGlobalLexicon);
   }, []);
 
   useEffect(() => {
@@ -117,12 +133,15 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
     setExpandedKeys(new Set());
   }, [word?.strongs]);
 
+  // グローバル辞書（Abbott-Smith由来）を優先、なければ書固有エントリを使用
+  const richEntry = (word && globalLexicon?.[word.strongs]) ?? entry;
+
   const verbExplanation =
     word && isVerbMorph(word.morph)
       ? explainVerbMorphologyJa(word.morph, {
           greek: word.greek,
           strongs: word.strongs,
-          lemma: entry?.lemma,
+          lemma: richEntry?.lemma,
         })
       : null;
 
@@ -131,7 +150,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
       ? explainNounMorphologyJa(word.morph, {
           greek: word.greek,
           strongs: word.strongs,
-          lemma: entry?.lemma,
+          lemma: richEntry?.lemma,
           glossJa: word.glossJa,
         })
       : null;
@@ -146,8 +165,8 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
           glossJa: word.glossJa,
           morph: word.morph,
           strongs: word.strongs,
-          lemma: entry?.lemma,
-          definitionJa: entry?.definitionJa,
+          lemma: richEntry?.lemma,
+          definitionJa: richEntry?.definitionJa,
         },
       }
     : null;
@@ -200,7 +219,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                 <p className="font-greek text-3xl">{word.greek}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Strong&apos;s {word.strongs}
-                  {entry?.lemma && ` · ${entry.lemma}`}
+                  {richEntry?.lemma && ` · ${richEntry.lemma}`}
                 </p>
               </div>
 
@@ -220,19 +239,34 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                 </p>
               </section>
 
-              {entry ? (
+              {richEntry ? (
                 <section>
                   <h3 className="section-label">
                     辞書
-                    {!entry.reviewed && (
+                    {richEntry.detailJa ? (
+                      <span className="ml-2 rounded bg-sky/60 px-1.5 py-0.5 text-[10px] font-normal normal-case text-primary">
+                        Abbott-Smith
+                      </span>
+                    ) : !richEntry.reviewed ? (
                       <span className="ml-2 rounded bg-accent/40 px-1.5 py-0.5 text-[10px] font-normal normal-case text-primary">
                         AI下書き
                       </span>
-                    )}
+                    ) : null}
                   </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-foreground">
-                    {entry.definitionJa}
-                  </p>
+                  {richEntry.detailJa ? (
+                    <>
+                      <p className="mt-1 text-sm font-semibold text-foreground">
+                        {richEntry.definitionJa}
+                      </p>
+                      <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
+                        {richEntry.detailJa}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {richEntry.definitionJa}
+                    </p>
+                  )}
                 </section>
               ) : (
                 <section>
