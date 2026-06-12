@@ -2,17 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LexiconEntry, VerseWord } from "@/types";
-import {
-  explainNounMorphologyJa,
-  explainVerbMorphologyJa,
-  isNounLikeMorph,
-  isVerbMorph,
-} from "@/lib/morphology";
 import { verseGreekFromWords, type ContextApiRequest } from "@/lib/context-llm";
+import type { GrammarNoteRequest } from "@/app/api/grammar-note/route";
 import { Button } from "@/components/ui/button";
 import { MorphLabels } from "./MorphLabels";
-import { NounMorphDetail } from "./NounMorphDetail";
-import { VerbMorphDetail } from "./VerbMorphDetail";
+import { GrammarNoteSection } from "./GrammarNoteSection";
 import { LlmContextSection } from "./LlmContextSection";
 
 type ConcordanceIndex = Record<string, { total: number; books: Record<string, number> }>;
@@ -136,24 +130,16 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
   // グローバル辞書（Abbott-Smith由来）を優先、なければ書固有エントリを使用
   const richEntry = (word && globalLexicon?.[word.strongs]) ?? entry;
 
-  const verbExplanation =
-    word && isVerbMorph(word.morph)
-      ? explainVerbMorphologyJa(word.morph, {
-          greek: word.greek,
-          strongs: word.strongs,
-          lemma: richEntry?.lemma,
-        })
-      : null;
-
-  const nounExplanation =
-    word && isNounLikeMorph(word.morph)
-      ? explainNounMorphologyJa(word.morph, {
-          greek: word.greek,
-          strongs: word.strongs,
-          lemma: richEntry?.lemma,
-          glossJa: word.glossJa,
-        })
-      : null;
+  const grammarNoteRequest: GrammarNoteRequest | null = word
+    ? {
+        greek: word.greek,
+        lemma: richEntry?.lemma,
+        morph: word.morph,
+        glossJa: word.glossJa,
+        reference,
+        verseGreek: verseGreekFromWords(verseWords),
+      }
+    : null;
 
   const contextRequest: ContextApiRequest | null = word
     ? {
@@ -274,12 +260,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                 </section>
               )}
 
-              {(verbExplanation || nounExplanation) && (
-                <section>
-                  {verbExplanation && <VerbMorphDetail explanation={verbExplanation} />}
-                  {nounExplanation && <NounMorphDetail explanation={nounExplanation} />}
-                </section>
-              )}
+              <GrammarNoteSection request={grammarNoteRequest} />
 
               {!llmOpen && (
                 <Button
