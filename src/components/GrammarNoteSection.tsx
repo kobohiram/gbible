@@ -57,6 +57,7 @@ export function GrammarNoteSection({ request }: Props) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loginPrompt, setLoginPrompt] = useState(false);
 
   async function handleReview() {
     if (!data?.id) return;
@@ -151,25 +152,32 @@ export function GrammarNoteSection({ request }: Props) {
           ) : (
             <p className="mt-1 text-sm leading-relaxed text-foreground">{data.content}</p>
           )}
-          {!editing && session?.user && data.id && (
-            <div className="mt-2 flex gap-3">
-              {!data.reviewed && (
+          {!editing && data.id && (
+            <div className="mt-2 space-y-1">
+              <div className="flex gap-3">
+                {!data.reviewed && (
+                  <button
+                    type="button"
+                    onClick={session?.user ? handleReview : () => setLoginPrompt(true)}
+                    disabled={reviewing}
+                    className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+                  >
+                    {reviewing ? "保存中…" : "✓ 承認"}
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={handleReview}
-                  disabled={reviewing}
-                  className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+                  onClick={session?.user ? () => { setEditText(data.content); setEditing(true); } : () => setLoginPrompt(true)}
+                  className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                 >
-                  {reviewing ? "保存中…" : "✓ 承認"}
+                  ✎ 編集
                 </button>
+              </div>
+              {loginPrompt && !session?.user && (
+                <p className="text-[11px] text-muted-foreground">
+                  Googleでログインすると承認・編集できます。
+                </p>
               )}
-              <button
-                type="button"
-                onClick={() => { setEditText(data.content); setEditing(true); }}
-                className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-              >
-                ✎ 編集
-              </button>
             </div>
           )}
         </>
