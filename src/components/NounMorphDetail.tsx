@@ -10,7 +10,7 @@ export function NounMorphDetail({ explanation }: Props) {
   return (
     <div className="morph-note-box">
       <p className="text-xs font-semibold text-[var(--grammar)]">
-        この語形のポイント
+        文法のワンポイント
       </p>
       <ul className="mt-1 space-y-1.5">
         {explanation.notes.map((note) => (

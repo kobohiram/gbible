@@ -227,8 +227,6 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                 <h3 className="section-label">文法</h3>
                 <div className="mt-1">
                   <MorphLabels morph={word.morph} size="md" variant="verbose" />
-                  {verbExplanation && <VerbMorphDetail explanation={verbExplanation} />}
-                  {nounExplanation && <NounMorphDetail explanation={nounExplanation} />}
                 </div>
               </section>
 
@@ -273,6 +271,13 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                   <p className="text-sm text-muted-foreground">
                     辞書エントリは準備中です。
                   </p>
+                </section>
+              )}
+
+              {(verbExplanation || nounExplanation) && (
+                <section>
+                  {verbExplanation && <VerbMorphDetail explanation={verbExplanation} />}
+                  {nounExplanation && <NounMorphDetail explanation={nounExplanation} />}
                 </section>
               )}
 

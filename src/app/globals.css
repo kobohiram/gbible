@@ -183,6 +183,6 @@ body {
   margin-top: 0.75rem;
   border-radius: 0.5rem;
   border: 1px solid color-mix(in oklch, var(--grammar) 30%, transparent);
-  background: color-mix(in oklch, var(--accent) 40%, var(--card));
+  background: transparent;
   padding: 0.75rem;
 }
