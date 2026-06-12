@@ -1,4 +1,5 @@
 import { expandMorphologyJa } from "@/lib/morphology";
+import { neon } from "@neondatabase/serverless";
 
 export type GrammarNoteRequest = {
   greek: string;
@@ -9,11 +10,21 @@ export type GrammarNoteRequest = {
   verseGreek: string;
 };
 
+export type GrammarNoteResponse = {
+  content: string;
+  reviewed: boolean;
+  id?: number;
+};
+
+function db() {
+  return neon(process.env.DATABASE_URL!);
+}
+
 function buildPrompt(req: GrammarNoteRequest): string {
   const morphJa = expandMorphologyJa(req.morph);
 
   return `あなたは新約聖書コイネーギリシャ語の文法・解釈の専門家です。
-以下の語形について、著者がこの語形を選んだ意図とニュアンスを日本語で解説してください。
+以下の語形について、文法的なニュアンスを日本語で解説してください。
 
 ## 対象の語
 - ギリシャ語: ${req.greek}${req.lemma ? `（見出し語: ${req.lemma}）` : ""}
@@ -24,34 +35,64 @@ function buildPrompt(req: GrammarNoteRequest): string {
 ${req.verseGreek}
 
 ## 解説の要件
-この語形が持つ文法的ニュアンスを以下の観点から丁寧に説明してください：
 
-**動詞の場合：**
-- アオリストなら：点的・完結的行為として描写した意図。未完了形との違い（未完了なら継続・反復を示していたが、ここではなぜアオリストか）
-- 未完了なら：継続・反復・進行の豊かなニュアンス。情景描写としての機能
-- 完了形なら：過去の行為が現在に影響を持続していることの神学的意義
-- 命令形なら：継続命令（現在）か一回的命令（アオリスト）か、その違い
-- 仮定法・希求法なら：著者の意図する可能性・願望・条件の表現
+**文法的説明（客観的事実として述べてよい）：**
+- 動詞の場合：時制・態・法の文法的機能と一般的なニュアンス
+  - アオリスト：点的・完結的行為の描写。未完了との対比
+  - 未完了：継続・反復・進行中の行為。情景描写としての機能
+  - 完了形：過去の行為が現在も効力を持つことを示す
+  - 命令形：現在命令（継続・反復）かアオリスト命令（一回的行為）か
+- 名詞の場合：格の文法的機能。属格絶対構文・不定詞の主語としての属格などの特殊用法があれば解説
+- 日本語訳では表現しにくいニュアンス
 
-**名詞・形容詞の場合：**
-- 格の機能（属格絶対構文、不定詞の主語としての属格、目的語属格など特殊用法があれば詳述）
-- 複数・単数の選択に意味がある場合はその解説
+**解釈的内容（可能性・推測として述べること）：**
+- 著者がこの語形を選んだ可能性のある意図は「〜とも考えられます」「〜という解釈もあります」の形で述べる
+- 神学的含意は断定せず「〜を示唆するかもしれません」の形にする
+- 学者間で議論があるものは「諸説あります」と明記する
 
-**全般：**
-- 日本語訳では失われがちなニュアンス
-- 著者（ヨハネ、パウロ等）がこの語形を選んだことで何を表現しようとしたか
-- 3〜5文程度、学術的だが読みやすい日本語で
-- 箇条書きにせず、一つの段落として書く`;
+**スタイル：**
+- 3〜5文程度、読みやすい日本語
+- 箇条書きにせず一つの段落として書く
+- 断定的・権威的な言い方を避ける`;
 }
 
-// サーバーサイドキャッシュ（morph + strongs でキャッシュ）
-const cache = new Map<string, string>();
+// メモリキャッシュ（DBアクセスの補助）
+const memCache = new Map<string, GrammarNoteResponse>();
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const morph = searchParams.get("morph");
+  const lemma = searchParams.get("lemma") ?? "";
+  const reference = searchParams.get("reference") ?? "";
+
+  if (!morph) return Response.json({ error: "morph が必要です" }, { status: 400 });
+
+  const cacheKey = `${morph}:${lemma}:${reference}`;
+  const cached = memCache.get(cacheKey);
+  if (cached) return Response.json(cached);
+
+  try {
+    const sql = db();
+    const rows = await sql`
+      SELECT id, content, reviewed FROM grammar_notes
+      WHERE morph = ${morph} AND lemma = ${lemma} AND reference = ${reference}
+      LIMIT 1
+    `;
+    if (rows.length > 0) {
+      const row = rows[0] as { id: number; content: string; reviewed: boolean };
+      const result: GrammarNoteResponse = { content: row.content, reviewed: row.reviewed, id: row.id };
+      memCache.set(cacheKey, result);
+      return Response.json(result);
+    }
+    return Response.json(null);
+  } catch {
+    return Response.json(null);
+  }
+}
 
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return Response.json({ error: "サーバー設定エラー" }, { status: 500 });
-  }
+  if (!apiKey) return Response.json({ error: "サーバー設定エラー" }, { status: 500 });
 
   let body: GrammarNoteRequest;
   try {
@@ -64,11 +105,25 @@ export async function POST(request: Request) {
     return Response.json({ error: "語形情報が不足しています" }, { status: 400 });
   }
 
-  // 同じ語形・同じ節は再利用
-  const cacheKey = `${body.morph}:${body.lemma ?? body.greek}:${body.reference}`;
-  const cached = cache.get(cacheKey);
-  if (cached) return Response.json({ content: cached });
+  const cacheKey = `${body.morph}:${body.lemma ?? ""}:${body.reference}`;
 
+  // DB確認
+  try {
+    const sql = db();
+    const rows = await sql`
+      SELECT id, content, reviewed FROM grammar_notes
+      WHERE morph = ${body.morph} AND lemma = ${body.lemma ?? ""} AND reference = ${body.reference}
+      LIMIT 1
+    `;
+    if (rows.length > 0) {
+      const row = rows[0] as { id: number; content: string; reviewed: boolean };
+      const result: GrammarNoteResponse = { content: row.content, reviewed: row.reviewed, id: row.id };
+      memCache.set(cacheKey, result);
+      return Response.json(result);
+    }
+  } catch { /* DB未作成などは無視して生成へ */ }
+
+  // Claude で生成
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -92,9 +147,38 @@ export async function POST(request: Request) {
     const data = (await res.json()) as { content?: { text: string }[] };
     const content = data.content?.[0]?.text?.trim() ?? "";
 
-    cache.set(cacheKey, content);
-    return Response.json({ content });
+    // DB保存
+    let id: number | undefined;
+    try {
+      const sql = db();
+      const rows = await sql`
+        INSERT INTO grammar_notes (morph, lemma, reference, content, reviewed)
+        VALUES (${body.morph}, ${body.lemma ?? ""}, ${body.reference}, ${content}, false)
+        ON CONFLICT (morph, lemma, reference) DO UPDATE SET content = EXCLUDED.content
+        RETURNING id
+      `;
+      id = (rows[0] as { id: number }).id;
+    } catch { /* DB未作成なら保存スキップ */ }
+
+    const result: GrammarNoteResponse = { content, reviewed: false, id };
+    memCache.set(cacheKey, result);
+    return Response.json(result);
   } catch {
     return Response.json({ error: "生成に失敗しました" }, { status: 502 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  const { id } = (await request.json()) as { id: number };
+  if (!id) return Response.json({ error: "id が必要です" }, { status: 400 });
+
+  try {
+    const sql = db();
+    await sql`UPDATE grammar_notes SET reviewed = true WHERE id = ${id}`;
+    // メモリキャッシュをクリア（次回取得時に reviewed=true が反映される）
+    memCache.clear();
+    return Response.json({ ok: true });
+  } catch {
+    return Response.json({ error: "更新に失敗しました" }, { status: 500 });
   }
 }
