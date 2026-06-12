@@ -54,6 +54,10 @@ export function GrammarNoteSection({ request }: Props) {
     return () => controller.abort();
   }, [request?.morph, request?.lemma, request?.greek, request?.reference]);
 
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const [saving, setSaving] = useState(false);
+
   async function handleReview() {
     if (!data?.id) return;
     setReviewing(true);
@@ -71,6 +75,27 @@ export function GrammarNoteSection({ request }: Props) {
       }
     } finally {
       setReviewing(false);
+    }
+  }
+
+  async function handleSaveEdit() {
+    if (!data?.id || !editText.trim()) return;
+    setSaving(true);
+    try {
+      await fetch("/api/grammar-note", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: data.id, content: editText.trim(), reviewed: true }),
+      });
+      const updated = { ...data, content: editText.trim(), reviewed: true };
+      setData(updated);
+      if (request) {
+        const cacheKey = `${request.morph}:${request.lemma ?? ""}:${request.reference}`;
+        memCache.set(cacheKey, updated);
+      }
+      setEditing(false);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -97,16 +122,55 @@ export function GrammarNoteSection({ request }: Props) {
       )}
       {!loading && data?.content && (
         <>
-          <p className="mt-1 text-sm leading-relaxed text-foreground">{data.content}</p>
-          {!data.reviewed && session?.user && data.id && (
-            <button
-              type="button"
-              onClick={handleReview}
-              disabled={reviewing}
-              className="mt-2 text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
-            >
-              {reviewing ? "保存中…" : "✓ この解説を承認"}
-            </button>
+          {editing ? (
+            <div className="mt-1 space-y-2">
+              <textarea
+                value={editText}
+                onChange={e => setEditText(e.target.value)}
+                rows={6}
+                className="w-full rounded border border-border bg-background px-3 py-2 text-sm leading-relaxed text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  disabled={saving}
+                  className="rounded bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground disabled:opacity-50"
+                >
+                  {saving ? "保存中…" : "保存してレビュー済みにする"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="text-[11px] text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-1 text-sm leading-relaxed text-foreground">{data.content}</p>
+          )}
+          {!editing && session?.user && data.id && (
+            <div className="mt-2 flex gap-3">
+              {!data.reviewed && (
+                <button
+                  type="button"
+                  onClick={handleReview}
+                  disabled={reviewing}
+                  className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+                >
+                  {reviewing ? "保存中…" : "✓ 承認"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setEditText(data.content); setEditing(true); }}
+                className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                ✎ 編集
+              </button>
+            </div>
           )}
         </>
       )}

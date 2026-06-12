@@ -196,13 +196,16 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { id } = (await request.json()) as { id: number };
-  if (!id) return Response.json({ error: "id が必要です" }, { status: 400 });
+  const body = (await request.json()) as { id: number; content?: string; reviewed?: boolean };
+  if (!body.id) return Response.json({ error: "id が必要です" }, { status: 400 });
 
   try {
     const sql = db();
-    await sql`UPDATE grammar_notes SET reviewed = true WHERE id = ${id}`;
-    // メモリキャッシュをクリア（次回取得時に reviewed=true が反映される）
+    if (body.content !== undefined) {
+      await sql`UPDATE grammar_notes SET content = ${body.content}, reviewed = true WHERE id = ${body.id}`;
+    } else {
+      await sql`UPDATE grammar_notes SET reviewed = true WHERE id = ${body.id}`;
+    }
     memCache.clear();
     return Response.json({ ok: true });
   } catch {
