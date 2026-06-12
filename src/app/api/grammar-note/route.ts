@@ -20,8 +20,35 @@ function db() {
   return neon(process.env.DATABASE_URL!);
 }
 
+// 固有名詞かどうか判定（ギリシャ語の大文字始まり）
+function isProperNoun(req: GrammarNoteRequest): boolean {
+  const target = req.lemma ?? req.greek;
+  const first = target[0];
+  return first === first.toUpperCase() && first !== first.toLowerCase();
+}
+
 function buildPrompt(req: GrammarNoteRequest): string {
   const morphJa = expandMorphologyJa(req.morph);
+
+  if (isProperNoun(req)) {
+    return `あなたは聖書の地理・歴史・文化の専門家です。
+新約聖書に登場するこの固有名詞について、読者が聖書を読む助けになる情報を日本語で解説してください。
+
+## 対象
+- ギリシャ語: ${req.greek}${req.lemma ? `（見出し語: ${req.lemma}）` : ""}
+- 日本語訳: ${req.glossJa}
+
+## 文脈（${req.reference}）
+${req.verseGreek}
+
+## 解説の要件
+- 地名なら：場所・地理的特徴・歴史的背景・新約時代の状況
+- 人名なら：その人物の概要・聖書での役割・興味深い事実
+- 語源・ヘブライ語/アラム語との関連があれば紹介
+- 知っていると聖書理解が深まるトリビアを含める
+- 3〜5文程度、読みやすい日本語、箇条書き不可
+- 不確かな情報は「〜とも言われています」の形にする`;
+  }
 
   return `あなたは新約聖書コイネーギリシャ語の文法・解釈の専門家です。
 以下の語形について、文法的なニュアンスを日本語で解説してください。

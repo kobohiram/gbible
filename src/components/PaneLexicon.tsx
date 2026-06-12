@@ -262,16 +262,6 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
 
               <GrammarNoteSection request={grammarNoteRequest} />
 
-              {!llmOpen && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setLlmOpen(true)}
-                >
-                  文脈補足（LLM）を表示
-                </Button>
-              )}
 
               {concordance.length > 0 && (
                 <section>
@@ -310,11 +300,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
             </article>
           )}
 
-          <LlmContextSection
-            contextRequest={contextRequest}
-            open={llmOpen}
-            onClose={() => setLlmOpen(false)}
-          />
+          {/* LlmContextSection は非表示（インフラは保持） */}
         </div>
       </div>
     </div>
