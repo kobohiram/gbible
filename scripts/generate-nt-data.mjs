@@ -240,11 +240,42 @@ ${wordList}`,
 // ---------------------------------------------------------------------------
 // メイン処理
 // ---------------------------------------------------------------------------
+async function promptApiKey() {
+  const { createInterface } = await import('readline');
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    process.stdout.write('ANTHROPIC_API_KEY を入力してください: ');
+    // 入力を非表示にする
+    if (process.stdin.isTTY) process.stdin.setRawMode(true);
+    let key = '';
+    process.stdin.resume();
+    process.stdin.setEncoding('utf-8');
+    process.stdin.on('data', function onData(ch) {
+      if (ch === '\n' || ch === '\r') {
+        process.stdin.setRawMode(false);
+        process.stdin.removeListener('data', onData);
+        rl.close();
+        process.stdout.write('\n');
+        resolve(key);
+      } else if (ch === '') {
+        process.exit();
+      } else if (ch === '') {
+        key = key.slice(0, -1);
+      } else {
+        key += ch;
+      }
+    });
+  });
+}
+
 async function main() {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  let apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    console.error('ANTHROPIC_API_KEY 環境変数が設定されていません。');
-    process.exit(1);
+    apiKey = await promptApiKey();
+    if (!apiKey) {
+      console.error('APIキーが入力されませんでした。');
+      process.exit(1);
+    }
   }
 
   // 対象書を絞り込む
