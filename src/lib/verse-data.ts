@@ -7,6 +7,7 @@ export const BOOKS_WITH_FULL_DATA = new Set<BookId>([
   "john",
   "mark",
   "matthew",
+  "luke",
 ]);
 
 const legacyLexicon: Record<string, LexiconEntry> = {
