@@ -123,9 +123,9 @@ export function PaneNotes({
           />
         </label>
 
-        {/* メモ */}
+        {/* メモ（超訳） */}
         <label className="flex flex-col gap-1">
-          <span className="section-label">メモ</span>
+          <span className="section-label">メモ（超訳）</span>
           <textarea
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
