@@ -87,7 +87,7 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`dark ${geistSans.variable} ${geistMono.variable} ${cardo.variable} ${gentiumPlus.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${cardo.variable} ${gentiumPlus.variable}`}
     >
       <body className="antialiased">
         <Providers>{children}</Providers>
