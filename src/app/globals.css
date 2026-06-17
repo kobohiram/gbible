@@ -186,3 +186,11 @@ body {
   background: transparent;
   padding: 0.75rem;
 }
+
+/* 共観福音書比較ページ — 一致マーカーの下線色 */
+:root {
+  --match-triple: oklch(0.75 0.16 95);   /* 🟨 三者共通（マタイ・マルコ・ルカ） */
+  --match-mt-lk: oklch(0.6 0.2 25);      /* 🟥 マタイ＋ルカ */
+  --match-mt-mk: oklch(0.65 0.16 145);   /* 🟩 マタイ＋マルコ */
+  --match-mk-lk: oklch(0.6 0.16 250);    /* 🟦 マルコ＋ルカ */
+}

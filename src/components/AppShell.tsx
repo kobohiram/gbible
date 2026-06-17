@@ -188,6 +188,12 @@ export function AppShell() {
           )}
         </h1>
         <div className="flex items-center gap-3">
+          <a
+            href="/study/synoptic"
+            className="text-sm font-semibold underline-offset-2 hover:underline"
+          >
+            共観福音書 →
+          </a>
           <DataBackupMenu onImported={refreshTranslations} />
           <AuthButton />
         </div>
