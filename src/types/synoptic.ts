@@ -22,6 +22,7 @@ export type MatchGroup = {
 export type Pericope = {
   id: string;
   title: string;
+  group: string;
   passages: PericopePassage[];
   matchGroups: MatchGroup[];
 };

@@ -137,6 +137,7 @@ for (const def of PERICOPE_DEFS) {
   pericopes.push({
     id: def.id,
     title: def.title,
+    group: def.group,
     passages: def.passages,
     matchGroups,
   });

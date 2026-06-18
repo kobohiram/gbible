@@ -11,7 +11,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { PericopeSelector } from "./PericopeSelector";
+import { PericopeListPane } from "./PericopeListPane";
 import { SynopticPane } from "./SynopticPane";
 
 const SYNOPTIC_BOOKS: BookId[] = ["matthew", "mark", "luke"];
@@ -90,7 +90,22 @@ export function SynopticShell() {
   const selectedPericope = pericopes.find((p) => p.id === selectedId) ?? null;
   const wordMarkMap = useMemo(() => buildWordMarkMap(selectedPericope), [selectedPericope]);
 
-  const panelChildren: React.ReactNode[] = [];
+  const panelChildren: React.ReactNode[] = [
+    <ResizablePanel
+      key="pericope-list"
+      className="min-w-0"
+      collapsible={false}
+      defaultSize="14%"
+      id="pane-pericope-list"
+      maxSize="20%"
+      minSize="10%"
+    >
+      <div className="pane-surface flex h-full min-h-0 flex-col overflow-hidden" data-pane="nav">
+        <PericopeListPane pericopes={pericopes} selectedId={selectedId} onSelect={setSelectedId} />
+      </div>
+    </ResizablePanel>,
+    <ResizableHandle key="handle-pericope-list" withHandle />,
+  ];
   paneBooks.forEach((bookId, i) => {
     if (i > 0) panelChildren.push(<ResizableHandle key={`handle-${bookId}`} withHandle />);
     const passage = selectedPericope?.passages.find((p) => p.bookId === bookId) ?? null;
@@ -99,7 +114,7 @@ export function SynopticShell() {
         key={bookId}
         className="min-w-0"
         collapsible={false}
-        defaultSize={`${Math.floor(100 / paneBooks.length)}%`}
+        defaultSize={`${Math.floor(86 / paneBooks.length)}%`}
         id={`pane-${bookId}`}
         minSize="18%"
       >
@@ -135,7 +150,6 @@ export function SynopticShell() {
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          <PericopeSelector pericopes={pericopes} selectedId={selectedId} onSelect={setSelectedId} />
           <button
             type="button"
             onClick={() => setShowJohn((v) => !v)}
