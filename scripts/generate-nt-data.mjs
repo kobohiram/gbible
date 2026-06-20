@@ -10,11 +10,11 @@
  *   node scripts/generate-nt-data.mjs --skip-api galatians  # API なし（不足語は見出し語）
  *   node scripts/generate-nt-data.mjs --force-api john      # 全語を API 再生成（非推奨）
  *
- * 語義は public/data/nt/lexicon.json を優先し、ない語だけ API で生成する。
- * 2ペイン表示は lexicon.json を参照するため、--skip-api でも書の収録が可能。
+ * 2ペイン表示は各書 JSON の word.glossJa（短い訳語）を使う。
+ * 語義の優先順: 既存書の glossJa → lexicon.json → API（不足語のみ）。
  */
 
-import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -117,6 +117,44 @@ function glossFromGlobalLexicon(strongs, globalLexicon) {
   const glossJa = entry.glossJa?.trim() || shortGlossFromDefinition(definitionJa);
   if (!glossJa && !definitionJa) return null;
   return { glossJa: glossJa || definitionJa, definitionJa };
+}
+
+const GREEK_RE = /[\u0370-\u03FF\u1F00-\u1FFF]/;
+const MAX_PANE_GLOSS_LEN = 18;
+
+/** 既存書 JSON から Strong 番号 → 短い glossJa を収集（2ペイン用） */
+function loadExistingStrongsGloss(excludeBookIds) {
+  const map = new Map();
+  if (!existsSync(DATA_DIR)) return map;
+
+  for (const file of readdirSync(DATA_DIR)) {
+    if (!file.endsWith('.json') || file === 'lexicon.json') continue;
+    const bookId = file.replace(/\.json$/, '');
+    if (excludeBookIds.has(bookId)) continue;
+
+    try {
+      const data = JSON.parse(readFileSync(join(DATA_DIR, file), 'utf-8'));
+      if (!data.words) continue;
+      for (const words of Object.values(data.words)) {
+        for (const w of words) {
+          const gloss = w.glossJa?.trim();
+          if (
+            !gloss ||
+            !w.strongs ||
+            GREEK_RE.test(gloss) ||
+            gloss.length > MAX_PANE_GLOSS_LEN ||
+            gloss.includes('。')
+          ) {
+            continue;
+          }
+          map.set(w.strongs, { glossJa: gloss, definitionJa: '' });
+        }
+      }
+    } catch {
+      // skip broken files
+    }
+  }
+  return map;
 }
 
 // ---------------------------------------------------------------------------
@@ -377,10 +415,11 @@ async function main() {
     console.log(`${verses.size} 節, ${chapters.length} 章`);
   }
 
-  // 語義: lexicon.json → キャッシュ → 不足分のみ API
+  // 語義: 既存書 → lexicon.json → キャッシュ → 不足分のみ API
   console.log('\n[3/4] 日本語語義を解決中...');
   const globalLexicon = loadGlobalLexicon();
   const glossCache = loadGlossCache();
+  const existingStrongsGloss = loadExistingStrongsGloss(new Set(books.map((b) => b.id)));
   const glossMap = new Map();
 
   const allLemmas = new Set();
@@ -391,8 +430,10 @@ async function main() {
   }
   console.log(`  一意な見出し語: ${allLemmas.size}`);
   console.log(`  lexicon.json: ${Object.keys(globalLexicon).length} エントリ`);
+  console.log(`  既存書から: ${existingStrongsGloss.size} Strong 番号`);
 
   let fromCache = 0;
+  let fromExisting = 0;
   let fromLexicon = 0;
 
   if (!forceApi) {
@@ -403,13 +444,21 @@ async function main() {
         continue;
       }
       const strongs = lookupStrongs(lemma, strongsMap, stripMap);
+      const fromBook = existingStrongsGloss.get(strongs);
+      if (fromBook) {
+        glossMap.set(lemma, fromBook);
+        fromExisting++;
+        continue;
+      }
       const fromGlobal = glossFromGlobalLexicon(strongs, globalLexicon);
       if (fromGlobal) {
         glossMap.set(lemma, fromGlobal);
         fromLexicon++;
       }
     }
-    console.log(`  キャッシュから: ${fromCache} / lexicon.json から: ${fromLexicon}`);
+    console.log(
+      `  キャッシュ: ${fromCache} / 既存書: ${fromExisting} / lexicon.json: ${fromLexicon}`,
+    );
   }
 
   const missing = [...allLemmas].filter((lemma) => !glossMap.has(lemma));

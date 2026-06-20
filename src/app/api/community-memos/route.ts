@@ -14,22 +14,30 @@ export async function GET(request: Request) {
     return Response.json({ error: "Missing params" }, { status: 400 });
   }
 
-  const sql = db();
-  const rows = await sql`
-    SELECT
-      id,
-      user_name  AS "userName",
-      memo,
-      updated_at AS "updatedAt"
-    FROM translations
-    WHERE book_id       = ${bookId}
-      AND chapter       = ${parseInt(chapter)}
-      AND verse         = ${parseInt(verse)}
-      AND memo_is_public = TRUE
-      AND memo          != ''
-    ORDER BY updated_at DESC
-    LIMIT 50
-  `;
+  if (!process.env.DATABASE_URL) {
+    return Response.json([]);
+  }
 
-  return Response.json(rows);
+  try {
+    const sql = db();
+    const rows = await sql`
+      SELECT
+        id,
+        user_name  AS "userName",
+        memo,
+        updated_at AS "updatedAt"
+      FROM translations
+      WHERE book_id       = ${bookId}
+        AND chapter       = ${parseInt(chapter)}
+        AND verse         = ${parseInt(verse)}
+        AND memo_is_public = TRUE
+        AND memo          != ''
+      ORDER BY updated_at DESC
+      LIMIT 50
+    `;
+
+    return Response.json(rows);
+  } catch {
+    return Response.json([]);
+  }
 }

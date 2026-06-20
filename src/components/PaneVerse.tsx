@@ -10,9 +10,7 @@ import {
 import { useAutoSave, SaveStatus } from "@/lib/use-auto-save";
 import { getWordScript, getWordText } from "@/lib/verse-text";
 import { loadOtPaneGloss } from "@/lib/ot-pane-gloss";
-import { loadNtLexicon } from "@/lib/nt-lexicon";
-import { resolvePaneGloss, resolveShortGloss } from "@/lib/word-gloss";
-import type { LexiconEntry } from "@/types";
+import { resolvePaneGloss } from "@/lib/word-gloss";
 import { MorphLabels } from "./MorphLabels";
 import { MorphLegend } from "./MorphLegend";
 import { useCallback, useEffect, useState } from "react";
@@ -53,16 +51,10 @@ export function PaneVerse({
   const { status } = useSession();
   const isLoggedIn = status === "authenticated";
   const [paneGlossMap, setPaneGlossMap] = useState<Record<string, string> | null>(null);
-  const [ntLexicon, setNtLexicon] = useState<Record<string, LexiconEntry> | null>(null);
 
   useEffect(() => {
-    if (corpus === "ot") {
-      void loadOtPaneGloss().then(setPaneGlossMap);
-      setNtLexicon(null);
-      return;
-    }
-    void loadNtLexicon().then(setNtLexicon);
-    setPaneGlossMap(null);
+    if (corpus !== "ot") return;
+    void loadOtPaneGloss().then(setPaneGlossMap);
   }, [corpus]);
   const isRtl = words.length > 0 && getWordScript(words[0]) === "heb";
 
@@ -142,7 +134,7 @@ export function PaneVerse({
                   <span className="text-center text-sm font-medium leading-tight text-[var(--gloss)]">
                     {corpus === "ot"
                       ? resolvePaneGloss(word, paneGlossMap?.[word.strongs])
-                      : resolveShortGloss(word, ntLexicon?.[word.strongs])}
+                      : word.glossJa}
                   </span>
                 </button>
               );
