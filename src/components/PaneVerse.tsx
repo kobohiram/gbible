@@ -9,6 +9,9 @@ import {
 } from "@/lib/translations";
 import { useAutoSave, SaveStatus } from "@/lib/use-auto-save";
 import { getWordScript, getWordText } from "@/lib/verse-text";
+import { loadOtLexicon } from "@/lib/ot-lexicon";
+import { resolveWordGloss } from "@/lib/word-gloss";
+import type { LexiconEntry } from "@/types";
 import { MorphLabels } from "./MorphLabels";
 import { MorphLegend } from "./MorphLegend";
 import { useCallback, useEffect, useState } from "react";
@@ -48,6 +51,12 @@ export function PaneVerse({
 }: Props) {
   const { status } = useSession();
   const isLoggedIn = status === "authenticated";
+  const [otLexicon, setOtLexicon] = useState<Record<string, LexiconEntry> | null>(null);
+
+  useEffect(() => {
+    if (corpus !== "ot") return;
+    void loadOtLexicon().then(setOtLexicon);
+  }, [corpus]);
   const isRtl = words.length > 0 && getWordScript(words[0]) === "heb";
 
   const [translation, setTranslation] = useState(savedTranslation);
@@ -124,7 +133,7 @@ export function PaneVerse({
                   </span>
                   <MorphLabels morph={word.morph} />
                   <span className="text-center text-sm font-medium leading-tight text-[var(--gloss)]">
-                    {word.glossJa}
+                    {resolveWordGloss(word, otLexicon?.[word.strongs])}
                   </span>
                 </button>
               );

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CorpusId, LexiconEntry, VerseWord } from "@/types";
+import { resolveWordGloss } from "@/lib/word-gloss";
 import { getWordScript, getWordText } from "@/lib/verse-text";
 import { verseGreekFromWords } from "@/lib/context-llm";
 import type { GrammarNoteRequest } from "@/app/api/grammar-note/route";
@@ -14,8 +15,8 @@ type GlobalLexicon = Record<string, LexiconEntry>;
 // モジュールレベルキャッシュ（再フェッチ防止）
 let concordanceIndexCache: ConcordanceIndex | null = null;
 let concordanceIndexPromise: Promise<ConcordanceIndex> | null = null;
-let globalLexiconCache: GlobalLexicon | null = null;
-let globalLexiconPromise: Promise<GlobalLexicon> | null = null;
+const globalLexiconCaches: Partial<Record<CorpusId, GlobalLexicon>> = {};
+const globalLexiconPromises: Partial<Record<CorpusId, Promise<GlobalLexicon>>> = {};
 
 function loadConcordanceIndex(): Promise<ConcordanceIndex> {
   if (concordanceIndexCache) return Promise.resolve(concordanceIndexCache);
@@ -28,15 +29,17 @@ function loadConcordanceIndex(): Promise<ConcordanceIndex> {
   return concordanceIndexPromise;
 }
 
-function loadGlobalLexicon(): Promise<GlobalLexicon> {
-  if (globalLexiconCache) return Promise.resolve(globalLexiconCache);
-  if (!globalLexiconPromise) {
-    globalLexiconPromise = fetch('/data/nt/lexicon.json')
+function loadGlobalLexicon(corpus: CorpusId): Promise<GlobalLexicon> {
+  const cached = globalLexiconCaches[corpus];
+  if (cached) return Promise.resolve(cached);
+  if (!globalLexiconPromises[corpus]) {
+    const path = corpus === "ot" ? "/data/ot/lexicon.json" : "/data/nt/lexicon.json";
+    globalLexiconPromises[corpus] = fetch(path)
       .then(r => r.ok ? r.json() as Promise<GlobalLexicon> : {})
-      .then(data => { globalLexiconCache = data; return data; })
+      .then(data => { globalLexiconCaches[corpus] = data; return data; })
       .catch(() => ({}));
   }
-  return globalLexiconPromise;
+  return globalLexiconPromises[corpus]!;
 }
 
 type Occurrence = {
@@ -106,7 +109,7 @@ function ConcordanceItem({ occ, isExpanded, onToggle }: {
                 <p className={`text-base font-bold text-foreground ${script === "heb" ? "font-hebrew" : "font-greek"}`} dir={script === "heb" ? "rtl" : "ltr"}>
                   {getWordText(w)}
                 </p>
-                <p className="text-sm font-medium text-[var(--gloss)]">{w.glossJa}</p>
+                <p className="text-sm font-medium text-[var(--gloss)]">{resolveWordGloss(w, globalLexicon?.[w.strongs])}</p>
                 <MorphLabels morph={w.morph} size="sm" variant="verbose" />
               </div>
             );
@@ -129,7 +132,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
     if (loadedRef.current) return;
     loadedRef.current = true;
     void loadConcordanceIndex().then(setConcordanceIndex);
-    void loadGlobalLexicon().then(setGlobalLexicon);
+    void loadGlobalLexicon(corpus).then(setGlobalLexicon);
   }, [corpus]);
 
   useEffect(() => {
@@ -137,9 +140,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
     setExpandedKeys(new Set());
   }, [word?.strongs]);
 
-  const richEntry = corpus === "nt"
-    ? ((word && globalLexicon?.[word.strongs]) ?? entry)
-    : entry;
+  const richEntry = (word && globalLexicon?.[word.strongs]) ?? entry;
 
   const surface = word ? getWordText(word) : "";
   const script = word ? getWordScript(word) : "grc";
@@ -223,7 +224,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
               <section>
                 <h3 className="section-label">意味（この語）</h3>
                 <p className="mt-1 text-base font-medium text-[var(--gloss)]">
-                  {word.glossJa}
+                  {resolveWordGloss(word, richEntry)}
                 </p>
               </section>
 

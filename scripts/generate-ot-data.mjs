@@ -9,6 +9,9 @@
  *   ANTHROPIC_API_KEY=sk-... node scripts/generate-ot-data.mjs
  *   ANTHROPIC_API_KEY=sk-... node scripts/generate-ot-data.mjs genesis
  *   node scripts/generate-ot-data.mjs --use-cache genesis
+ *   node scripts/generate-ot-data.mjs --use-cache genesis --from 2 --to 11  # 2〜11章を追加
+ *   ANTHROPIC_API_KEY=sk-... node scripts/generate-ot-data.mjs --lexicon-only genesis  # 辞書のみ生成
+ *   node scripts/generate-ot-data.mjs --lexicon-only genesis --limit 50  # 50語ずつ
  *   node scripts/generate-ot-data.mjs --export-sources genesis  # 英語ソースを .ot-cache に出力
  */
 
@@ -53,7 +56,7 @@ const INDEX_URL =
   'https://raw.githubusercontent.com/openscriptures/HebrewLexicon/master/LexicalIndex.xml';
 
 const OSHB_BOOKS = {
-  genesis: { file: 'Gen.xml', osis: 'Gen', name: '創世記', chapters: 50 },
+  genesis: { id: 'genesis', file: 'Gen.xml', osis: 'Gen', name: '創世記', chapters: 50 },
 };
 
 const LEXICON_CACHE = join(CACHE_DIR, 'genesis-lexicon-ja.json');
@@ -311,7 +314,7 @@ const SYSTEM_PROMPT =
   'TBESH（Tyndale House, CC BY 4.0）、Strong\'s Hebrew Dictionary、' +
   'Brown-Driver-Briggs（Open Scriptures, CC BY 4.0）の英語資料をもとに、' +
   'ギリシャ語版 Gbible と同品質の日本語辞書エントリを JSON 形式で作成します。' +
-  '聖書箇所は創世記1章を中心に、和訳書名＋章:節（例: 創1:2）で表記します。';
+  '聖書箇所は創世記を中心に、和訳書名＋章:節（例: 創12:1）で表記します。';
 
 async function generateDetailedEntry(entry, apiKey) {
   const { strongs, lemma, translit, gloss, entryText } = entry;
@@ -404,16 +407,127 @@ async function generateLexiconJa(entries, apiKey) {
   return results;
 }
 
-function loadLexiconJa() {
+function loadLexiconJa(existingLexicon = null) {
+  const merged = { ...(existingLexicon ?? {}) };
   if (existsSync(LEXICON_CACHE)) {
     console.log('  キャッシュ辞書を使用:', LEXICON_CACHE);
-    return JSON.parse(readFileSync(LEXICON_CACHE, 'utf-8'));
-  }
-  if (existsSync(STUB_LEXICON)) {
+    Object.assign(merged, JSON.parse(readFileSync(LEXICON_CACHE, 'utf-8')));
+  } else if (existsSync(STUB_LEXICON)) {
     console.log('  スタブ辞書を使用:', STUB_LEXICON);
-    return JSON.parse(readFileSync(STUB_LEXICON, 'utf-8'));
+    Object.assign(merged, JSON.parse(readFileSync(STUB_LEXICON, 'utf-8')));
   }
-  return null;
+  return Object.keys(merged).length > 0 ? merged : null;
+}
+
+function parseChapterRange(args) {
+  const fromIdx = args.indexOf('--from');
+  const toIdx = args.indexOf('--to');
+  const from = fromIdx >= 0 ? parseInt(args[fromIdx + 1], 10) : null;
+  const to = toIdx >= 0 ? parseInt(args[toIdx + 1], 10) : null;
+  if (from != null && to != null) return { from, to };
+  const nums = args.filter((a) => /^\d+$/.test(a)).map((a) => parseInt(a, 10));
+  if (nums.length >= 2) return { from: nums[0], to: nums[1] };
+  if (nums.length === 1) return { from: nums[0], to: nums[0] };
+  return { from: 1, to: 1 };
+}
+
+function jaEntryHasDetail(ja) {
+  return Boolean(ja?.detailJa?.trim());
+}
+
+function applyJaToLexicon(lexiconObj, strongs, ja, merged) {
+  const prev = lexiconObj[strongs] ?? {};
+  lexiconObj[strongs] = {
+    strongs,
+    lemma: prev.lemma ?? merged?.lemma ?? ja?.lemma ?? strongs,
+    definitionJa: ja?.definitionJa ?? ja?.glossJa ?? prev.definitionJa ?? merged?.gloss ?? '',
+    detailJa: ja?.detailJa ?? prev.detailJa,
+    reviewed: Boolean(ja?.detailJa ?? prev.reviewed),
+    source: prev.source ?? 'bdb',
+  };
+}
+
+function applyJaToWords(wordsObj, strongs, ja) {
+  const gloss = ja?.glossJa ?? ja?.definitionJa;
+  if (!gloss) return;
+  for (const wordList of Object.values(wordsObj)) {
+    for (const w of wordList) {
+      if (w.strongs === strongs) w.glossJa = gloss;
+    }
+  }
+}
+
+async function generateLexiconOnly(book, apiKey, limit = 0) {
+  const outPath = join(DATA_DIR, `${book.id}.json`);
+  if (!existsSync(outPath)) {
+    console.error(`エラー: ${outPath} がありません。先に本文データを生成してください。`);
+    process.exit(1);
+  }
+
+  const data = JSON.parse(readFileSync(outPath, 'utf-8'));
+  const strongsNeeded = new Set();
+  for (const wordList of Object.values(data.words)) {
+    for (const w of wordList) {
+      if (w.strongs && w.strongs !== 'H0') strongsNeeded.add(w.strongs);
+    }
+  }
+
+  console.log('\n[1/3] 辞典ソースを読み込み中...');
+  const [tbeshText, strongXml, bdbXml, indexXml] = await Promise.all([
+    fetchCached(TBESH_URL, 'tbesh.txt'),
+    fetchCached(STRONG_URL, 'hebrew-strong.xml'),
+    fetchCached(BDB_URL, 'bdb.xml'),
+    fetchCached(INDEX_URL, 'lexical-index.xml'),
+  ]);
+  const tbeshMap = parseTBESH(tbeshText);
+  const strongMap = parseHebrewStrong(strongXml);
+  const bdbMap = parseBDB(bdbXml);
+  const indexMap = parseLexicalIndex(indexXml);
+
+  const lexiconJa = loadLexiconJa(data.lexicon) ?? { ...(data.lexicon ?? {}) };
+  const missing = [...strongsNeeded]
+    .filter((s) => !jaEntryHasDetail(lexiconJa[s]) && !jaEntryHasDetail(data.lexicon[s]))
+    .map((s) => mergeLexiconSources(s, tbeshMap, strongMap, indexMap, bdbMap))
+    .filter((e) => e.entryText.length > 0 || e.gloss);
+
+  const withDetail = [...strongsNeeded].filter(
+    (s) => jaEntryHasDetail(lexiconJa[s]) || jaEntryHasDetail(data.lexicon[s]),
+  ).length;
+
+  console.log(`  対象語 ${strongsNeeded.size} / 詳細辞書あり ${withDetail} / 未生成 ${missing.length}`);
+  if (missing.length === 0) {
+    console.log('\n詳細辞書はすべて揃っています。');
+    return;
+  }
+
+  const batch = limit > 0 ? missing.slice(0, limit) : missing;
+  console.log(`\n[2/3] 日本語辞書を生成中... (${batch.length} 語)`);
+
+  const generated = await generateLexiconJa(batch, apiKey);
+  Object.assign(lexiconJa, generated);
+
+  console.log('\n[3/3] JSON を更新中...');
+  const lexiconObj = { ...data.lexicon };
+  for (const [strongs, ja] of Object.entries(generated)) {
+    const merged = mergeLexiconSources(strongs, tbeshMap, strongMap, indexMap, bdbMap);
+    applyJaToLexicon(lexiconObj, strongs, ja, merged);
+    applyJaToWords(data.words, strongs, ja);
+  }
+
+  data.lexicon = lexiconObj;
+  writeFileSync(outPath, JSON.stringify(data), 'utf-8');
+  mkdirSync(CACHE_DIR, { recursive: true });
+  writeFileSync(LEXICON_CACHE, JSON.stringify(lexiconJa, null, 2), 'utf-8');
+
+  const kb = Math.round(JSON.stringify(data).length / 1024);
+  const remaining = missing.length - batch.length;
+  console.log(`  ✓ ${book.name} → ${outPath} (${kb} KB)`);
+  console.log(`  キャッシュ: ${LEXICON_CACHE}`);
+  if (remaining > 0) {
+    console.log(`\n残り ${remaining} 語。続き: node scripts/generate-ot-data.mjs --lexicon-only ${book.id}${limit > 0 ? ` --limit ${limit}` : ''}`);
+  } else {
+    console.log('\n詳細辞書の生成が完了しました。');
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -421,7 +535,11 @@ async function main() {
   const args = process.argv.slice(2);
   const useCache = args.includes('--use-cache');
   const exportSources = args.includes('--export-sources');
-  const bookIds = args.filter((a) => !a.startsWith('--'));
+  const lexiconOnly = args.includes('--lexicon-only');
+  const limitIdx = args.indexOf('--limit');
+  const limit = limitIdx >= 0 ? parseInt(args[limitIdx + 1], 10) : 0;
+  const chapterRange = parseChapterRange(args);
+  const bookIds = args.filter((a) => !a.startsWith('--') && !/^\d+$/.test(a));
   const books = bookIds.length
     ? bookIds.map((id) => OSHB_BOOKS[id]).filter(Boolean)
     : [OSHB_BOOKS.genesis];
@@ -432,6 +550,20 @@ async function main() {
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (lexiconOnly) {
+    if (!apiKey) {
+      console.error('\nエラー: ANTHROPIC_API_KEY が必要です。');
+      console.error('  .env.local に設定するか、環境変数で渡してください。');
+      process.exit(1);
+    }
+    console.log('\n=== Gbible 旧約辞書生成 (TBESH + BDB → 日本語) ===');
+    for (const book of books) {
+      await generateLexiconOnly(book, apiKey, limit);
+    }
+    return;
+  }
+
   console.log('\n=== Gbible 旧約データ生成 (OSHB + TBESH + BDB) ===');
 
   console.log('\n[1/5] 辞典ソースを読み込み中...');
@@ -455,13 +587,26 @@ async function main() {
       `oshb-${book.file}`,
     );
 
-    const chapter = 1;
-    const verses = parseOshbChapter(xml, book.osis, chapter);
-    console.log(`  第${chapter}章: ${verses.size} 節`);
+    const { from: fromChapter, to: toChapter } = chapterRange;
+    console.log(`  対象章: 第${fromChapter}章〜第${toChapter}章`);
+
+    const outPath = join(DATA_DIR, `${book.id}.json`);
+    let existingData = null;
+    if (existsSync(outPath)) {
+      existingData = JSON.parse(readFileSync(outPath, 'utf-8'));
+      console.log(`  既存データをマージ: ${Object.keys(existingData.words).length} 節`);
+    }
 
     const strongsNeeded = new Set();
-    for (const wordList of verses.values()) {
-      for (const w of wordList) strongsNeeded.add(lemmaToStrongs(w.lemma));
+    const chapterVerses = new Map();
+
+    for (let chapter = fromChapter; chapter <= toChapter; chapter++) {
+      const verses = parseOshbChapter(xml, book.osis, chapter);
+      chapterVerses.set(chapter, verses);
+      console.log(`  第${chapter}章: ${verses.size} 節`);
+      for (const wordList of verses.values()) {
+        for (const w of wordList) strongsNeeded.add(lemmaToStrongs(w.lemma));
+      }
     }
 
     const mergedEntries = [...strongsNeeded]
@@ -476,16 +621,22 @@ async function main() {
     }
 
     console.log(`\n[3/5] 日本語辞書を生成中... (${mergedEntries.length} 語)`);
-    let lexiconJa = useCache || !apiKey ? loadLexiconJa() : null;
+    const existingLexicon = existingData?.lexicon ?? null;
+    let lexiconJa = useCache || !apiKey ? loadLexiconJa(existingLexicon) : { ...(existingLexicon ?? {}) };
 
-    if (!lexiconJa && apiKey) {
-      lexiconJa = await generateLexiconJa(mergedEntries, apiKey);
-      mkdirSync(CACHE_DIR, { recursive: true });
-      writeFileSync(LEXICON_CACHE, JSON.stringify(lexiconJa, null, 2), 'utf-8');
-      console.log(`  キャッシュ保存: ${LEXICON_CACHE}`);
+    if (!useCache && apiKey) {
+      const missing = mergedEntries.filter((e) => !jaEntryHasDetail(lexiconJa[e.strongs]));
+      if (missing.length > 0) {
+        console.log(`  未訳語 ${missing.length} 件を API で生成...`);
+        const generated = await generateLexiconJa(missing, apiKey);
+        Object.assign(lexiconJa, generated);
+        mkdirSync(CACHE_DIR, { recursive: true });
+        writeFileSync(LEXICON_CACHE, JSON.stringify(lexiconJa, null, 2), 'utf-8');
+        console.log(`  キャッシュ保存: ${LEXICON_CACHE}`);
+      }
     }
 
-    if (!lexiconJa) {
+    if (!lexiconJa || Object.keys(lexiconJa).length === 0) {
       console.error('\nエラー: 辞書データがありません。');
       console.error('  ANTHROPIC_API_KEY を設定して実行するか、');
       console.error('  scripts/genesis-1-stub-lexicon.json を用意してください。');
@@ -495,43 +646,39 @@ async function main() {
     console.log('\n[4/5] JSON を書き出し中...');
     mkdirSync(DATA_DIR, { recursive: true });
 
-    const wordsObj = {};
-    const lexiconObj = {};
-    const seenStrongs = new Set();
+    const wordsObj = { ...(existingData?.words ?? {}) };
+    const lexiconObj = { ...(existingData?.lexicon ?? {}) };
 
-    for (const [verse, wordList] of verses.entries()) {
-      const key = `${chapter}:${verse}`;
-      wordsObj[key] = wordList.map((w, idx) => {
-        const strongs = lemmaToStrongs(w.lemma);
-        const merged = mergeLexiconSources(strongs, tbeshMap, strongMap, indexMap, bdbMap);
-        const ja = lexiconJa[strongs];
+    for (let chapter = fromChapter; chapter <= toChapter; chapter++) {
+      const verses = chapterVerses.get(chapter);
+      for (const [verse, wordList] of verses.entries()) {
+        const key = `${chapter}:${verse}`;
+        wordsObj[key] = wordList.map((w, idx) => {
+          const strongs = lemmaToStrongs(w.lemma);
+          const merged = mergeLexiconSources(strongs, tbeshMap, strongMap, indexMap, bdbMap);
+          const ja = lexiconJa[strongs];
 
-        if (!seenStrongs.has(strongs) && (merged.lemma || tbeshMap.get(strongs))) {
-          seenStrongs.add(strongs);
-          lexiconObj[strongs] = {
+          if (!lexiconObj[strongs] && (merged.lemma || tbeshMap.get(strongs) || strongs !== 'H0')) {
+            applyJaToLexicon(lexiconObj, strongs, ja, merged);
+          } else if (ja && jaEntryHasDetail(ja) && lexiconObj[strongs]) {
+            applyJaToLexicon(lexiconObj, strongs, ja, merged);
+          }
+
+          return {
+            id: `genesis-${chapter}-${verse}-w${idx + 1}`,
             strongs,
-            lemma: merged.lemma,
-            definitionJa: ja?.definitionJa ?? ja?.glossJa ?? merged.gloss,
-            detailJa: ja?.detailJa,
-            reviewed: Boolean(ja?.reviewed ?? apiKey),
-            source: 'bdb',
+            text: w.text,
+            script: 'heb',
+            morph: w.morph,
+            glossJa: ja?.glossJa ?? ja?.definitionJa ?? merged.gloss ?? w.text,
           };
-        }
-
-        return {
-          id: `genesis-${chapter}-${verse}-w${idx + 1}`,
-          strongs,
-          text: w.text,
-          script: 'heb',
-          morph: w.morph,
-          glossJa: ja?.glossJa ?? ja?.definitionJa ?? merged.gloss ?? w.text,
-        };
-      });
+        });
+      }
     }
 
     const genesisChapters = [
       31, 25, 24, 26, 32, 22, 24, 22, 29, 32, 32, 20, 18, 24, 21, 16, 27, 33, 38, 18,
-      34, 24, 20, 67, 34, 35, 46, 22, 35, 43, 55, 32, 20, 31, 29, 43, 36, 30, 23, 23,
+      34, 24, 20, 67, 34, 35, 46, 22, 35, 43, 54, 33, 20, 31, 29, 43, 36, 30, 23, 23,
       57, 38, 34, 34, 28, 34, 31, 22, 33, 26,
     ];
 
@@ -544,7 +691,6 @@ async function main() {
       lexicon: lexiconObj,
     };
 
-    const outPath = join(DATA_DIR, 'genesis.json');
     writeFileSync(outPath, JSON.stringify(output), 'utf-8');
     const kb = Math.round(JSON.stringify(output).length / 1024);
     console.log(`  ✓ ${book.name} → ${outPath} (${kb} KB)`);

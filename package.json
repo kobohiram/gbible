@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "generate:ot": "node scripts/generate-ot-data.mjs",
+    "generate:ot-lexicon": "node scripts/gen-ot-lexicon.mjs --book genesis",
     "build:ot-stub": "node scripts/build-genesis-stub.mjs"
   },
   "dependencies": {
