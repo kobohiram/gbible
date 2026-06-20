@@ -6,11 +6,12 @@
  * Claude API で日本語語義を生成して public/data/nt/[bookId].json に出力する。
  *
  * 使い方:
- *   ANTHROPIC_API_KEY=sk-... node scripts/generate-nt-data.mjs          # 全27書
- *   ANTHROPIC_API_KEY=sk-... node scripts/generate-nt-data.mjs john     # ヨハネのみ
- *   ANTHROPIC_API_KEY=sk-... node scripts/generate-nt-data.mjs john mark # 複数指定
+ *   node scripts/generate-nt-data.mjs galatians ephesians   # 指定書のみ
+ *   node scripts/generate-nt-data.mjs --skip-api galatians  # API なし（不足語は見出し語）
+ *   node scripts/generate-nt-data.mjs --force-api john      # 全語を API 再生成（非推奨）
  *
- * 必要: Node.js 18+（ビルトイン fetch を使用）
+ * 語義は public/data/nt/lexicon.json を優先し、ない語だけ API で生成する。
+ * 2ペイン表示は lexicon.json を参照するため、--skip-api でも書の収録が可能。
  */
 
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
@@ -21,6 +22,24 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'public', 'data', 'nt');
 const CACHE_DIR = join(ROOT, '.nt-cache');
+
+function loadEnvLocal() {
+  const envPath = join(ROOT, '.env.local');
+  if (!existsSync(envPath)) return;
+  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let val = trimmed.slice(eq + 1).trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = val;
+  }
+}
+loadEnvLocal();
 
 // ---------------------------------------------------------------------------
 // NT書定義（MorphGNT ファイル名 → アプリ内 BookId）
@@ -57,6 +76,48 @@ const NT_BOOKS = [
 
 const MORPHGNT_BASE = 'https://raw.githubusercontent.com/morphgnt/sblgnt/master';
 const STRONGS_XML_URL = 'https://raw.githubusercontent.com/morphgnt/strongs-dictionary-xml/master/strongsgreek.xml';
+const GLOBAL_LEXICON_PATH = join(DATA_DIR, 'lexicon.json');
+const GLOSS_CACHE_PATH = join(CACHE_DIR, 'nt-gloss-lemma.json');
+
+function loadGlobalLexicon() {
+  if (!existsSync(GLOBAL_LEXICON_PATH)) return {};
+  try {
+    return JSON.parse(readFileSync(GLOBAL_LEXICON_PATH, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+function loadGlossCache() {
+  if (!existsSync(GLOSS_CACHE_PATH)) return {};
+  try {
+    return JSON.parse(readFileSync(GLOSS_CACHE_PATH, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+function saveGlossCache(cache) {
+  mkdirSync(CACHE_DIR, { recursive: true });
+  writeFileSync(GLOSS_CACHE_PATH, JSON.stringify(cache), 'utf-8');
+}
+
+/** lexicon.json の definitionJa から 2ペイン向け短い訳語を抽出 */
+function shortGlossFromDefinition(definitionJa) {
+  if (!definitionJa) return '';
+  const first = definitionJa.split(/[／、,]/)[0]?.trim() ?? '';
+  if (!first) return '';
+  return first.length <= 24 ? first : first.slice(0, 24);
+}
+
+function glossFromGlobalLexicon(strongs, globalLexicon) {
+  const entry = globalLexicon[strongs];
+  if (!entry) return null;
+  const definitionJa = entry.definitionJa?.trim() ?? '';
+  const glossJa = entry.glossJa?.trim() || shortGlossFromDefinition(definitionJa);
+  if (!glossJa && !definitionJa) return null;
+  return { glossJa: glossJa || definitionJa, definitionJa };
+}
 
 // ---------------------------------------------------------------------------
 // ユーティリティ: キャッシュ付きフェッチ
@@ -160,14 +221,14 @@ function parseMorphGNT(text) {
 // ---------------------------------------------------------------------------
 // Claude API で日本語語義を一括生成（50語単位でバッチ）
 // ---------------------------------------------------------------------------
-async function generateGlosses(lemmaDefs, apiKey) {
+async function generateGlosses(lemmaDefs, apiKey, glossCache) {
   const BATCH = 50;
   const entries = [...lemmaDefs.entries()]; // [lemma, engGloss]
   const results = new Map(); // lemma → { glossJa, definitionJa }
 
   for (let i = 0; i < entries.length; i += BATCH) {
     const batch = entries.slice(i, i + BATCH);
-    console.log(`  Claude API: 語義生成 ${i + 1}〜${Math.min(i + BATCH, entries.length)} / ${entries.length}`);
+    console.log(`  Claude API: 不足語のみ ${i + 1}〜${Math.min(i + BATCH, entries.length)} / ${entries.length}`);
 
     const wordList = batch
       .map(([lemma, eng]) => `${lemma}${eng ? ` (${eng})` : ''}`)
@@ -218,11 +279,16 @@ ${wordList}`,
         const jsonStr = text.match(/\[[\s\S]*\]/)?.[0] ?? '[]';
         const arr = JSON.parse(jsonStr);
         for (const item of arr) {
-          if (item.lemma) results.set(item.lemma, {
-            glossJa: item.glossJa ?? '',
-            definitionJa: item.definitionJa ?? '',
-          });
+          if (item.lemma) {
+            const entry = {
+              glossJa: item.glossJa ?? '',
+              definitionJa: item.definitionJa ?? '',
+            };
+            results.set(item.lemma, entry);
+            glossCache[item.lemma] = entry;
+          }
         }
+        saveGlossCache(glossCache);
       } catch (e) {
         console.warn('  JSON パース失敗。スキップ:', e.message);
       }
@@ -269,17 +335,14 @@ async function promptApiKey() {
 }
 
 async function main() {
+  const argv = process.argv.slice(2);
+  const skipApi = argv.includes('--skip-api');
+  const forceApi = argv.includes('--force-api');
+  const targets = argv.filter((a) => !a.startsWith('--'));
+
   let apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    apiKey = await promptApiKey();
-    if (!apiKey) {
-      console.error('APIキーが入力されませんでした。');
-      process.exit(1);
-    }
-  }
 
   // 対象書を絞り込む
-  const targets = process.argv.slice(2);
   const books = targets.length
     ? NT_BOOKS.filter((b) => targets.includes(b.id))
     : NT_BOOKS;
@@ -314,19 +377,77 @@ async function main() {
     console.log(`${verses.size} 節, ${chapters.length} 章`);
   }
 
-  // 全書に渡る一意な見出し語を収集（English gloss は Strong's 辞書から取れないので空でOK）
-  console.log('\n[3/4] 日本語語義を生成中...');
-  const allLemmas = new Map(); // lemma → ""
+  // 語義: lexicon.json → キャッシュ → 不足分のみ API
+  console.log('\n[3/4] 日本語語義を解決中...');
+  const globalLexicon = loadGlobalLexicon();
+  const glossCache = loadGlossCache();
+  const glossMap = new Map();
+
+  const allLemmas = new Set();
   for (const { verses } of parsedBooks) {
     for (const words of verses.values()) {
-      for (const { lemma } of words) {
-        if (!allLemmas.has(lemma)) allLemmas.set(lemma, '');
-      }
+      for (const { lemma } of words) allLemmas.add(lemma);
     }
   }
   console.log(`  一意な見出し語: ${allLemmas.size}`);
-  const glossMap = await generateGlosses(allLemmas, apiKey);
-  console.log(`  生成完了: ${glossMap.size} 語義`);
+  console.log(`  lexicon.json: ${Object.keys(globalLexicon).length} エントリ`);
+
+  let fromCache = 0;
+  let fromLexicon = 0;
+
+  if (!forceApi) {
+    for (const lemma of allLemmas) {
+      if (glossCache[lemma]) {
+        glossMap.set(lemma, glossCache[lemma]);
+        fromCache++;
+        continue;
+      }
+      const strongs = lookupStrongs(lemma, strongsMap, stripMap);
+      const fromGlobal = glossFromGlobalLexicon(strongs, globalLexicon);
+      if (fromGlobal) {
+        glossMap.set(lemma, fromGlobal);
+        fromLexicon++;
+      }
+    }
+    console.log(`  キャッシュから: ${fromCache} / lexicon.json から: ${fromLexicon}`);
+  }
+
+  const missing = [...allLemmas].filter((lemma) => !glossMap.has(lemma));
+  console.log(`  API 生成が必要: ${missing.length} 語`);
+
+  if (missing.length > 0 && !skipApi && !forceApi) {
+    if (!apiKey) {
+      console.error('不足語の生成には ANTHROPIC_API_KEY が必要です（--skip-api で省略可）');
+      process.exit(1);
+    }
+    const generated = await generateGlosses(
+      new Map(missing.map((lemma) => [lemma, ''])),
+      apiKey,
+      glossCache,
+    );
+    for (const [lemma, entry] of generated) glossMap.set(lemma, entry);
+    console.log(`  API 生成完了: ${generated.size} 語`);
+  } else if (missing.length > 0 && forceApi) {
+    if (!apiKey) {
+      apiKey = await promptApiKey();
+      if (!apiKey) {
+        console.error('APIキーが入力されませんでした。');
+        process.exit(1);
+      }
+    }
+    const generated = await generateGlosses(
+      new Map([...allLemmas].map((lemma) => [lemma, ''])),
+      apiKey,
+      glossCache,
+    );
+    glossMap.clear();
+    for (const [lemma, entry] of generated) glossMap.set(lemma, entry);
+    console.log(`  --force-api: 全語再生成 ${generated.size} 語`);
+  } else if (missing.length > 0) {
+    console.log('  --skip-api: 不足語は見出し語をそのまま使用');
+  }
+
+  console.log(`  語義解決済み: ${glossMap.size} / ${allLemmas.size}`);
 
   // JSON ファイルを出力
   console.log('\n[4/4] JSON ファイルを書き出し中...');
@@ -343,15 +464,16 @@ async function main() {
         const morph = toMorph(w.pos, w.parse);
         const strongs = lookupStrongs(w.lemma, strongsMap, stripMap);
         const gloss = glossMap.get(w.lemma);
+        const globalEntry = globalLexicon[strongs];
 
-        // 見出し語ごとに1回だけ lexicon エントリを追加
+        // 書内 lexicon は軽量スタブ（詳細は lexicon.json を参照）
         if (!seenLemma.has(w.lemma)) {
           seenLemma.add(w.lemma);
           lexiconObj[strongs] = {
             strongs,
             lemma: w.lemma,
-            definitionJa: gloss?.definitionJa ?? '',
-            reviewed: false,
+            definitionJa: gloss?.definitionJa ?? globalEntry?.definitionJa ?? '',
+            reviewed: Boolean(globalEntry?.reviewed),
           };
         }
 

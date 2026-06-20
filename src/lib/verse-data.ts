@@ -4,16 +4,35 @@ import { john1Verse14Words, lexiconJohn114 } from "@/data/john-1-14";
 import { normalizeVerseWords } from "@/lib/verse-text";
 import type { BookId, CorpusId, LexiconEntry, NtBookId, OtBookId, VerseWord } from "@/types";
 
-/** 全節データが揃っている新約書のID */
+/** 全節データが揃っている新約書のID（全27書） */
 export const BOOKS_WITH_FULL_DATA = new Set<NtBookId>([
-  "john",
-  "mark",
   "matthew",
+  "mark",
   "luke",
+  "john",
   "acts",
   "romans",
   "1corinthians",
   "2corinthians",
+  "galatians",
+  "ephesians",
+  "philippians",
+  "colossians",
+  "1thessalonians",
+  "2thessalonians",
+  "1timothy",
+  "2timothy",
+  "titus",
+  "philemon",
+  "hebrews",
+  "james",
+  "1peter",
+  "2peter",
+  "1john",
+  "2john",
+  "3john",
+  "jude",
+  "revelation",
 ]);
 
 /** 創世記全50章にデータあり */
