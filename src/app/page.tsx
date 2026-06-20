@@ -5,41 +5,75 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Gbible — 新約聖書をギリシャ語原典で読む",
+  title: "Gbible — 聖書原文をギリシャ語・ヘブル語で読む",
   description:
-    "新約聖書のギリシャ語原典（SBLGNT）を語形解析・日本語辞書・私訳メモと一緒に読めるツール。コイネーギリシャ語の学習・聖書研究に。工房ヒラム運営。",
+    "新約（ギリシャ語）・旧約（ヘブル語）の原文を、語形解析・日本語辞書・私訳メモと一緒に読めるツール。工房ヒラム運営。",
   openGraph: {
     url: "https://gbible.online",
   },
 };
 
-const SOURCES = [
+const NT_SOURCES = [
   {
     name: "SBLGNT",
     fullName: "SBL Greek New Testament",
     credibility:
-      "米国聖書文学会（Society of Biblical Literature）が発行する新約聖書批評版テキスト。SBL は世界最大規模の聖書学会で、学術出版の最高峰として知られます。",
+      "米国聖書文学会（SBL）が発行する新約批評版テキスト。学術出版で広く採用されています。",
     adoption:
-      "Logos Bible Software、Accordance、Olive Tree など、世界中のプロ向け聖書研究ツールで標準テキストとして採用されています。",
+      "Logos、Accordance、Olive Tree など主要な聖書研究ツールの標準テキスト。",
   },
   {
     name: "MorphGNT",
     fullName: "Morphologically Analysed Greek New Testament",
     credibility:
-      "新約聖書の全単語に品詞・格・数・性・時制・態などの形態論タグを付与したオープンソースコーパス。複数の聖書学・言語学の専門家によって構築・校正されています。",
+      "新約全単語に形態論タグを付与したオープンソースコーパス。専門家による校正済み。",
     adoption:
-      "OpenText.org をはじめ、国際的な学術 NLP プロジェクトや聖書言語教育ツールで広く利用。GitHub 上で継続的にメンテナンスされています。",
+      "学術 NLP プロジェクトや聖書言語教育ツールで広く利用。",
   },
   {
-    name: "Strong's Concordance",
-    fullName: "Strong's Exhaustive Concordance",
+    name: "TBESG",
+    fullName: "Translators Brief lexicon of Extended Strongs (Greek)",
     credibility:
-      "James Strong が 1890 年に完成させた聖書語彙索引。各単語に固有番号を割り当てた体系は、130 年以上にわたり聖書研究の標準参照番号として機能しています。",
+      "Tyndale House（ケンブリッジ）による Abbott-Smith 要約辞書。CC BY 4.0。",
     adoption:
-      "BibleHub、Blue Letter Bible、Logos、YouVersion など、現代の主要な聖書ツールのほぼすべてで採用されている業界標準です。",
+      "STEP Bible プロジェクトの標準ギリシャ語辞書データ。",
   },
 ];
 
+const OT_SOURCES = [
+  {
+    name: "WLC / OSHB",
+    fullName: "Westminster Leningrad Codex + Open Scriptures Hebrew Bible",
+    credibility:
+      "レニングラード写本に基づくヘブル語旧約本文と、OSHB による形態論解析（CC BY 4.0）。",
+    adoption:
+      "Open Scriptures、Logos、BibleHub などで広く参照されるオープンデータ。",
+  },
+  {
+    name: "BDB + Strong's",
+    fullName: "Brown-Driver-Briggs + Hebrew Strong's (Open Scriptures)",
+    credibility:
+      "BDB 全文ベースと Strong's ヘブル語辞典。Open Scriptures Hebrew Bible Project, CC BY 4.0。",
+    adoption:
+      "Blue Letter Bible 等が参照する BDB のオープン版。",
+  },
+  {
+    name: "TBESH",
+    fullName: "Translators Brief lexicon of Extended Strongs (Hebrew)",
+    credibility:
+      "Tyndale House による BDB（Brown-Driver-Briggs）要約辞書。CC BY 4.0。",
+    adoption:
+      "STEP Bible プロジェクトの標準ヘブル語辞書データ。",
+  },
+  {
+    name: "Strong's",
+    fullName: "Strong's Exhaustive Concordance",
+    credibility:
+      "James Strong が作成した聖書語彙索引。ギリシャ語・ヘブル語の標準参照番号。",
+    adoption:
+      "BibleHub、Blue Letter Bible、Logos など主要ツールで採用。",
+  },
+];
 
 export default async function Home() {
   const session = await auth();
@@ -47,24 +81,20 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      {/* ヘッダー */}
       <header className="flex items-center border-b border-primary/20 bg-primary px-6 py-3">
         <Image src="/logo.png" alt="Gbible" width={120} height={40} className="h-8 w-auto" />
       </header>
 
-      {/* メイン */}
       <main className="flex flex-1 flex-col items-center justify-center gap-10 px-6 py-16 text-center">
-        {/* キャッチ */}
         <div className="space-y-3">
           <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
-            ギリシャ語で聖書を読む
+            原文で聖書を読む
           </h2>
           <p className="mx-auto max-w-md text-base text-muted-foreground">
-            新約聖書の原文を、語形解析・辞書・私訳メモと一緒に読めるツールです。
+            新約（ギリシャ語）と旧約（ヘブル語）を、語形解析・辞書・私訳メモと一緒に読めるツールです。
           </p>
         </div>
 
-        {/* スクリーンショット */}
         <div className="w-full max-w-4xl overflow-hidden rounded-xl border border-border shadow-lg">
           <Image
             src="/screenshot.png"
@@ -76,7 +106,6 @@ export default async function Home() {
           />
         </div>
 
-        {/* ボタン */}
         <div className="flex flex-col items-center gap-4 sm:flex-row">
           <Link
             href="/study"
@@ -99,45 +128,65 @@ export default async function Home() {
           </form>
         </div>
 
-        {/* ログインのメリット */}
         <p className="text-xs text-muted-foreground">
           ログインすると私訳・メモをクラウドに保存でき、どの端末からでも続きを読めます。
         </p>
       </main>
 
-      {/* 使用データの信頼性 */}
       <section className="border-t border-border bg-muted/40 px-6 py-12">
-        <div className="mx-auto max-w-3xl space-y-8">
+        <div className="mx-auto max-w-3xl space-y-10">
           <div className="text-center">
             <h2 className="text-lg font-bold tracking-tight text-foreground">
               学術標準データを使用
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              テキストと語形解析は、世界中の聖書学者・研究ツールが採用している権威あるデータに基づいています。
+              テキストと語形解析は、世界中の聖書学者・研究ツールが採用している権威あるオープンデータに基づいています。
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            {SOURCES.map((s) => (
-              <div
-                key={s.name}
-                className="rounded-lg border border-border bg-background p-4 space-y-2"
-              >
-                <div>
-                  <p className="text-xs font-mono font-semibold text-primary">{s.name}</p>
-                  <p className="text-xs text-muted-foreground">{s.fullName}</p>
+          <div>
+            <h3 className="mb-3 text-center text-sm font-semibold text-foreground">新約（ギリシャ語）</h3>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {NT_SOURCES.map((s) => (
+                <div
+                  key={s.name}
+                  className="rounded-lg border border-border bg-background p-4 space-y-2"
+                >
+                  <div>
+                    <p className="text-xs font-mono font-semibold text-primary">{s.name}</p>
+                    <p className="text-xs text-muted-foreground">{s.fullName}</p>
+                  </div>
+                  <p className="text-xs leading-relaxed text-foreground/80">{s.credibility}</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{s.adoption}</p>
                 </div>
-                <p className="text-xs leading-relaxed text-foreground/80">{s.credibility}</p>
-                <p className="text-xs leading-relaxed text-muted-foreground">{s.adoption}</p>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-3 text-center text-sm font-semibold text-foreground">旧約（ヘブル語）</h3>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {OT_SOURCES.map((s) => (
+                <div
+                  key={s.name}
+                  className="rounded-lg border border-border bg-background p-4 space-y-2"
+                >
+                  <div>
+                    <p className="text-xs font-mono font-semibold text-primary">{s.name}</p>
+                    <p className="text-xs text-muted-foreground">{s.fullName}</p>
+                  </div>
+                  <p className="text-xs leading-relaxed text-foreground/80">{s.credibility}</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{s.adoption}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-            <strong>日本語の語義・解説について：</strong>
-            各単語の日本語訳語と辞書定義は AI（Claude by Anthropic）が生成したドラフトです。
-            ギリシャ語の見出し語・文脈に基づいて生成していますが、神学者・言語学者による査読は行っていません。
-            参照・学習目的の利用を推奨します。
+            <strong>日本語の語義・辞書について：</strong>
+            辞書は TBESG（ギリシャ語）・BDB/Strong&apos;s/TBESH（ヘブル語）などのオープンソース辞典をもとに、
+            AI（Claude by Anthropic）が日本語化したものです。参照・学習目的の利用を推奨します。
+            旧約は現在、創世記1章を試験公開中です。
           </div>
 
           <p className="text-center text-xs text-muted-foreground">

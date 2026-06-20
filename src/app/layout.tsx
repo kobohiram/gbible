@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 const cardo = Cardo({
   variable: "--font-cardo",
-  subsets: ["greek", "greek-ext", "latin", "latin-ext"],
+  subsets: ["greek", "greek-ext", "hebrew", "latin", "latin-ext"],
   weight: ["400", "700"],
   display: "swap",
 });

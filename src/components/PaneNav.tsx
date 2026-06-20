@@ -2,18 +2,20 @@
 
 import { getChapterCount, getVerseCount } from "@/data/bible";
 import { hasVerseData } from "@/lib/verse-data";
-import type { Book, BookId, PersonalTranslation } from "@/types";
+import type { Book, BookId, CorpusId, PersonalTranslation } from "@/types";
 
 const selectClassName =
-  "w-full min-w-0 rounded-lg border border-input bg-card px-2 py-1.5 text-sm font-medium text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "min-w-0 rounded-lg border border-input bg-card px-2 py-1.5 text-sm font-medium text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
 type Props = {
+  corpus: CorpusId;
   books: readonly Book[];
   bookId: BookId;
   chapter: number;
   selectedVerse: number;
   translations: PersonalTranslation[];
   bookDataLoaded: boolean;
+  onCorpusChange: (corpus: CorpusId) => void;
   onBookChange: (bookId: BookId) => void;
   onChapterChange: (chapter: number) => void;
   onSelectVerse: (verse: number) => void;
@@ -21,12 +23,14 @@ type Props = {
 };
 
 export function PaneNav({
+  corpus,
   books,
   bookId,
   chapter,
   selectedVerse,
   translations,
   bookDataLoaded,
+  onCorpusChange,
   onBookChange,
   onChapterChange,
   onSelectVerse,
@@ -43,35 +47,60 @@ export function PaneNav({
     <div className={stacked ? "flex flex-col" : "flex h-full flex-col"}>
       <header className="pane-header space-y-2 px-4 py-3">
         <h2 className="pane-header-label">書・章・節</h2>
-        <label className="block">
-          <span className="sr-only">書</span>
-          <select
-            className={selectClassName}
-            value={bookId}
-            onChange={(e) => onBookChange(e.target.value as BookId)}
-          >
-            {books.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-2">
-          <span className="sr-only">章</span>
-          <select
-            className={`${selectClassName} w-24 shrink-0`}
-            value={chapter}
-            onChange={(e) => onChapterChange(Number(e.target.value))}
-          >
-            {Array.from({ length: chapterCount }, (_, i) => i + 1).map((ch) => (
-              <option key={ch} value={ch}>
-                {ch}
-              </option>
-            ))}
-          </select>
-          <span className="text-sm font-medium text-foreground">章</span>
-        </label>
+
+        <div
+          className="grid grid-cols-2 gap-1 rounded-lg border border-input bg-muted/40 p-0.5"
+          role="tablist"
+          aria-label="聖書の区分"
+        >
+          {(["ot", "nt"] as const).map((c) => (
+            <button
+              key={c}
+              type="button"
+              role="tab"
+              aria-selected={corpus === c}
+              onClick={() => onCorpusChange(c)}
+              className={`rounded-md px-2 py-1.5 text-sm font-semibold transition-colors ${
+                corpus === c
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {c === "ot" ? "旧約" : "新約"}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="min-w-0 flex-1">
+            <span className="sr-only">書</span>
+            <select
+              className={`${selectClassName} w-full`}
+              value={bookId}
+              onChange={(e) => onBookChange(e.target.value as BookId)}
+            >
+              {books.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="shrink-0">
+            <span className="sr-only">章</span>
+            <select
+              className={`${selectClassName} w-[3.25rem] tabular-nums`}
+              value={chapter}
+              onChange={(e) => onChapterChange(Number(e.target.value))}
+            >
+              {Array.from({ length: chapterCount }, (_, i) => i + 1).map((ch) => (
+                <option key={ch} value={ch}>
+                  {ch}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
       <ul className={stacked ? "max-h-64 overflow-y-auto px-3 py-2" : "flex-1 overflow-y-auto px-3 py-2"}>
         {Array.from({ length: verseCount }, (_, i) => i + 1).map((verse) => {

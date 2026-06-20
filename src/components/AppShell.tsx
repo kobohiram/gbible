@@ -3,9 +3,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { ChevronDown } from "lucide-react";
-import { BOOKS, getBook, getVerseCount } from "@/data/bible";
-import { getLexiconEntry, getVerseWords, loadLastLocation, saveLastLocation } from "@/lib/verse-data";
-import type { BookData, BookId, PersonalTranslation, VerseWord } from "@/types";
+import {
+  getBook,
+  getBooksForCorpus,
+  getVerseCount,
+} from "@/data/bible";
+import {
+  bookExpectsJsonData,
+  getLexiconEntry,
+  getVerseWords,
+  loadLastLocation,
+  saveLastLocation,
+} from "@/lib/verse-data";
+import { normalizeVerseWords } from "@/lib/verse-text";
+import type { BookData, BookId, CorpusId, PersonalTranslation, VerseWord } from "@/types";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -40,14 +51,17 @@ function PaneFrame({
 export function AppShell() {
   const { data: session } = useSession();
   const [userCount, setUserCount] = useState<number | null>(null);
-  const [bookId, setBookId] = useState<BookId>(() => loadLastLocation().bookId);
-  const [chapter, setChapter] = useState(() => loadLastLocation().chapter);
-  const [selectedVerse, setSelectedVerse] = useState(() => loadLastLocation().verse);
+  const [corpus, setCorpus] = useState<CorpusId>("nt");
+  const [bookId, setBookId] = useState<BookId>(() => loadLastLocation("nt").bookId);
+  const [chapter, setChapter] = useState(() => loadLastLocation("nt").chapter);
+  const [selectedVerse, setSelectedVerse] = useState(() => loadLastLocation("nt").verse);
   const [selectedWord, setSelectedWord] = useState<VerseWord | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [translations, setTranslations] = useState<PersonalTranslation[]>([]);
   const [bookData, setBookData] = useState<BookData | null>(null);
   const mobileLexiconRef = useRef<HTMLDivElement>(null);
+
+  const books = getBooksForCorpus(corpus);
 
   useEffect(() => {
     fetch('/api/stats').then(r => r.ok ? r.json() : null).then(d => {
@@ -55,21 +69,34 @@ export function AppShell() {
     }).catch(() => {});
   }, []);
 
-  // 位置をローカルに記憶
   useEffect(() => {
-    saveLastLocation(bookId, chapter, selectedVerse);
-  }, [bookId, chapter, selectedVerse]);
+    saveLastLocation(corpus, bookId, chapter, selectedVerse);
+  }, [corpus, bookId, chapter, selectedVerse]);
 
-  // 書が変わったら JSON をフェッチ
   useEffect(() => {
+    if (!bookExpectsJsonData(bookId)) {
+      setBookData(null);
+      return;
+    }
     setBookData(null);
     let cancelled = false;
-    fetch(`/data/nt/${bookId}.json`)
+    const dataPath = corpus === "ot" ? `/data/ot/${bookId}.json` : `/data/nt/${bookId}.json`;
+    fetch(dataPath)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: BookData | null) => { if (!cancelled) setBookData(d); })
-      .catch(() => { /* データなし — 静的フォールバックを使う */ });
+      .then((d: BookData | null) => {
+        if (!cancelled && d) {
+          const normalized: BookData = {
+            ...d,
+            words: Object.fromEntries(
+              Object.entries(d.words).map(([k, ws]) => [k, normalizeVerseWords(ws)]),
+            ),
+          };
+          setBookData(normalized);
+        }
+      })
+      .catch(() => { /* データなし */ });
     return () => { cancelled = true; };
-  }, [bookId]);
+  }, [bookId, corpus]);
 
   const book = getBook(bookId);
   const words =
@@ -107,6 +134,16 @@ export function AppShell() {
     setSelectedWord(null);
   }, [bookId, chapter, selectedVerse]);
 
+  function handleCorpusChange(nextCorpus: CorpusId) {
+    if (nextCorpus === corpus) return;
+    const loc = loadLastLocation(nextCorpus);
+    setCorpus(nextCorpus);
+    setBookId(loc.bookId);
+    setChapter(loc.chapter);
+    setSelectedVerse(loc.verse);
+    setSelectedWord(null);
+  }
+
   function handleBookChange(nextBookId: BookId) {
     setBookId(nextBookId);
     setChapter(1);
@@ -131,12 +168,14 @@ export function AppShell() {
 
   const navPane = (
     <PaneNav
-      books={BOOKS}
+      corpus={corpus}
+      books={books}
       bookId={bookId}
       chapter={chapter}
       selectedVerse={selectedVerse}
       translations={translations}
       bookDataLoaded={bookData !== null}
+      onCorpusChange={handleCorpusChange}
       onBookChange={handleBookChange}
       onChapterChange={handleChapterChange}
       onSelectVerse={setSelectedVerse}
@@ -145,6 +184,7 @@ export function AppShell() {
 
   const versePane = (
     <PaneVerse
+      corpus={corpus}
       reference={reference}
       words={words}
       selectedWordId={selectedWord?.id ?? null}
@@ -154,6 +194,7 @@ export function AppShell() {
 
   const lexiconPane = (
     <PaneLexicon
+      corpus={corpus}
       word={selectedWord}
       entry={lexiconEntry}
       reference={reference}
@@ -188,18 +229,19 @@ export function AppShell() {
           )}
         </h1>
         <div className="flex items-center gap-3">
-          <a
-            href="/study/synoptic"
-            className="text-sm font-semibold underline-offset-2 hover:underline"
-          >
-            共観福音書 →
-          </a>
+          {corpus === "nt" && (
+            <a
+              href="/study/synoptic"
+              className="text-sm font-semibold underline-offset-2 hover:underline"
+            >
+              共観福音書 →
+            </a>
+          )}
           <DataBackupMenu onImported={refreshTranslations} />
           <AuthButton />
         </div>
       </header>
 
-      {/* Desktop: 4-pane resizable (wrapper controls visibility — ResizablePanelGroup applies inline display:flex which overrides Tailwind hidden) */}
       <div className="hidden min-h-0 flex-1 md:flex">
         <ResizablePanelGroup
           className="min-h-0 flex-1"
@@ -255,10 +297,7 @@ export function AppShell() {
         </ResizablePanelGroup>
       </div>
 
-      {/* Mobile: vertically stacked */}
       <div className="flex flex-1 flex-col overflow-y-auto md:hidden">
-
-        {/* 目次（折りたたみ） */}
         <div className="border-b border-border">
           <button
             type="button"
@@ -277,12 +316,14 @@ export function AppShell() {
             <div className="pane-surface" data-pane="nav">
               <PaneNav
                 stacked
-                books={BOOKS}
+                corpus={corpus}
+                books={books}
                 bookId={bookId}
                 chapter={chapter}
                 selectedVerse={selectedVerse}
                 translations={translations}
                 bookDataLoaded={bookData !== null}
+                onCorpusChange={handleCorpusChange}
                 onBookChange={handleBookChange}
                 onChapterChange={handleChapterChange}
                 onSelectVerse={(verse) => {
@@ -294,10 +335,10 @@ export function AppShell() {
           )}
         </div>
 
-        {/* 原文 */}
         <div className="pane-surface border-b border-border" data-pane="verse">
           <PaneVerse
             stacked
+            corpus={corpus}
             reference={reference}
             words={words}
             selectedWordId={selectedWord?.id ?? null}
@@ -305,10 +346,10 @@ export function AppShell() {
           />
         </div>
 
-        {/* 辞書・解説 */}
         <div ref={mobileLexiconRef} className="pane-surface border-b border-border" data-pane="lexicon">
           <PaneLexicon
             stacked
+            corpus={corpus}
             word={selectedWord}
             entry={lexiconEntry}
             reference={reference}
@@ -318,7 +359,6 @@ export function AppShell() {
           />
         </div>
 
-        {/* 私訳・メモ */}
         <div className="pane-surface" data-pane="notes">
           <PaneNotes
             stacked

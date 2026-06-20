@@ -95,6 +95,13 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
+@utility font-hebrew {
+  --font-hebrew: var(--font-cardo), "SBL Hebrew", "Ezra SIL", "Noto Serif Hebrew",
+    serif;
+  font-family: var(--font-hebrew);
+  font-feature-settings: "kern" 1;
+}
+
 /* Tailwind font-greek ユーティリティと併用（font-family は @theme で定義） */
 @utility font-greek {
   --font-greek: var(--font-cardo), "GentiumAlt", var(--font-gentium-plus),

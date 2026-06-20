@@ -572,6 +572,10 @@ export const MORPH_LEGEND = [
   },
 ] as const;
 
+export function isHebrewMorph(code: string): boolean {
+  return /^H[A-Z]/.test(code.trim());
+}
+
 /** MorphGNT 内部形式 → Robinson 略語 */
 export function morphgntToRobinson(pos: string, parsing: string): string {
   const posKey = pos.replace(/-$/, "").trim();

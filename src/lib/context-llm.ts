@@ -1,4 +1,5 @@
 import { expandMorphologyJa } from "@/lib/morphology";
+import { getWordText } from "@/lib/verse-text";
 import type { VerseWord } from "@/types";
 
 export type ContextApiRequest = {
@@ -43,5 +44,5 @@ ${word.definitionJa ? `- 辞書: ${word.definitionJa}` : ""}
 }
 
 export function verseGreekFromWords(words: VerseWord[]): string {
-  return words.map((w) => w.greek).join(" ");
+  return words.map((w) => getWordText(w)).join(" ");
 }

@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { LexiconEntry, VerseWord } from "@/types";
-import { verseGreekFromWords, type ContextApiRequest } from "@/lib/context-llm";
+import type { CorpusId, LexiconEntry, VerseWord } from "@/types";
+import { getWordScript, getWordText } from "@/lib/verse-text";
+import { verseGreekFromWords } from "@/lib/context-llm";
 import type { GrammarNoteRequest } from "@/app/api/grammar-note/route";
-import { Button } from "@/components/ui/button";
 import { MorphLabels } from "./MorphLabels";
 import { GrammarNoteSection } from "./GrammarNoteSection";
-import { LlmContextSection } from "./LlmContextSection";
 
 type ConcordanceIndex = Record<string, { total: number; books: Record<string, number> }>;
 type GlobalLexicon = Record<string, LexiconEntry>;
@@ -55,6 +54,7 @@ type Props = {
   verseWords: VerseWord[];
   allVerseWords: Record<string, VerseWord[]> | null;
   bookName: string;
+  corpus?: CorpusId;
   stacked?: boolean;
 };
 
@@ -64,6 +64,7 @@ function ConcordanceItem({ occ, isExpanded, onToggle }: {
   onToggle: () => void;
 }) {
   const matchingWords = occ.allWords.filter(w => occ.matchIds.has(w.id));
+  const isHeb = occ.allWords.length > 0 && getWordScript(occ.allWords[0]) === "heb";
 
   return (
     <li className="border-b border-border/50 last:border-0">
@@ -76,14 +77,19 @@ function ConcordanceItem({ occ, isExpanded, onToggle }: {
           <span className="shrink-0 font-mono text-xs font-semibold text-primary tabular-nums">
             {occ.chapter}:{occ.verse}
           </span>
-          <p className="font-greek text-sm leading-relaxed text-foreground min-w-0">
+          <p
+            className={`text-sm leading-relaxed text-foreground min-w-0 ${isHeb ? "font-hebrew" : "font-greek"}`}
+            dir={isHeb ? "rtl" : "ltr"}
+          >
             {occ.allWords.map((w, i) => (
               <span key={w.id}>
                 {i > 0 && " "}
                 {occ.matchIds.has(w.id) ? (
-                  <strong className="font-bold text-foreground">{w.greek}</strong>
+                  <strong className="font-bold text-primary bg-primary/10 rounded-sm px-0.5">
+                    {getWordText(w)}
+                  </strong>
                 ) : (
-                  <span className="text-muted-foreground/80">{w.greek}</span>
+                  <span className="text-muted-foreground/80">{getWordText(w)}</span>
                 )}
               </span>
             ))}
@@ -93,21 +99,25 @@ function ConcordanceItem({ occ, isExpanded, onToggle }: {
 
       {isExpanded && (
         <div className="pb-2 pt-1 px-1 space-y-2">
-          {matchingWords.map(w => (
-            <div key={w.id} className="rounded-md bg-accent/15 px-3 py-2 space-y-1">
-              <p className="font-greek text-base font-bold text-foreground">{w.greek}</p>
-              <p className="text-sm font-medium text-[var(--gloss)]">{w.glossJa}</p>
-              <MorphLabels morph={w.morph} size="sm" variant="verbose" />
-            </div>
-          ))}
+          {matchingWords.map(w => {
+            const script = getWordScript(w);
+            return (
+              <div key={w.id} className="rounded-md bg-accent/15 px-3 py-2 space-y-1" dir="ltr">
+                <p className={`text-base font-bold text-foreground ${script === "heb" ? "font-hebrew" : "font-greek"}`} dir={script === "heb" ? "rtl" : "ltr"}>
+                  {getWordText(w)}
+                </p>
+                <p className="text-sm font-medium text-[var(--gloss)]">{w.glossJa}</p>
+                <MorphLabels morph={w.morph} size="sm" variant="verbose" />
+              </div>
+            );
+          })}
         </div>
       )}
     </li>
   );
 }
 
-export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords, bookName, stacked }: Props) {
-  const [llmOpen, setLlmOpen] = useState(false);
+export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords, bookName, corpus = "nt", stacked }: Props) {
   const [shown, setShown] = useState(20);
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [concordanceIndex, setConcordanceIndex] = useState<ConcordanceIndex | null>(null);
@@ -115,47 +125,36 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
   const loadedRef = useRef(false);
 
   useEffect(() => {
+    if (corpus !== "nt") return;
     if (loadedRef.current) return;
     loadedRef.current = true;
     void loadConcordanceIndex().then(setConcordanceIndex);
     void loadGlobalLexicon().then(setGlobalLexicon);
-  }, []);
+  }, [corpus]);
 
   useEffect(() => {
-    setLlmOpen(false);
     setShown(20);
     setExpandedKeys(new Set());
   }, [word?.strongs]);
 
-  // グローバル辞書（Abbott-Smith由来）を優先、なければ書固有エントリを使用
-  const richEntry = (word && globalLexicon?.[word.strongs]) ?? entry;
+  const richEntry = corpus === "nt"
+    ? ((word && globalLexicon?.[word.strongs]) ?? entry)
+    : entry;
 
-  const grammarNoteRequest: GrammarNoteRequest | null = word
-    ? {
-        greek: word.greek,
-        lemma: richEntry?.lemma,
-        morph: word.morph,
-        glossJa: word.glossJa,
-        reference,
-        verseGreek: verseGreekFromWords(verseWords),
-      }
-    : null;
+  const surface = word ? getWordText(word) : "";
+  const script = word ? getWordScript(word) : "grc";
 
-  const contextRequest: ContextApiRequest | null = word
-    ? {
-        reference,
-        verseGreek: verseGreekFromWords(verseWords),
-        word: {
-          id: word.id,
-          greek: word.greek,
-          glossJa: word.glossJa,
-          morph: word.morph,
-          strongs: word.strongs,
+  const grammarNoteRequest: GrammarNoteRequest | null =
+    corpus === "nt" && word
+      ? {
+          greek: surface,
           lemma: richEntry?.lemma,
-          definitionJa: richEntry?.definitionJa,
-        },
-      }
-    : null;
+          morph: word.morph,
+          glossJa: word.glossJa,
+          reference,
+          verseGreek: verseGreekFromWords(verseWords),
+        }
+      : null;
 
   const concordance = useMemo((): Occurrence[] => {
     if (!word || !allVerseWords) return [];
@@ -202,7 +201,12 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
           ) : (
             <article className="space-y-4">
               <div>
-                <p className="font-greek text-3xl">{word.greek}</p>
+                <p
+                  className={`text-3xl ${script === "heb" ? "font-hebrew" : "font-greek"}`}
+                  dir={script === "heb" ? "rtl" : "ltr"}
+                >
+                  {surface}
+                </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Strong&apos;s {word.strongs}
                   {richEntry?.lemma && ` · ${richEntry.lemma}`}
@@ -227,7 +231,15 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                 <section>
                   <h3 className="section-label">
                     辞書
-                    {richEntry.detailJa ? (
+                    {richEntry.source === "bdb" ? (
+                      <span className="ml-2 rounded bg-sky/60 px-1.5 py-0.5 text-[10px] font-normal normal-case text-primary">
+                        BDB
+                      </span>
+                    ) : richEntry.source === "tbesh" ? (
+                      <span className="ml-2 rounded bg-sky/60 px-1.5 py-0.5 text-[10px] font-normal normal-case text-primary">
+                        TBESH
+                      </span>
+                    ) : richEntry.detailJa ? (
                       <span className="ml-2 rounded bg-sky/60 px-1.5 py-0.5 text-[10px] font-normal normal-case text-primary">
                         Abbott-Smith
                       </span>
@@ -260,8 +272,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                 </section>
               )}
 
-              <GrammarNoteSection request={grammarNoteRequest} />
-
+              {corpus === "nt" && <GrammarNoteSection request={grammarNoteRequest} />}
 
               {concordance.length > 0 && (
                 <section>
@@ -269,7 +280,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                     出現箇所
                     <span className="ml-2 font-normal normal-case text-muted-foreground">
                       {bookName.replace("による福音書", "書").replace("への手紙", "書")} {concordance.length}回
-                      {concordanceIndex && word && (concordanceIndex[word.strongs]?.total ?? 0) > concordance.length && (
+                      {corpus === "nt" && concordanceIndex && word && (concordanceIndex[word.strongs]?.total ?? 0) > concordance.length && (
                         <span className="ml-1 text-muted-foreground/60">
                           / 新約 {concordanceIndex[word.strongs]?.total}回
                         </span>

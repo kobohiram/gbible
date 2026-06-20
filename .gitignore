@@ -41,3 +41,5 @@ next-env.d.ts
 
 # local script caches
 .nt-cache/
+.ot-cache/
+scripts/.genesis1-tbesh-extract.json

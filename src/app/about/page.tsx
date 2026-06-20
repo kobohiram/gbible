@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "使用資料について",
   description:
-    "Gbible が使用するギリシャ語本文（SBLGNT）・形態論データ（MorphGNT）・Strong's 番号・日本語語義の出典とライセンス。工房ヒラム運営。",
+    "Gbible が使用するギリシャ語・ヘブル語本文、形態論データ、辞書、日本語語義の出典とライセンス。工房ヒラム運営。",
   openGraph: {
     url: "https://gbible.online/about",
   },
@@ -73,20 +73,65 @@ export default function AboutPage() {
           </p>
         </Section>
 
+        <Section title="ヘブル語本文（旧約）">
+          <p>
+            旧約聖書のヘブル語本文には{" "}
+            <strong>WLC（Westminster Leningrad Codex）</strong>
+            を使用しています。テキストおよび形態論は{" "}
+            <strong>OSHB（Open Scriptures Hebrew Bible）</strong> プロジェクトのデータに基づきます。
+          </p>
+          <p>
+            WLC 本文はパブリックドメイン、OSHB のレンマ・形態論データは{" "}
+            <strong>CC BY 4.0</strong> です。
+            現在は創世記1章を試験公開しています。
+          </p>
+          <Ref href="https://hb.openscriptures.org">hb.openscriptures.org</Ref>
+        </Section>
+
+        <Section title="ヘブル語形態論解析">
+          <p>
+            旧約の品詞・語幹・性・数・状態などは OSHB が付与した形態論タグを使用しています。
+            Gbible 内の「文法」表示はこのデータを日本語に変換して表示しています。
+          </p>
+          <Ref href="https://github.com/openscriptures/morphhb">github.com/openscriptures/morphhb</Ref>
+        </Section>
+
+        <Section title="ギリシャ語辞書（TBESG）">
+          <p>
+            新約の詳細辞書には Tyndale House（ケンブリッジ）の{" "}
+            <strong>TBESG（Translators Brief lexicon of Extended Strongs for Greek）</strong>
+            を使用しています。Abbott-Smith 要約に基づく CC BY 4.0 のオープンデータです。
+          </p>
+          <Ref href="https://github.com/STEPBible/STEPBible-Data">github.com/STEPBible/STEPBible-Data</Ref>
+        </Section>
+
+        <Section title="ヘブル語辞書（BDB + Strong's + TBESH）">
+          <p>
+            旧約の詳細辞書には{" "}
+            <strong>TBESH</strong>（Tyndale House, CC BY 4.0）、
+            <strong>Open Scriptures Hebrew Strong&apos;s</strong>（CC BY 4.0）、
+            <strong>Brown-Driver-Briggs</strong>（Open Scriptures, CC BY 4.0）を
+            統合した英語資料をもとに、AI が日本語化しています。
+          </p>
+          <Ref href="https://github.com/STEPBible/STEPBible-Data">github.com/STEPBible/STEPBible-Data</Ref>
+          <Ref href="https://github.com/openscriptures/HebrewLexicon">github.com/openscriptures/HebrewLexicon</Ref>
+        </Section>
+
         <Section title="日本語語義・辞書定義">
           <p>
-            各単語の日本語語義（語形ごとの訳語）と辞書定義は{" "}
-            <strong>AI（Claude by Anthropic）によって生成したドラフト</strong>
-            です。ギリシャ語の見出し語・文脈・Strong&apos;s 番号をもとに生成しており、
-            神学者・言語学者による査読は行っていません。
+            各単語の日本語語義（短い訳語）と辞書定義は、
+            <strong>TBESG / TBESH / BDB / Strong&apos;s の英語エントリ</strong>をもとに{" "}
+            <strong>AI（Claude by Anthropic）が日本語化</strong>したものです。
+            オープンソース辞典の内容を根拠とし、神学者・言語学者による全文査読は行っていません。
           </p>
           <p>
             そのため誤りや不適切な訳語が含まれる可能性があります。
-            参照・学習目的でのご利用を推奨し、教義判断や翻訳の根拠としてそのまま使用することはお勧めしません。
+            参照・学習目的でのご利用を推奨します。
           </p>
           <p className="text-xs text-muted-foreground">
-            ※ AI 生成コンテンツには「AI下書き」バッジが表示されます。
-            将来的に専門家によるレビュー済みエントリへ順次置き換える予定です。
+            ※ 辞書ペインに TBESG / BDB バッジが表示されます。
+            再生成は <code className="text-xs">npm run generate:ot</code>（旧約）で行えます。
+            API キーがない場合は <code className="text-xs">npm run build:ot-stub</code> でスタブ辞書を更新できます。
           </p>
         </Section>
 
@@ -128,8 +173,20 @@ export default function AboutPage() {
                 <td className="py-2">Public Domain / CC0</td>
               </tr>
               <tr>
-                <td className="py-2 pr-4">日本語語義・定義（AI生成）</td>
-                <td className="py-2">Gbible 独自（査読なし）</td>
+                <td className="py-2 pr-4">WLC テキスト（旧約）</td>
+                <td className="py-2">Public Domain</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">OSHB 形態論タグ</td>
+                <td className="py-2">CC BY 4.0</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">TBESG / TBESH 辞典</td>
+                <td className="py-2">CC BY 4.0 / Tyndale House</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">日本語語義・定義</td>
+                <td className="py-2">Gbible（TBESG/TBESH ベース AI 日本語化）</td>
               </tr>
             </tbody>
           </table>

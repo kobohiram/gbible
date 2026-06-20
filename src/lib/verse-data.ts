@@ -1,9 +1,11 @@
+import { bookHasOtData } from "@/data/bible";
 import { john1Verse1Words, lexiconSamples as lexiconJohn11 } from "@/data/john-1-1";
 import { john1Verse14Words, lexiconJohn114 } from "@/data/john-1-14";
-import type { BookId, LexiconEntry, VerseWord } from "@/types";
+import { normalizeVerseWords } from "@/lib/verse-text";
+import type { BookId, CorpusId, LexiconEntry, NtBookId, OtBookId, VerseWord } from "@/types";
 
-/** 全節データが揃っている書のID（generate-nt-data.mjs 実行後に追加していく） */
-export const BOOKS_WITH_FULL_DATA = new Set<BookId>([
+/** 全節データが揃っている新約書のID */
+export const BOOKS_WITH_FULL_DATA = new Set<NtBookId>([
   "john",
   "mark",
   "matthew",
@@ -13,6 +15,11 @@ export const BOOKS_WITH_FULL_DATA = new Set<BookId>([
   "1corinthians",
   "2corinthians",
 ]);
+
+/** 創世記1章のみデータあり（試作） */
+export const OT_CHAPTER_DATA: Partial<Record<OtBookId, Set<number>>> = {
+  genesis: new Set([1]),
+};
 
 const legacyLexicon: Record<string, LexiconEntry> = {
   ...lexiconJohn11,
@@ -26,8 +33,8 @@ export function getVerseWords(
   verse: number,
 ): VerseWord[] {
   if (bookId === "john" && chapter === 1) {
-    if (verse === 1)  return john1Verse1Words;
-    if (verse === 14) return john1Verse14Words;
+    if (verse === 1) return normalizeVerseWords(john1Verse1Words);
+    if (verse === 14) return normalizeVerseWords(john1Verse14Words);
   }
   return [];
 }
@@ -41,36 +48,61 @@ export function hasVerseData(
   chapter: number,
   verse: number,
 ): boolean {
-  if (BOOKS_WITH_FULL_DATA.has(bookId)) return true;
+  if (BOOKS_WITH_FULL_DATA.has(bookId as NtBookId)) return true;
+  const otChapters = OT_CHAPTER_DATA[bookId as OtBookId];
+  if (otChapters?.has(chapter)) return true;
   return getVerseWords(bookId, chapter, verse).length > 0;
 }
 
-export const DEFAULT_LOCATION = {
+export const DEFAULT_NT_LOCATION = {
   bookId: "john" as BookId,
   chapter: 1,
   verse: 14,
 };
 
-const LAST_LOCATION_KEY = "gbible-last-location";
+export const DEFAULT_OT_LOCATION = {
+  bookId: "genesis" as BookId,
+  chapter: 1,
+  verse: 1,
+};
 
-export function loadLastLocation(): { bookId: BookId; chapter: number; verse: number } {
-  if (typeof window === "undefined") return DEFAULT_LOCATION;
+const LAST_LOCATION_KEY_NT = "gbible-last-location-nt";
+const LAST_LOCATION_KEY_OT = "gbible-last-location-ot";
+
+export function loadLastLocation(corpus: CorpusId): {
+  bookId: BookId;
+  chapter: number;
+  verse: number;
+} {
+  const fallback = corpus === "nt" ? DEFAULT_NT_LOCATION : DEFAULT_OT_LOCATION;
+  if (typeof window === "undefined") return fallback;
+  const key = corpus === "nt" ? LAST_LOCATION_KEY_NT : LAST_LOCATION_KEY_OT;
   try {
-    const raw = localStorage.getItem(LAST_LOCATION_KEY);
-    if (!raw) return DEFAULT_LOCATION;
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
     const parsed = JSON.parse(raw) as { bookId: BookId; chapter: number; verse: number };
     if (parsed.bookId && parsed.chapter && parsed.verse) return parsed;
   } catch {
     // ignore
   }
-  return DEFAULT_LOCATION;
+  return fallback;
 }
 
-export function saveLastLocation(bookId: BookId, chapter: number, verse: number): void {
+export function saveLastLocation(
+  corpus: CorpusId,
+  bookId: BookId,
+  chapter: number,
+  verse: number,
+): void {
   if (typeof window === "undefined") return;
+  const key = corpus === "nt" ? LAST_LOCATION_KEY_NT : LAST_LOCATION_KEY_OT;
   try {
-    localStorage.setItem(LAST_LOCATION_KEY, JSON.stringify({ bookId, chapter, verse }));
+    localStorage.setItem(key, JSON.stringify({ bookId, chapter, verse }));
   } catch {
     // ignore
   }
+}
+
+export function bookExpectsJsonData(bookId: BookId): boolean {
+  return BOOKS_WITH_FULL_DATA.has(bookId as NtBookId) || bookHasOtData(bookId);
 }

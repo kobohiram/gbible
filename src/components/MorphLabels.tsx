@@ -1,4 +1,8 @@
-import { expandMorphologyJa, expandMorphologyJaVerbose } from "@/lib/morphology";
+import { expandMorphologyJa, expandMorphologyJaVerbose, isHebrewMorph } from "@/lib/morphology";
+import {
+  expandHebrewMorphologyJa,
+  expandHebrewMorphologyJaVerbose,
+} from "@/lib/morphology-hebrew";
 
 type Props = {
   morph: string;
@@ -7,10 +11,15 @@ type Props = {
 };
 
 export function MorphLabels({ morph, size = "sm", variant = "compact" }: Props) {
+  const hebrew = isHebrewMorph(morph);
   const japanese =
     variant === "verbose"
-      ? expandMorphologyJaVerbose(morph)
-      : expandMorphologyJa(morph);
+      ? hebrew
+        ? expandHebrewMorphologyJaVerbose(morph)
+        : expandMorphologyJaVerbose(morph)
+      : hebrew
+        ? expandHebrewMorphologyJa(morph)
+        : expandMorphologyJa(morph);
 
   const className =
     size === "sm"
