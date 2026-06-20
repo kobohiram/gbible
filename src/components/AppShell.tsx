@@ -16,6 +16,7 @@ import {
   saveLastLocation,
 } from "@/lib/verse-data";
 import { normalizeVerseWords } from "@/lib/verse-text";
+import { fetchMnspBook, type MnspBookData } from "@/lib/translations";
 import type { BookData, BookId, CorpusId, PersonalTranslation, VerseWord } from "@/types";
 import {
   ResizableHandle,
@@ -59,6 +60,7 @@ export function AppShell() {
   const [navOpen, setNavOpen] = useState(false);
   const [translations, setTranslations] = useState<PersonalTranslation[]>([]);
   const [bookData, setBookData] = useState<BookData | null>(null);
+  const [mnspData, setMnspData] = useState<MnspBookData | null>(null);
   const mobileLexiconRef = useRef<HTMLDivElement>(null);
 
   const books = getBooksForCorpus(corpus);
@@ -97,6 +99,14 @@ export function AppShell() {
       .catch(() => { /* データなし */ });
     return () => { cancelled = true; };
   }, [bookId, corpus]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchMnspBook(bookId).then((d) => {
+      if (!cancelled) setMnspData(d);
+    });
+    return () => { cancelled = true; };
+  }, [bookId]);
 
   const book = getBook(bookId);
   const words =
@@ -165,6 +175,10 @@ export function AppShell() {
   }
 
   const reference = `${book.name} ${chapter}:${selectedVerse}`;
+  const currentTranslation = translations.find((t) => t.verse === selectedVerse);
+  const savedTranslation = currentTranslation?.translation ?? "";
+  const savedMemo = currentTranslation?.memo ?? "";
+  const savedMemoIsPublic = currentTranslation?.memoIsPublic ?? false;
 
   const navPane = (
     <PaneNav
@@ -174,6 +188,7 @@ export function AppShell() {
       chapter={chapter}
       selectedVerse={selectedVerse}
       translations={translations}
+      mnspData={mnspData}
       bookDataLoaded={bookData !== null}
       onCorpusChange={handleCorpusChange}
       onBookChange={handleBookChange}
@@ -184,11 +199,19 @@ export function AppShell() {
 
   const versePane = (
     <PaneVerse
+      bookId={bookId}
+      chapter={chapter}
+      verse={selectedVerse}
       corpus={corpus}
       reference={reference}
       words={words}
       selectedWordId={selectedWord?.id ?? null}
       onSelectWord={handleSelectWord}
+      mnspData={mnspData}
+      savedTranslation={savedTranslation}
+      savedMemo={savedMemo}
+      savedMemoIsPublic={savedMemoIsPublic}
+      onSaved={() => { void refreshTranslations(); }}
     />
   );
 
@@ -204,17 +227,16 @@ export function AppShell() {
     />
   );
 
-  const currentTranslation = translations.find((t) => t.verse === selectedVerse);
-
   const notesPane = (
     <PaneNotes
       bookId={bookId}
       bookName={book.name}
       chapter={chapter}
       verse={selectedVerse}
-      savedTranslation={currentTranslation?.translation ?? ""}
-      savedMemo={currentTranslation?.memo ?? ""}
-      savedMemoIsPublic={currentTranslation?.memoIsPublic ?? false}
+      mnspData={mnspData}
+      savedTranslation={savedTranslation}
+      savedMemo={savedMemo}
+      savedMemoIsPublic={savedMemoIsPublic}
       onSaved={() => { void refreshTranslations(); }}
     />
   );
@@ -322,6 +344,7 @@ export function AppShell() {
                 chapter={chapter}
                 selectedVerse={selectedVerse}
                 translations={translations}
+                mnspData={mnspData}
                 bookDataLoaded={bookData !== null}
                 onCorpusChange={handleCorpusChange}
                 onBookChange={handleBookChange}
@@ -338,11 +361,19 @@ export function AppShell() {
         <div className="pane-surface border-b border-border" data-pane="verse">
           <PaneVerse
             stacked
+            bookId={bookId}
+            chapter={chapter}
+            verse={selectedVerse}
             corpus={corpus}
             reference={reference}
             words={words}
             selectedWordId={selectedWord?.id ?? null}
             onSelectWord={handleSelectWord}
+            mnspData={mnspData}
+            savedTranslation={savedTranslation}
+            savedMemo={savedMemo}
+            savedMemoIsPublic={savedMemoIsPublic}
+            onSaved={() => { void refreshTranslations(); }}
           />
         </div>
 
@@ -366,9 +397,10 @@ export function AppShell() {
             bookName={book.name}
             chapter={chapter}
             verse={selectedVerse}
-            savedTranslation={currentTranslation?.translation ?? ""}
-            savedMemo={currentTranslation?.memo ?? ""}
-            savedMemoIsPublic={currentTranslation?.memoIsPublic ?? false}
+            mnspData={mnspData}
+            savedTranslation={savedTranslation}
+            savedMemo={savedMemo}
+            savedMemoIsPublic={savedMemoIsPublic}
             onSaved={() => { void refreshTranslations(); }}
           />
         </div>

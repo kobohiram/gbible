@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "mnsp",
+      "name": "みんなの聖書",
+      "attribution": "出典：みんなの聖書翻訳プロジェクト",
+      "books": {
+        "mark": {
+          "chapters": {
+            "1": {
+              "from": 1,
+              "to": 45
+            }
+          }
+        }
+      }
+    }
+  ]
+}
