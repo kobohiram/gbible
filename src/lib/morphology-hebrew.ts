@@ -106,7 +106,7 @@ const PRON_TYPE_JA: Record<string, string> = {
 
 const PERSON_JA: Record<string, string> = { "1": "１", "2": "２", "3": "３" };
 
-function parseDetails(segment: string): string[] {
+function parseHebrewSegment(segment: string): string[] {
   const parts: string[] = [];
   const lang = segment[0];
   if (lang !== "H" && lang !== "A") return parts;
@@ -114,81 +114,110 @@ function parseDetails(segment: string): string[] {
   const pos = segment[1];
   if (!pos) return parts;
   parts.push(POS_JA[pos] ?? pos);
+  appendMorphDetails(parts, pos, segment, 2);
+  return parts;
+}
 
+function parseBareSegment(segment: string): string[] {
+  if (segment === "R") return ["前"];
+  const parts: string[] = [];
+  const pos = segment[0];
+  if (!pos || !POS_JA[pos]) return parts;
+  parts.push(POS_JA[pos]);
+  appendMorphDetails(parts, pos, segment, 1);
+  return parts;
+}
+
+function appendMorphDetails(
+  parts: string[],
+  pos: string,
+  segment: string,
+  offset: number,
+): void {
   if (pos === "V") {
-    const stem = segment[2];
-    const type = segment[3];
+    const stem = segment[offset];
+    const type = segment[offset + 1];
     if (stem) parts.push(VERB_STEM_JA[stem] ?? stem);
     if (type) parts.push(VERB_TYPE_JA[type] ?? type);
-    const person = segment[4];
-    const gender = segment[5];
-    const number = segment[6];
-    const state = segment[7];
+    const person = segment[offset + 2];
+    const gender = segment[offset + 3];
+    const number = segment[offset + 4];
+    const state = segment[offset + 5];
     if (person && /[123]/.test(person)) parts.push(`${PERSON_JA[person] ?? person}人称`);
     if (gender) parts.push(GENDER_JA[gender] ?? gender);
     if (number) parts.push(NUMBER_JA[number] ?? number);
     if (state) parts.push(STATE_JA[state] ?? state);
-    return parts;
+    return;
   }
 
   if (pos === "N" || pos === "A") {
-    const type = segment[2];
-    const gender = segment[3];
-    const number = segment[4];
-    const state = segment[5];
+    const type = segment[offset];
+    const gender = segment[offset + 1];
+    const number = segment[offset + 2];
+    const state = segment[offset + 3];
     if (type) parts.push(NOUN_TYPE_JA[type] ?? type);
     if (gender) parts.push(GENDER_JA[gender] ?? gender);
     if (number) parts.push(NUMBER_JA[number] ?? number);
     if (state) parts.push(STATE_JA[state] ?? state);
-    return parts;
+    return;
   }
 
   if (pos === "P") {
-    const type = segment[2];
-    const person = segment[3];
-    const gender = segment[4];
-    const number = segment[5];
+    const type = segment[offset];
+    const person = segment[offset + 1];
+    const gender = segment[offset + 2];
+    const number = segment[offset + 3];
     if (type) parts.push(PRON_TYPE_JA[type] ?? type);
     if (person && /[123]/.test(person)) parts.push(`${PERSON_JA[person] ?? person}人称`);
     if (gender) parts.push(GENDER_JA[gender] ?? gender);
     if (number) parts.push(NUMBER_JA[number] ?? number);
-    return parts;
+    return;
   }
 
   if (pos === "T") {
-    const type = segment[2];
+    const type = segment[offset];
     if (type) parts.push(PARTICLE_TYPE_JA[type] ?? type);
-    return parts;
+    return;
   }
 
-  if (pos === "R" && segment[2] === "d") {
+  if (pos === "R" && segment[offset] === "d") {
     parts.push("定冠付き");
   }
 
   if (pos === "S") {
-    const type = segment[2];
-    const person = segment[3];
-    const gender = segment[4];
-    const number = segment[5];
+    const type = segment[offset];
+    const person = segment[offset + 1];
+    const gender = segment[offset + 2];
+    const number = segment[offset + 3];
     if (type) parts.push(type === "p" ? "代名接辞" : type);
     if (person && /[123]/.test(person)) parts.push(`${PERSON_JA[person] ?? person}人称`);
     if (gender) parts.push(GENDER_JA[gender] ?? gender);
     if (number) parts.push(NUMBER_JA[number] ?? number);
   }
+}
 
-  return parts;
+function parseDetails(segment: string): string[] {
+  if (!segment) return [];
+  if (segment[0] === "H" || segment[0] === "A") {
+    return parseHebrewSegment(segment);
+  }
+  return parseBareSegment(segment);
 }
 
 export function isHebrewMorph(code: string): boolean {
-  return /^H[A-Z]/.test(code.trim());
+  return /^H/.test(code.trim());
 }
 
-/** コンパクト表示 */
+const COMPACT_POS = new Set(["名", "動", "前", "接", "助", "代", "副", "形", "接辞"]);
+
+/** コンパクト表示（品詞レベルに絞る） */
 export function expandHebrewMorphologyJa(code: string): string {
   const segments = code.trim().split("/");
   const labels = segments.flatMap(parseDetails);
   if (labels.length === 0) return code;
-  return labels.join("-");
+  const posOnly = labels.filter((l) => COMPACT_POS.has(l));
+  const shown = posOnly.length > 0 ? posOnly : labels;
+  return [...new Set(shown)].join("-");
 }
 
 /** 丁寧表示 */

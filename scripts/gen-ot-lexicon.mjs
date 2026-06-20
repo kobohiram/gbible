@@ -217,9 +217,13 @@ function mergeLexiconSources(strongs, tbesh, strong, index, bdbMap) {
 }
 
 function jaToLexiconEntry(strongs, ja, merged) {
+  const def = ja?.definitionJa?.trim() ?? '';
+  const glossJa = ja?.glossJa?.trim()
+    || (def && def.length <= 18 ? def.split('、')[0] : '');
   return {
     strongs,
     lemma: merged?.lemma ?? ja?.lemma ?? strongs,
+    glossJa: glossJa || undefined,
     definitionJa: ja?.definitionJa ?? ja?.glossJa ?? merged?.gloss ?? '',
     detailJa: ja?.detailJa ?? '',
     reviewed: Boolean(ja?.reviewed ?? ja?.detailJa),
@@ -355,8 +359,8 @@ function syncBookGloss(bookId, lexicon) {
   for (const wordList of Object.values(book.words ?? {})) {
     for (const w of wordList) {
       const entry = lexicon[w.strongs];
-      if (entry?.definitionJa) {
-        w.glossJa = entry.definitionJa;
+      if (entry?.glossJa || entry?.definitionJa) {
+        w.glossJa = entry.glossJa || entry.definitionJa;
         glossCount++;
       }
     }

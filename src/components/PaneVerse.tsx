@@ -10,7 +10,7 @@ import {
 import { useAutoSave, SaveStatus } from "@/lib/use-auto-save";
 import { getWordScript, getWordText } from "@/lib/verse-text";
 import { loadOtLexicon } from "@/lib/ot-lexicon";
-import { resolveWordGloss } from "@/lib/word-gloss";
+import { resolveShortGloss } from "@/lib/word-gloss";
 import type { LexiconEntry } from "@/types";
 import { MorphLabels } from "./MorphLabels";
 import { MorphLegend } from "./MorphLegend";
@@ -133,7 +133,7 @@ export function PaneVerse({
                   </span>
                   <MorphLabels morph={word.morph} />
                   <span className="text-center text-sm font-medium leading-tight text-[var(--gloss)]">
-                    {resolveWordGloss(word, otLexicon?.[word.strongs])}
+                    {resolveShortGloss(word, otLexicon?.[word.strongs])}
                   </span>
                 </button>
               );

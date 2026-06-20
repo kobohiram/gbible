@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CorpusId, LexiconEntry, VerseWord } from "@/types";
-import { resolveWordGloss } from "@/lib/word-gloss";
+import { resolveShortGloss } from "@/lib/word-gloss";
 import { getWordScript, getWordText } from "@/lib/verse-text";
 import { verseGreekFromWords } from "@/lib/context-llm";
 import type { GrammarNoteRequest } from "@/app/api/grammar-note/route";
@@ -109,7 +109,7 @@ function ConcordanceItem({ occ, isExpanded, onToggle }: {
                 <p className={`text-base font-bold text-foreground ${script === "heb" ? "font-hebrew" : "font-greek"}`} dir={script === "heb" ? "rtl" : "ltr"}>
                   {getWordText(w)}
                 </p>
-                <p className="text-sm font-medium text-[var(--gloss)]">{resolveWordGloss(w, globalLexicon?.[w.strongs])}</p>
+                <p className="text-sm font-medium text-[var(--gloss)]">{resolveShortGloss(w, globalLexicon?.[w.strongs])}</p>
                 <MorphLabels morph={w.morph} size="sm" variant="verbose" />
               </div>
             );
@@ -224,7 +224,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
               <section>
                 <h3 className="section-label">意味（この語）</h3>
                 <p className="mt-1 text-base font-medium text-[var(--gloss)]">
-                  {resolveWordGloss(word, richEntry)}
+                  {resolveShortGloss(word, richEntry)}
                 </p>
               </section>
 

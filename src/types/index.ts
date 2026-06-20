@@ -46,6 +46,8 @@ export type VerseWord = {
 export type LexiconEntry = {
   strongs: string;
   lemma: string;
+  /** 短い訳語（2ペイン表示用） */
+  glossJa?: string;
   definitionJa: string;
   detailJa?: string;
   reviewed: boolean;
