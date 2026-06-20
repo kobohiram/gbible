@@ -1,4 +1,5 @@
 import type { LexiconEntry, VerseWord } from "@/types";
+import { getWordText } from "@/lib/verse-text";
 
 const MAX_SHORT_LEN = 18;
 
@@ -68,7 +69,7 @@ function composeWithPrefixes(word: VerseWord, core: string): string {
   for (const seg of segments) {
     if (seg === "HC" || seg.startsWith("HC")) bits.push("と");
     else if (seg === "R" || seg === "HR" || (seg[0] === "H" && seg[1] === "R")) {
-      bits.push(prefixGlossFromSurface(word.text));
+      bits.push(prefixGlossFromSurface(getWordText(word)));
     }
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CorpusId, LexiconEntry, VerseWord } from "@/types";
 import { resolveShortGloss } from "@/lib/word-gloss";
 import { getWordScript, getWordText } from "@/lib/verse-text";
@@ -61,10 +61,11 @@ type Props = {
   stacked?: boolean;
 };
 
-function ConcordanceItem({ occ, isExpanded, onToggle }: {
+function ConcordanceItem({ occ, isExpanded, onToggle, globalLexicon }: {
   occ: Occurrence;
   isExpanded: boolean;
   onToggle: () => void;
+  globalLexicon: GlobalLexicon | null;
 }) {
   const matchingWords = occ.allWords.filter(w => occ.matchIds.has(w.id));
   const isHeb = occ.allWords.length > 0 && getWordScript(occ.allWords[0]) === "heb";
@@ -125,13 +126,13 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [concordanceIndex, setConcordanceIndex] = useState<ConcordanceIndex | null>(null);
   const [globalLexicon, setGlobalLexicon] = useState<GlobalLexicon | null>(null);
-  const loadedRef = useRef(false);
 
   useEffect(() => {
-    if (corpus !== "nt") return;
-    if (loadedRef.current) return;
-    loadedRef.current = true;
-    void loadConcordanceIndex().then(setConcordanceIndex);
+    if (corpus === "nt") {
+      void loadConcordanceIndex().then(setConcordanceIndex);
+    } else {
+      setConcordanceIndex(null);
+    }
     void loadGlobalLexicon(corpus).then(setGlobalLexicon);
   }, [corpus]);
 
@@ -295,6 +296,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                         occ={occ}
                         isExpanded={expandedKeys.has(occ.verseKey)}
                         onToggle={() => toggleExpand(occ.verseKey)}
+                        globalLexicon={globalLexicon}
                       />
                     ))}
                   </ul>
