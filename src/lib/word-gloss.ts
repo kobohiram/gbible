@@ -2,8 +2,9 @@ import type { LexiconEntry, VerseWord } from "@/types";
 import { getWordText } from "@/lib/verse-text";
 
 const MAX_SHORT_LEN = 18;
+const MAX_PANE_LEN = 8;
 
-/** 頻出語の短い訳語（AI 抽出より優先） */
+/** 頻出語の短い訳語 */
 const COMMON_GLOSS: Record<string, string> = {
   H1004: "家",
   H776: "地",
@@ -15,12 +16,77 @@ const COMMON_GLOSS: Record<string, string> = {
   H413: "〜へ",
 };
 
+const VERBOSE_RE =
+  /を示す|を指す|新たに|ことが|接続詞|前置詞|ものを|集団|空間|原因|理由|混沌状態|荒れ地|虚空・|広く表す|発する・|二者の/;
+
 function isShortGloss(text: string): boolean {
   const t = text.trim();
   return t.length > 0 && t.length <= MAX_SHORT_LEN && !t.includes("。");
 }
 
-/** 辞書エントリから短い訳語を抽出する */
+function firstSegment(text: string): string {
+  if (!text) return "";
+  return text.split(/[・、,／/]/)[0]?.trim() ?? "";
+}
+
+function trimToPane(text: string): string {
+  const t = firstSegment(text);
+  if (!t) return "";
+  if (t.length <= MAX_PANE_LEN && !VERBOSE_RE.test(t)) return t;
+  if (t.length <= 6) return t;
+  return t.slice(0, MAX_PANE_LEN);
+}
+
+function fromDetailJa(detail: string): string {
+  if (!detail) return "";
+
+  const posMatch = detail.match(/(?:名詞|動詞|前置詞|接続詞|副詞|形容詞|数詞)「([^」]+)」/);
+  if (posMatch) {
+    const c = trimToPane(posMatch[1]);
+    if (c) return c;
+  }
+
+  const lineMatch = detail.match(
+    /^[「"]?(名詞|動詞|前置詞|接続詞|副詞|形容詞|数詞)[「」"]?([^。\n]{1,24})/,
+  );
+  if (lineMatch) {
+    const c = trimToPane(lineMatch[2]);
+    if (c) return c;
+  }
+
+  const quoted = detail.match(/「([^」]{1,12})」/g);
+  if (quoted) {
+    for (const q of quoted) {
+      const inner = q.match(/「([^」]+)」/)?.[1] ?? "";
+      const c = trimToPane(inner);
+      if (c && !VERBOSE_RE.test(c)) return c;
+    }
+  }
+
+  return "";
+}
+
+/** 2ペイン向け：語彙の最初の訳語だけ（最大8文字） */
+export function extractPaneGloss(lexicon?: LexiconEntry | null): string {
+  if (!lexicon) return "";
+  if (COMMON_GLOSS[lexicon.strongs]) return COMMON_GLOSS[lexicon.strongs];
+
+  const fromDetail = fromDetailJa(lexicon.detailJa ?? "");
+  if (fromDetail) return fromDetail;
+
+  const def = firstSegment(lexicon.definitionJa ?? "");
+  if (def && def.length <= MAX_PANE_LEN && !VERBOSE_RE.test(def)) return def;
+
+  const stored = lexicon.glossJa?.trim() ?? "";
+  const gloss = firstSegment(stored);
+  if (gloss && !VERBOSE_RE.test(gloss)) {
+    return gloss.length <= MAX_PANE_LEN ? gloss : gloss.slice(0, MAX_PANE_LEN);
+  }
+
+  return "";
+}
+
+/** 辞書エントリから短い訳語を抽出する（3ペイン「意味」向け） */
 export function extractShortGloss(lexicon?: LexiconEntry | null): string {
   if (!lexicon) return "";
   if (COMMON_GLOSS[lexicon.strongs]) return COMMON_GLOSS[lexicon.strongs];
@@ -79,7 +145,18 @@ function composeWithPrefixes(word: VerseWord, core: string): string {
   return unique.join("・");
 }
 
-/** 2ペイン原文・「意味（この語）」向けの短い訳語 */
+/** 2ペイン原文：短い訳語のみ（詳しい辞書本文は出さない） */
+export function resolvePaneGloss(
+  word: VerseWord,
+  lexicon?: LexiconEntry | null,
+): string {
+  const fromLex = extractPaneGloss(lexicon);
+  const core = fromLex || trimToPane(word.glossJa ?? "");
+  if (!core) return "";
+  return composeWithPrefixes(word, core);
+}
+
+/** 3ペイン「意味（この語）」向けの短い訳語 */
 export function resolveShortGloss(
   word: VerseWord,
   lexicon?: LexiconEntry | null,
