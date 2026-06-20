@@ -145,13 +145,12 @@ function composeWithPrefixes(word: VerseWord, core: string): string {
   return unique.join("・");
 }
 
-/** 2ペイン原文：短い訳語のみ（詳しい辞書本文は出さない） */
+/** 2ペイン原文：TBESH 訳語（pane-gloss.json）のみ。辞書本文は使わない */
 export function resolvePaneGloss(
   word: VerseWord,
-  lexicon?: LexiconEntry | null,
+  paneGloss?: string | null,
 ): string {
-  const fromLex = extractPaneGloss(lexicon);
-  const core = fromLex || trimToPane(word.glossJa ?? "");
+  const core = paneGloss?.trim() ?? "";
   if (!core) return "";
   return composeWithPrefixes(word, core);
 }
