@@ -151,6 +151,37 @@ export default function AboutPage() {
           </p>
         </Section>
 
+        <Section title="日本語訳（みんなの聖書）">
+          <p>
+            学習画面の参考訳として、
+            <a
+              href="https://bible.tbts.jp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold underline underline-offset-2 hover:text-foreground"
+            >
+              みんなの聖書翻訳プロジェクト
+            </a>
+            の日本語訳を掲載しています。プロジェクトから使用の許可をいただいています。
+          </p>
+          <p>
+            このプロジェクトは、原文の語順や文法をできるだけ残す<strong>素訳</strong>（直訳）と、
+            日本語として読みやすく聞きなおす<strong>超訳</strong>（意訳）を並べて提示する翻訳です。
+            聖書をただ読むだけでなく、原典の手触りを味わうことを目指しています。
+          </p>
+          <Ref href="https://bible.tbts.jp/greeting/">プロジェクトのご挨拶・趣旨（bible.tbts.jp）</Ref>
+          <p>
+            原文ペインでは超訳を「みんなの聖書」として表示し、
+            メモペインでは素訳を「メモ（素訳）」として表示します。
+            私訳と並べて読み比べできるよう、原文の下に積み重ねて表示しています。
+          </p>
+          <p>
+            収録は書・章ごとに順次追加しています。
+            未収録の節は「未収録（翻訳プロジェクト進行中）」と表示されます。
+            現在の収録範囲はマルコ福音書1章、ルカ福音書1〜20章です。
+          </p>
+        </Section>
+
         <Section title="ライセンスまとめ">
           <table className="w-full text-sm border-collapse">
             <thead>
@@ -187,6 +218,10 @@ export default function AboutPage() {
               <tr>
                 <td className="py-2 pr-4">日本語語義・定義</td>
                 <td className="py-2">Gbible（TBESG/TBESH ベース AI 日本語化）</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">みんなの聖書（超訳・素訳）</td>
+                <td className="py-2">みんなの聖書翻訳プロジェクト（使用許諾・bible.tbts.jp）</td>
               </tr>
             </tbody>
           </table>

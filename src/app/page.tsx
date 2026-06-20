@@ -92,6 +92,16 @@ export default async function Home() {
           </h2>
           <p className="mx-auto max-w-md text-base text-muted-foreground">
             新約（ギリシャ語）と旧約（ヘブル語）を、語形解析・辞書・私訳メモと一緒に読めるツールです。
+            参考訳として
+            <a
+              href="https://bible.tbts.jp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground/80 underline underline-offset-2 hover:text-foreground"
+            >
+              みんなの聖書翻訳プロジェクト
+            </a>
+            の日本語訳も掲載しています。
           </p>
         </div>
 
@@ -180,6 +190,38 @@ export default async function Home() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-4 text-left text-sm leading-relaxed text-foreground/90">
+            <h3 className="mb-2 font-semibold text-foreground">日本語訳（みんなの聖書）</h3>
+            <p>
+              <a
+                href="https://bible.tbts.jp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-foreground underline underline-offset-2 hover:text-primary"
+              >
+                みんなの聖書翻訳プロジェクト
+              </a>
+              の訳を、原文と並べて読めるように掲載しています。
+              プロジェクトから使用の許可をいただいています。
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              素訳（原文に近い直訳）と超訳（読みやすい意訳）を並べて味わう翻訳です。
+              <a
+                href="https://bible.tbts.jp/greeting/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-1 underline underline-offset-2 hover:text-foreground"
+              >
+                プロジェクトの趣旨
+              </a>
+            </p>
+            <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-muted-foreground">
+              <li>原文ペインの「みんなの聖書」… 超訳（読みやすい日本語訳）</li>
+              <li>メモペインの「メモ（素訳）」… 素訳（原文に近い訳）</li>
+              <li>収録は順次追加（現在：マルコ1章、ルカ1〜20章）</li>
+            </ul>
           </div>
 
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
