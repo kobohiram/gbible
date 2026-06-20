@@ -3,7 +3,7 @@
  * みんなの聖書スプレッドシート → public/data/translations/mnsp/[book].json
  *
  * 使い方:
- *   node scripts/import-mnsp-spreadsheet.mjs luke 20
+ *   node scripts/import-mnsp-spreadsheet.mjs genesis 11
  *   node scripts/import-mnsp-spreadsheet.mjs mark 1 --spreadsheet-id=1vsLCSLMIT1rQuKEqrLjnSj9owlnFPfcH
  */
 
@@ -16,14 +16,22 @@ const ROOT = join(__dirname, "..");
 const OUT_DIR = join(ROOT, "public", "data", "translations", "mnsp");
 
 const BOOK_META = {
+  genesis: {
+    name: "創世記",
+    spreadsheetId: "1djGAyHP2qQqQ272W6rokbMc9oBC_-3jP",
+    sotakuCol: 2, // 原訳（C列）＝素訳（sotaku）
+    chouyakuCol: 3, // 超訳１（D列）
+  },
   luke: {
     name: "ルカによる福音書",
     spreadsheetId: "1PXWDGqWvsO3YP5MfwhEjLq70r5prmiqH",
+    sotakuCol: 2, // 素訳（C列）
     chouyakuCol: 3, // 超訳（D列）
   },
   mark: {
     name: "マルコによる福音書",
     spreadsheetId: "1vsLCSLMIT1rQuKEqrLjnSj9owlnFPfcH",
+    sotakuCol: 2, // 素訳（C列）
     chouyakuCol: 4, // 超訳１（E列）
   },
 };
@@ -84,12 +92,13 @@ function parseCsv(text) {
 }
 
 function cleanSotaku(text) {
-  return text.replace(/^\d+\s*[　\s]+/, "").trim();
+  return text.replace(/^[0-9０-９]+\s*[　\s]+/, "").trim();
 }
 
 function verseFromSotaku(text) {
-  const m = text.match(/^(\d+)\s*[　\s]+/);
-  return m ? Number(m[1]) : null;
+  const m = text.match(/^([0-9０-９]+)\s*[　\s]+/);
+  if (!m) return null;
+  return Number(m[1].replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0)));
 }
 
 async function fetchChapterCsv(spreadsheetId, chapter) {
@@ -119,7 +128,7 @@ async function importBook(bookId, maxChapter, spreadsheetIdOverride) {
       const row = rows[r];
       let chapter = Number(row[0]);
       let verse = Number(row[1]);
-      const rawSotaku = (row[2] ?? "").trim();
+      const rawSotaku = (row[meta.sotakuCol ?? 2] ?? "").trim();
       const chouyaku = (row[meta.chouyakuCol] ?? "").trim();
 
       if (!chapter) chapter = ch;

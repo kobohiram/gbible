@@ -220,7 +220,7 @@ export default async function Home() {
             <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-muted-foreground">
               <li>原文ペインの「みんなの聖書」… 超訳（読みやすい日本語訳）</li>
               <li>メモペインの「メモ（素訳）」… 素訳（原文に近い訳）</li>
-              <li>収録は順次追加（現在：マルコ1章、ルカ1〜20章）</li>
+              <li>収録は順次追加（現在：創世記1〜11章、マルコ1章、ルカ1〜20章）</li>
             </ul>
           </div>
 
