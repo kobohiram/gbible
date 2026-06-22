@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import type { GrammarNoteRequest, GrammarNoteResponse } from "@/app/api/grammar-note/route";
+import { GrammarNoteContent } from "./GrammarNoteContent";
 
 type Props = {
   request: GrammarNoteRequest | null;
@@ -150,7 +151,7 @@ export function GrammarNoteSection({ request }: Props) {
               </div>
             </div>
           ) : (
-            <p className="mt-1 text-sm leading-relaxed text-foreground">{data.content}</p>
+            <GrammarNoteContent content={data.content} />
           )}
           {!editing && data.id && (
             <div className="mt-2 space-y-1">
