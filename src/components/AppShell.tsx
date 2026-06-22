@@ -223,6 +223,7 @@ export function AppShell() {
       reference={reference}
       verseWords={words}
       allVerseWords={bookData?.words ?? null}
+      bookId={bookId}
       bookName={book.name}
     />
   );
@@ -386,6 +387,7 @@ export function AppShell() {
             reference={reference}
             verseWords={words}
             allVerseWords={bookData?.words ?? null}
+            bookId={bookId}
             bookName={book.name}
           />
         </div>

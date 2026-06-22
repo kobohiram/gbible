@@ -8,6 +8,7 @@ export type GrammarNoteRequest = {
   glossJa: string;
   reference: string;
   verseGreek: string;
+  bookId?: string;
 };
 
 export type GrammarNoteResponse = {
@@ -18,6 +19,20 @@ export type GrammarNoteResponse = {
 
 function db() {
   return neon(process.env.DATABASE_URL!);
+}
+
+const SYNOPTIC_BOOKS = new Set(["matthew", "mark", "luke"]);
+
+function synopticNoteBlock(bookId?: string): string {
+  if (!bookId || !SYNOPTIC_BOOKS.has(bookId)) return "";
+  return `
+
+**共観福音書のトリビア（該当する場合のみ1〜2文追加）：**
+- 同じ場面で他の福音書と接頭辞（ἀνα-「上」、κατα-「下」、προσ-、εἰσ- など）や語彙が異なることがある
+- 例：イエスの移動・視線・方向を表す複合動詞で、著者ごとに接頭辞が違う平行箇所がある
+- ルカは「下の方の人々」への配慮、マタイはキリストの権威・メシア性の強調——といった著者の重点の違いが語彙選択に表れる、という解釈もある
+- 該当しない語形では無理に言及しない
+- 解釈は断定せず「〜とも考えられます」「諸説があります」の形にする`;
 }
 
 // 固有名詞かどうか判定（ギリシャ語の大文字始まり）
@@ -79,10 +94,10 @@ ${req.verseGreek}
 - 学者間で議論があるものは「諸説あります」と明記する
 
 **スタイル：**
-- 3〜5文程度、読みやすい日本語
+- 4〜6文程度、読みやすい日本語
 - 箇条書きにせず一つの段落として書く
 - Markdown記法（##、**など）は使わず、プレーンテキストのみ
-- 断定的・権威的な言い方を避ける`;
+- 断定的・権威的な言い方を避ける${synopticNoteBlock(req.bookId)}`;
 }
 
 // メモリキャッシュ（DBアクセスの補助）
@@ -163,7 +178,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 600,
+        max_tokens: 750,
         messages: [{ role: "user", content: buildPrompt(body) }],
       }),
     });

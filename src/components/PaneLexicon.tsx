@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { CorpusId, LexiconEntry, VerseWord } from "@/types";
+import type { BookId, CorpusId, LexiconEntry, VerseWord } from "@/types";
 import { resolveShortGloss } from "@/lib/word-gloss";
 import { getWordScript, getWordText } from "@/lib/verse-text";
 import { verseGreekFromWords } from "@/lib/context-llm";
@@ -56,6 +56,7 @@ type Props = {
   reference: string;
   verseWords: VerseWord[];
   allVerseWords: Record<string, VerseWord[]> | null;
+  bookId: BookId;
   bookName: string;
   corpus?: CorpusId;
   stacked?: boolean;
@@ -121,7 +122,7 @@ function ConcordanceItem({ occ, isExpanded, onToggle, globalLexicon }: {
   );
 }
 
-export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords, bookName, corpus = "nt", stacked }: Props) {
+export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords, bookId, bookName, corpus = "nt", stacked }: Props) {
   const [shown, setShown] = useState(20);
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [concordanceIndex, setConcordanceIndex] = useState<ConcordanceIndex | null>(null);
@@ -155,6 +156,7 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
           glossJa: word.glossJa,
           reference,
           verseGreek: verseGreekFromWords(verseWords),
+          bookId,
         }
       : null;
 
