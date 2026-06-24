@@ -32,11 +32,28 @@ type Props = {
   onNavigateToVerse?: (location: BibleLocation) => void;
 };
 
+type ChatDisplayItem =
+  | { kind: "divider"; label: string }
+  | { kind: "chat"; message: ChatMessage };
+
 function chatSessionKey(request: ContextApiRequest): string {
   if (request.word) {
     return `word:${request.word.id}:${request.reference}`;
   }
   return `general:${request.reference}`;
+}
+
+function contextDividerLabel(request: ContextApiRequest, reference: string): string {
+  if (request.word?.greek) {
+    return `${reference}（${request.word.greek}）`;
+  }
+  return reference;
+}
+
+function chatHistoryFromDisplay(items: ChatDisplayItem[]): ChatMessage[] {
+  return items
+    .filter((item): item is { kind: "chat"; message: ChatMessage } => item.kind === "chat")
+    .map((item) => item.message);
 }
 
 export function loadGrammarCollapsed(): boolean {
@@ -62,6 +79,10 @@ export function PaneGrammarPoint({
   const isLoggedIn = status === "authenticated";
 
   const sessionKey = useMemo(() => chatSessionKey(contextRequest), [contextRequest]);
+  const dividerLabel = useMemo(
+    () => contextDividerLabel(contextRequest, reference),
+    [contextRequest, reference],
+  );
 
   const [serverKeyAvailable, setServerKeyAvailable] = useState(false);
   const [configured, setConfigured] = useState(false);
@@ -70,14 +91,14 @@ export function PaneGrammarPoint({
   const [draftKey, setDraftKey] = useState("");
   const [keyError, setKeyError] = useState<string | null>(null);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [displayItems, setDisplayItems] = useState<ChatDisplayItem[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const activeKeyRef = useRef<string | null>(null);
+  const lastSessionKeyRef = useRef<string | null>(null);
 
   const refreshKeyState = useCallback((serverAvailable: boolean) => {
     const hasUserKey = hasLlmApiKey();
@@ -102,24 +123,30 @@ export function PaneGrammarPoint({
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading]);
+  }, [displayItems, loading]);
 
   useEffect(() => {
     if (!isLoggedIn || !configured) {
-      setMessages([]);
+      setDisplayItems([]);
       setChatError(null);
       setLoading(false);
-      activeKeyRef.current = null;
+      lastSessionKeyRef.current = null;
+      abortRef.current?.abort();
       return;
     }
 
-    activeKeyRef.current = sessionKey;
-    setMessages([]);
-    setChatError(null);
-    setInput("");
-    abortRef.current?.abort();
-    setLoading(false);
-  }, [isLoggedIn, configured, sessionKey]);
+    const prevKey = lastSessionKeyRef.current;
+    if (prevKey !== null && prevKey !== sessionKey) {
+      setDisplayItems((prev) => {
+        const hasChat = prev.some((item) => item.kind === "chat");
+        if (!hasChat) return prev;
+        const last = prev[prev.length - 1];
+        if (last?.kind === "divider" && last.label === dividerLabel) return prev;
+        return [...prev, { kind: "divider", label: dividerLabel }];
+      });
+    }
+    lastSessionKeyRef.current = sessionKey;
+  }, [isLoggedIn, configured, sessionKey, dividerLabel]);
 
   const callChat = useCallback(
     async (request: ContextApiRequest, history: ChatMessage[], signal: AbortSignal) => {
@@ -150,19 +177,23 @@ export function PaneGrammarPoint({
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    const key = sessionKey;
 
     try {
       const content = await callChat(contextRequest, history, controller.signal);
-      if (activeKeyRef.current !== key) return;
-      setMessages((prev) => [...prev, { role: "assistant", content }]);
+      setDisplayItems((prev) => [...prev, { kind: "chat", message: { role: "assistant", content } }]);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
-      if (activeKeyRef.current !== key) return;
       setChatError(err instanceof Error ? err.message : "送信に失敗しました。");
-      setMessages(history.slice(0, -1));
+      setDisplayItems((prev) => {
+        const items = [...prev];
+        const last = items[items.length - 1];
+        if (last?.kind === "chat" && last.message.role === "user") {
+          items.pop();
+        }
+        return items;
+      });
     } finally {
-      if (activeKeyRef.current === key && !controller.signal.aborted) {
+      if (!controller.signal.aborted) {
         setLoading(false);
       }
     }
@@ -172,8 +203,8 @@ export function PaneGrammarPoint({
     if (!input.trim() || loading) return;
 
     const userMessage: ChatMessage = { role: "user", content: input.trim() };
-    const nextHistory = [...messages, userMessage];
-    setMessages(nextHistory);
+    const nextHistory = [...chatHistoryFromDisplay(displayItems), userMessage];
+    setDisplayItems((prev) => [...prev, { kind: "chat", message: userMessage }]);
     setInput("");
     await sendMessages(nextHistory);
   }
@@ -212,6 +243,7 @@ export function PaneGrammarPoint({
 
   const showKeyForm = useOwnKey && (editingKey || (!hasLlmApiKey() && !serverKeyAvailable));
   const hasUserKey = hasLlmApiKey();
+  const hasChat = displayItems.some((item) => item.kind === "chat");
 
   const idleHint = (
     <p className="text-sm leading-relaxed text-muted-foreground">
@@ -332,33 +364,50 @@ export function PaneGrammarPoint({
                     : "mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
               }
             >
-              {messages.length === 0 && idleHint}
-              {messages.map((msg, i) => (
-                <div
-                  key={i}
-                  className={
-                    msg.role === "user"
-                      ? "ml-6 rounded-lg bg-primary/10 px-3 py-2 text-sm leading-relaxed text-foreground"
-                      : "mr-2 rounded-lg bg-muted/60 px-3 py-2 text-sm leading-relaxed text-foreground"
-                  }
-                >
-                  {msg.role === "user" && (
-                    <span className="mb-1 block text-[10px] font-semibold text-primary">あなた</span>
-                  )}
-                  {msg.role === "assistant" && (
-                    <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">Gbible bot</span>
-                  )}
-                  {msg.role === "assistant" ? (
-                    <GrammarNoteContent
-                      content={msg.content}
-                      contextBookId={contextBookId}
-                      onNavigateToVerse={onNavigateToVerse}
-                    />
-                  ) : (
-                    msg.content
-                  )}
-                </div>
-              ))}
+              {!hasChat && idleHint}
+              {displayItems.map((item, i) => {
+                if (item.kind === "divider") {
+                  return (
+                    <div
+                      key={`divider-${i}`}
+                      className="flex items-center gap-2 py-1 text-[11px] text-muted-foreground"
+                      aria-label={`${item.label} へ移動`}
+                    >
+                      <span className="h-px flex-1 bg-border" aria-hidden />
+                      <span className="shrink-0 font-medium">{item.label}</span>
+                      <span className="h-px flex-1 bg-border" aria-hidden />
+                    </div>
+                  );
+                }
+
+                const msg = item.message;
+                return (
+                  <div
+                    key={`chat-${i}`}
+                    className={
+                      msg.role === "user"
+                        ? "ml-6 rounded-lg bg-primary/10 px-3 py-2 text-sm leading-relaxed text-foreground"
+                        : "mr-2 rounded-lg bg-muted/60 px-3 py-2 text-sm leading-relaxed text-foreground"
+                    }
+                  >
+                    {msg.role === "user" && (
+                      <span className="mb-1 block text-[10px] font-semibold text-primary">あなた</span>
+                    )}
+                    {msg.role === "assistant" && (
+                      <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">Gbible bot</span>
+                    )}
+                    {msg.role === "assistant" ? (
+                      <GrammarNoteContent
+                        content={msg.content}
+                        contextBookId={contextBookId}
+                        onNavigateToVerse={onNavigateToVerse}
+                      />
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
+                );
+              })}
               {loading && (
                 <p className="text-sm text-muted-foreground">考え中…</p>
               )}

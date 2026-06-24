@@ -51,6 +51,11 @@ const MOOD_TENSE_RULES = `【法と時制の基本（よくある誤りを避け
 - 直説法未完了: 過去の継続・反復・背景
 - 直説法現在: 現在の状態・習慣、叙事文では歴史的現在の可能性も`;
 
+const CHAT_CONTEXT_NOTE = `【会話の文脈】
+- 以前のやりとりは別の節・別の語についての場合がある
+- 今回の質問は必ず【現在ユーザーが読んでいる位置】（または【固定コンテキスト】）を優先して答える
+- ユーザーが過去の節について明示的に聞いたときだけ、履歴を参照する`;
+
 const COMPACT_STYLE = `【表示形式（必ず守る）】
 - 回答は画面右端の狭いペイン用。全体で150〜250字を目安（長くても350字以内）
 - 初回は要点だけ。詳細はユーザーが追加で聞いたときだけ述べる
@@ -186,6 +191,8 @@ ${VOCAB_TRANSLATION_GUIDE}
 
 ${OFF_TOPIC_POLICY}
 
+${CHAT_CONTEXT_NOTE}
+
 ${COMPACT_STYLE}`;
   }
 
@@ -226,6 +233,8 @@ ${SITE_USAGE_GUIDE}
 ${VOCAB_TRANSLATION_GUIDE}
 
 ${OFF_TOPIC_POLICY}
+
+${CHAT_CONTEXT_NOTE}
 
 ${COMPACT_STYLE}`;
 }
