@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: MODEL,
         messages: openAiMessages,
-        max_tokens: history.length === 1 ? 400 : 600,
+        max_tokens: history.length === 1 ? 280 : 400,
         temperature: 0.4,
       }),
     });
