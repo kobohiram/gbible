@@ -35,9 +35,10 @@ export const BOOKS_WITH_FULL_DATA = new Set<NtBookId>([
   "revelation",
 ]);
 
-/** 創世記全50章にデータあり */
+/** データが揃っている旧約書の章セット */
 export const OT_CHAPTER_DATA: Partial<Record<OtBookId, Set<number>>> = {
   genesis: new Set(Array.from({ length: 50 }, (_, i) => i + 1)),
+  exodus: new Set(Array.from({ length: 40 }, (_, i) => i + 1)),
 };
 
 const legacyLexicon: Record<string, LexiconEntry> = {
