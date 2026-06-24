@@ -18,6 +18,7 @@ type Props = {
   savedMemoIsPublic: boolean;
   onSaved: () => void;
   stacked?: boolean;
+  embedded?: boolean;
 };
 
 const MNSP_SOTAKU_LABEL = "みんなの聖書（素訳）";
@@ -41,6 +42,7 @@ export function PaneNotes({
   savedMemoIsPublic,
   onSaved,
   stacked,
+  embedded,
 }: Props) {
   const { data: session, status } = useSession();
   const isLoggedIn = status === "authenticated";
@@ -130,7 +132,7 @@ export function PaneNotes({
   const myName = session?.user?.name ?? null;
 
   return (
-    <div className={stacked ? "flex flex-col" : "flex h-full flex-col"}>
+    <div className={embedded ? "flex h-full min-h-0 flex-col" : stacked ? "flex flex-col" : "flex h-full flex-col"}>
       <header className="pane-header px-4 py-3">
         <h2 className="pane-header-label">メモ</h2>
         <p className="mt-1 font-bold text-foreground">
@@ -140,9 +142,11 @@ export function PaneNotes({
 
       <div
         className={
-          stacked
-            ? "flex flex-col gap-3 p-4"
-            : "flex flex-1 flex-col gap-3 overflow-y-auto p-4"
+          embedded
+            ? "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4"
+            : stacked
+              ? "flex flex-col gap-3 p-4"
+              : "flex flex-1 flex-col gap-3 overflow-y-auto p-4"
         }
       >
         <label className="flex flex-col gap-1">

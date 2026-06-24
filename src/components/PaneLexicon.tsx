@@ -316,7 +316,6 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
             </article>
           )}
 
-          {/* LlmContextSection は非表示（インフラは保持） */}
         </div>
       </div>
     </div>

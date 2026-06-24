@@ -1,4 +1,9 @@
-import { buildContextPrompt, type ContextApiRequest } from "@/lib/context-llm";
+import {
+  buildContextPrompt,
+  buildContextSystemPrompt,
+  type ChatMessage,
+  type ContextApiRequest,
+} from "@/lib/context-llm";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const MODEL = "gpt-4o-mini";
@@ -10,10 +15,7 @@ export async function POST(request: Request) {
     : "";
 
   if (!apiKey) {
-    return Response.json(
-      { error: "APIキーが必要です。" },
-      { status: 401 },
-    );
+    return Response.json({ error: "APIキーが必要です。" }, { status: 401 });
   }
 
   let payload: ContextApiRequest;
@@ -27,6 +29,19 @@ export async function POST(request: Request) {
     return Response.json({ error: "節または語の情報が不足しています。" }, { status: 400 });
   }
 
+  const history: ChatMessage[] = payload.messages ?? [];
+  const openAiMessages: { role: "system" | "user" | "assistant"; content: string }[] = [
+    { role: "system", content: buildContextSystemPrompt(payload) },
+  ];
+
+  if (history.length === 0) {
+    openAiMessages.push({ role: "user", content: buildContextPrompt(payload) });
+  } else {
+    for (const msg of history) {
+      openAiMessages.push({ role: msg.role, content: msg.content });
+    }
+  }
+
   try {
     const response = await fetch(OPENAI_URL, {
       method: "POST",
@@ -36,18 +51,8 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content:
-              "あなたは新約ギリシャ語と聖書解釈に詳しい助手です。簡潔で正確な日本語で答えてください。",
-          },
-          {
-            role: "user",
-            content: buildContextPrompt(payload),
-          },
-        ],
-        max_tokens: 400,
+        messages: openAiMessages,
+        max_tokens: history.length === 0 ? 400 : 600,
         temperature: 0.4,
       }),
     });

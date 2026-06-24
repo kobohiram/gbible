@@ -1,10 +1,16 @@
 import { expandMorphologyJa } from "@/lib/morphology";
 import { getWordText } from "@/lib/verse-text";
-import type { VerseWord } from "@/types";
+import type { CorpusId, LexiconEntry, VerseWord } from "@/types";
+
+export type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
 
 export type ContextApiRequest = {
   reference: string;
   verseGreek: string;
+  corpus?: CorpusId;
   word: {
     id: string;
     greek: string;
@@ -14,33 +20,55 @@ export type ContextApiRequest = {
     lemma?: string;
     definitionJa?: string;
   };
+  messages?: ChatMessage[];
 };
 
-export function buildContextPrompt(payload: ContextApiRequest): string {
+export function buildContextRequest(
+  reference: string,
+  verseWords: VerseWord[],
+  word: VerseWord,
+  lexicon?: LexiconEntry | null,
+  corpus: CorpusId = "nt",
+): ContextApiRequest {
+  return {
+    reference,
+    verseGreek: verseGreekFromWords(verseWords),
+    corpus,
+    word: {
+      id: word.id,
+      greek: getWordText(word),
+      glossJa: word.glossJa ?? "",
+      morph: word.morph,
+      strongs: word.strongs,
+      lemma: lexicon?.lemma,
+      definitionJa: lexicon?.definitionJa,
+    },
+  };
+}
+
+export function buildContextSystemPrompt(payload: ContextApiRequest): string {
   const { reference, verseGreek, word } = payload;
+  const corpus = payload.corpus ?? "nt";
+  const lang = corpus === "ot" ? "ヘブル語" : "ギリシャ語";
   const morphJa = expandMorphologyJa(word.morph);
 
-  return `あなたは新約ギリシャ語の解説者です。以下の節における特定の語の「文脈上の用法」を、初学者向けに日本語で補足してください。
+  return `あなたは${lang}聖書の解説助手です。ユーザーと${lang}の語句について対話します。
 
-## 節
-${reference}
+【固定コンテキスト】
+節: ${reference}
+節全体: ${verseGreek}
+注目語: ${word.greek}
+Strong's: ${word.strongs}
+${word.lemma ? `見出し語: ${word.lemma}` : ""}
+基本意味: ${word.glossJa}
+文法: ${word.morph}（${morphJa}）
+${word.definitionJa ? `辞書: ${word.definitionJa}` : ""}
 
-## 節全体（ギリシャ語）
-${verseGreek}
+初学者向けに簡潔で正確な日本語で答えてください。神学的内容は節の範囲内に留め、断定しすぎないでください。`;
+}
 
-## 注目する語
-- ギリシャ語: ${word.greek}
-- Strong's: ${word.strongs}
-${word.lemma ? `- 見出し語: ${word.lemma}` : ""}
-- 基本意味: ${word.glossJa}
-- 文法: ${word.morph}（${morphJa}）
-${word.definitionJa ? `- 辞書: ${word.definitionJa}` : ""}
-
-## 出力要件
-- 3〜5文程度、丁寧な日本語
-- この節の文脈でなぜこの語形・意味が選ばれているか
-- 神学的内容は節の範囲内に留める
-- 箇条書き不可、段落1つ`;
+export function buildContextPrompt(_payload: ContextApiRequest): string {
+  return "この節におけるこの語の文脈上の用法を、初学者向けに3〜5文で解説してください。";
 }
 
 export function verseGreekFromWords(words: VerseWord[]): string {

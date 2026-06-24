@@ -16,6 +16,7 @@ import {
   saveLastLocation,
 } from "@/lib/verse-data";
 import { normalizeVerseWords } from "@/lib/verse-text";
+import { buildContextRequest } from "@/lib/context-llm";
 import { fetchMnspBook, type MnspBookData } from "@/lib/translations";
 import type { BookData, BookId, CorpusId, PersonalTranslation, VerseWord } from "@/types";
 import {
@@ -23,14 +24,14 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { PaneSide } from "./PaneSide";
 import { PaneLexicon } from "./PaneLexicon";
 import { PaneNav } from "./PaneNav";
-import { PaneNotes } from "./PaneNotes";
 import { PaneVerse } from "./PaneVerse";
 import { DataBackupMenu } from "./DataBackupMenu";
 import { AuthButton } from "./AuthButton";
 
-type PaneKind = "nav" | "verse" | "lexicon" | "notes";
+type PaneKind = "nav" | "verse" | "lexicon" | "side";
 
 function PaneFrame({
   children,
@@ -215,6 +216,17 @@ export function AppShell() {
     />
   );
 
+  const contextRequest =
+    selectedWord
+      ? buildContextRequest(
+          reference,
+          words,
+          selectedWord,
+          lexiconEntry,
+          corpus,
+        )
+      : null;
+
   const lexiconPane = (
     <PaneLexicon
       corpus={corpus}
@@ -228,8 +240,10 @@ export function AppShell() {
     />
   );
 
-  const notesPane = (
-    <PaneNotes
+  const sidePane = (
+    <PaneSide
+      contextRequest={contextRequest}
+      reference={reference}
       bookId={bookId}
       bookName={book.name}
       chapter={chapter}
@@ -312,10 +326,10 @@ export function AppShell() {
             className="min-w-0"
             collapsible={false}
             defaultSize="26%"
-            id="notes"
-            minSize="15%"
+            id="side"
+            minSize="18%"
           >
-            <PaneFrame pane="notes">{notesPane}</PaneFrame>
+            <PaneFrame pane="side">{sidePane}</PaneFrame>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
@@ -392,9 +406,11 @@ export function AppShell() {
           />
         </div>
 
-        <div className="pane-surface" data-pane="notes">
-          <PaneNotes
+        <div className="pane-surface border-b border-border" data-pane="side">
+          <PaneSide
             stacked
+            contextRequest={contextRequest}
+            reference={reference}
             bookId={bookId}
             bookName={book.name}
             chapter={chapter}
