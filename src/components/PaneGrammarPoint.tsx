@@ -54,9 +54,6 @@ export function PaneGrammarPoint({
 }: Props) {
   const { status } = useSession();
   const isLoggedIn = status === "authenticated";
-  const hasWord = Boolean(contextRequest.word);
-  const corpus = contextRequest.corpus ?? "nt";
-  const langLabel = corpus === "ot" ? "ヘブル語" : "ギリシャ語";
 
   const sessionKey = useMemo(() => chatSessionKey(contextRequest), [contextRequest]);
 
@@ -210,24 +207,10 @@ export function PaneGrammarPoint({
   const showKeyForm = useOwnKey && (editingKey || (!hasLlmApiKey() && !serverKeyAvailable));
   const hasUserKey = hasLlmApiKey();
 
-  const idleHint = hasWord ? (
-    <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-      <p>
-        <span className="font-medium text-foreground">{contextRequest.word!.greek}</span>
-        {contextRequest.word!.glossJa && (
-          <span className="text-muted-foreground"> — {contextRequest.word!.glossJa}</span>
-        )}
-      </p>
-      <p>文法・構文、または日本語↔{langLabel}の語彙について、下の入力欄から質問できます。</p>
-    </div>
-  ) : (
-    <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
-      <p>原文の語をクリックすると、その語について文法・ニュアンスを質問できます。</p>
-      <p>
-        日本語↔{langLabel}の語彙（例:「愛は{langLabel}で？」）や Gbible の使い方も、こちらでお答えします。
-      </p>
-      <p className="text-xs">ご質問をどうぞ（下の入力欄）。</p>
-    </div>
+  const idleHint = (
+    <p className="text-sm leading-relaxed text-muted-foreground">
+      使い方などご質問をどうぞ。
+    </p>
   );
 
   return (
@@ -318,43 +301,18 @@ export function PaneGrammarPoint({
               </div>
             )}
 
-            {configured && !showKeyForm && (serverKeyAvailable || hasUserKey) && (
+            {configured && !showKeyForm && serverKeyAvailable && !hasUserKey && (
               <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                {serverKeyAvailable && !hasUserKey && (
-                  <button
-                    type="button"
-                    className="underline-offset-2 hover:text-foreground hover:underline"
-                    onClick={() => {
-                      setUseOwnKey(true);
-                      setEditingKey(true);
-                    }}
-                  >
-                    独自のキーを使う
-                  </button>
-                )}
-                {hasUserKey && (
-                  <>
-                    <button
-                      type="button"
-                      className="underline-offset-2 hover:text-foreground hover:underline"
-                      onClick={() => {
-                        setUseOwnKey(true);
-                        setEditingKey(true);
-                        setDraftKey("");
-                      }}
-                    >
-                      変更
-                    </button>
-                    <span>·</span>
-                    <button
-                      type="button"
-                      className="text-red-500 underline-offset-2 hover:text-red-700 hover:underline"
-                      onClick={handleClearKey}
-                    >
-                      削除
-                    </button>
-                  </>
-                )}
+                <button
+                  type="button"
+                  className="underline-offset-2 hover:text-foreground hover:underline"
+                  onClick={() => {
+                    setUseOwnKey(true);
+                    setEditingKey(true);
+                  }}
+                >
+                  独自のキーを使う
+                </button>
               </div>
             )}
 
@@ -410,11 +368,6 @@ export function PaneGrammarPoint({
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={
-                  hasWord
-                    ? "文法・語彙について質問…"
-                    : `ご質問をどうぞ…（例: 愛は${langLabel}で？）`
-                }
                 disabled={!configured || loading}
                 className="flex-1"
               />
