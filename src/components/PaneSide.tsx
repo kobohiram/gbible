@@ -24,7 +24,7 @@ function loadContextCollapsed(): boolean {
 }
 
 type Props = {
-  contextRequest: ContextApiRequest | null;
+  contextRequest: ContextApiRequest;
   reference: string;
   bookId: BookId;
   bookName: string;

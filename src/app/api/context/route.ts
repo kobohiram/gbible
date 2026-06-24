@@ -1,5 +1,4 @@
 import {
-  buildContextPrompt,
   buildContextSystemPrompt,
   type ChatMessage,
   type ContextApiRequest,
@@ -25,21 +24,21 @@ export async function POST(request: Request) {
     return Response.json({ error: "リクエストが不正です。" }, { status: 400 });
   }
 
-  if (!payload.reference || !payload.word?.greek) {
-    return Response.json({ error: "節または語の情報が不足しています。" }, { status: 400 });
+  if (!payload.reference) {
+    return Response.json({ error: "節の情報が不足しています。" }, { status: 400 });
   }
 
   const history: ChatMessage[] = payload.messages ?? [];
+  if (history.length === 0) {
+    return Response.json({ error: "メッセージが必要です。" }, { status: 400 });
+  }
+
   const openAiMessages: { role: "system" | "user" | "assistant"; content: string }[] = [
     { role: "system", content: buildContextSystemPrompt(payload) },
   ];
 
-  if (history.length === 0) {
-    openAiMessages.push({ role: "user", content: buildContextPrompt(payload) });
-  } else {
-    for (const msg of history) {
-      openAiMessages.push({ role: msg.role, content: msg.content });
-    }
+  for (const msg of history) {
+    openAiMessages.push({ role: msg.role, content: msg.content });
   }
 
   try {
@@ -52,7 +51,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: MODEL,
         messages: openAiMessages,
-        max_tokens: history.length === 0 ? 400 : 600,
+        max_tokens: history.length === 1 ? 400 : 600,
         temperature: 0.4,
       }),
     });

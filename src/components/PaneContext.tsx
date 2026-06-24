@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
-import type { ChatMessage, ContextApiRequest } from "@/lib/context-llm";
+import { WORD_NUANCE_REQUEST, type ChatMessage, type ContextApiRequest } from "@/lib/context-llm";
 import {
   clearLlmApiKey,
   getLlmApiKey,
@@ -18,7 +18,7 @@ import { Send, ChevronDown } from "lucide-react";
 const OPENAI_API_KEYS_URL = "https://platform.openai.com/api-keys";
 
 type Props = {
-  contextRequest: ContextApiRequest | null;
+  contextRequest: ContextApiRequest;
   reference: string;
   stacked?: boolean;
   embedded?: boolean;
@@ -26,8 +26,11 @@ type Props = {
   onCollapsedChange?: (collapsed: boolean) => void;
 };
 
-function chatKey(request: ContextApiRequest): string {
-  return `${request.word.id}:${request.reference}`;
+function chatSessionKey(request: ContextApiRequest): string {
+  if (request.word) {
+    return `word:${request.word.id}:${request.reference}`;
+  }
+  return `general:${request.reference}`;
 }
 
 export function PaneContext({
@@ -40,6 +43,9 @@ export function PaneContext({
 }: Props) {
   const { status } = useSession();
   const isLoggedIn = status === "authenticated";
+  const hasWord = Boolean(contextRequest.word);
+
+  const sessionKey = useMemo(() => chatSessionKey(contextRequest), [contextRequest]);
 
   const [configured, setConfigured] = useState(false);
   const [editingKey, setEditingKey] = useState(false);
@@ -69,6 +75,23 @@ export function PaneContext({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
+  useEffect(() => {
+    if (!isLoggedIn || !configured) {
+      setMessages([]);
+      setChatError(null);
+      setLoading(false);
+      activeKeyRef.current = null;
+      return;
+    }
+
+    activeKeyRef.current = sessionKey;
+    setMessages([]);
+    setChatError(null);
+    setInput("");
+    abortRef.current?.abort();
+    setLoading(false);
+  }, [isLoggedIn, configured, sessionKey]);
+
   const callChat = useCallback(
     async (request: ContextApiRequest, history: ChatMessage[], signal: AbortSignal) => {
       const apiKey = getLlmApiKey();
@@ -93,71 +116,48 @@ export function PaneContext({
     [],
   );
 
-  useEffect(() => {
-    if (!isLoggedIn || !configured || !contextRequest) {
-      setMessages([]);
-      setChatError(null);
-      setLoading(false);
-      activeKeyRef.current = null;
-      return;
-    }
-
-    const key = chatKey(contextRequest);
-    activeKeyRef.current = key;
-    setMessages([]);
+  async function sendMessages(history: ChatMessage[]) {
     setChatError(null);
-    setInput("");
+    setLoading(true);
 
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
+    const key = sessionKey;
 
-    setLoading(true);
-    void callChat(contextRequest, [], controller.signal)
-      .then((content) => {
-        if (activeKeyRef.current !== key) return;
-        if (content) {
-          setMessages([{ role: "assistant", content }]);
-        }
-      })
-      .catch((err) => {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        if (activeKeyRef.current !== key) return;
-        setChatError(err instanceof Error ? err.message : "文脈補足の取得に失敗しました。");
-      })
-      .finally(() => {
-        if (activeKeyRef.current === key && !controller.signal.aborted) {
-          setLoading(false);
-        }
-      });
-
-    return () => controller.abort();
-  }, [isLoggedIn, configured, contextRequest, callChat]);
+    try {
+      const content = await callChat(contextRequest, history, controller.signal);
+      if (activeKeyRef.current !== key) return;
+      setMessages((prev) => [...prev, { role: "assistant", content }]);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      if (activeKeyRef.current !== key) return;
+      setChatError(err instanceof Error ? err.message : "送信に失敗しました。");
+      setMessages(history.slice(0, -1));
+    } finally {
+      if (activeKeyRef.current === key && !controller.signal.aborted) {
+        setLoading(false);
+      }
+    }
+  }
 
   async function handleSend() {
-    if (!contextRequest || !input.trim() || loading) return;
+    if (!input.trim() || loading) return;
 
     const userMessage: ChatMessage = { role: "user", content: input.trim() };
     const nextHistory = [...messages, userMessage];
     setMessages(nextHistory);
     setInput("");
-    setChatError(null);
-    setLoading(true);
+    await sendMessages(nextHistory);
+  }
 
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+  async function handleGenerateNuances() {
+    if (!hasWord || loading) return;
 
-    try {
-      const content = await callChat(contextRequest, nextHistory, controller.signal);
-      setMessages((prev) => [...prev, { role: "assistant", content }]);
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return;
-      setChatError(err instanceof Error ? err.message : "送信に失敗しました。");
-      setMessages((prev) => prev.slice(0, -1));
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-    }
+    const userMessage: ChatMessage = { role: "user", content: WORD_NUANCE_REQUEST };
+    const nextHistory = [...messages, userMessage];
+    setMessages(nextHistory);
+    await sendMessages(nextHistory);
   }
 
   function handleSaveKey() {
@@ -184,6 +184,38 @@ export function PaneContext({
     setKeyError(null);
     refreshKeyState();
   }
+
+  const idleHint = hasWord ? (
+    <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+      <p>
+        <span className="font-medium text-foreground">{contextRequest.word!.greek}</span>
+        {contextRequest.word!.glossJa && (
+          <span className="text-muted-foreground"> — {contextRequest.word!.glossJa}</span>
+        )}
+      </p>
+      <p>この語の文法・時制・構文のニュアンスについて、AI に質問できます。</p>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        disabled={!configured || loading}
+        onClick={() => void handleGenerateNuances()}
+      >
+        この語のニュアンスを解説する
+      </Button>
+      <p className="text-xs">または下の入力欄にご質問をどうぞ。</p>
+    </div>
+  ) : (
+    <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+      <p>
+        原文の語をクリックすると、その語について文法・ニュアンスを質問できます。
+      </p>
+      <p>
+        Gbible の使い方（画面の見方、メモの保存、API キーの設定など）についても、こちらでお答えします。
+      </p>
+      <p className="text-xs">ご質問をどうぞ（下の入力欄）。例:「使い方を教えて」「メモの保存方法は？」</p>
+    </div>
+  );
 
   return (
     <div className={embedded && !collapsed ? "flex h-full min-h-0 flex-col" : "flex shrink-0 flex-col"}>
@@ -212,7 +244,7 @@ export function PaneContext({
         {!isLoggedIn ? (
           <div className="rounded-lg border border-dashed border-border bg-card/80 p-4 text-left">
             <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-              原文の語を選ぶと、その節の文法・構文・時制のニュアンスを AI が解説します。日本語訳だけでは分からない原文の含意も、チャットで深掘りできます。利用には Google ログインと OpenAI API キー（ご自身のもの）が必要です。
+              原文の語を選んで文法・構文のニュアンスを質問したり、Gbible の使い方を聞いたりできます。利用には Google ログインと OpenAI API キー（ご自身のもの）が必要です。
             </p>
             <button
               type="button"
@@ -297,77 +329,67 @@ export function PaneContext({
               </div>
             )}
 
-            {!contextRequest ? (
-              <p className="text-sm text-muted-foreground">
-                原文の単語をクリックすると、文法・時制・構文のニュアンスについて AI と対話できます。
-              </p>
-            ) : (
-              <>
+            <div
+              ref={scrollRef}
+              className={
+                embedded
+                  ? "mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
+                  : stacked
+                    ? "mb-3 max-h-64 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
+                    : "mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
+              }
+            >
+              {messages.length === 0 && idleHint}
+              {messages.map((msg, i) => (
                 <div
-                  ref={scrollRef}
+                  key={i}
                   className={
-                    embedded
-                      ? "mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
-                      : stacked
-                        ? "mb-3 max-h-64 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
-                        : "mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
+                    msg.role === "user"
+                      ? "ml-6 rounded-lg bg-primary/10 px-3 py-2 text-sm leading-relaxed text-foreground"
+                      : "mr-2 rounded-lg bg-muted/60 px-3 py-2 text-sm leading-relaxed text-foreground"
                   }
                 >
-                  {messages.length === 0 && loading && (
-                    <p className="text-sm text-muted-foreground">文脈補足を生成中…</p>
+                  {msg.role === "user" && (
+                    <span className="mb-1 block text-[10px] font-semibold text-primary">あなた</span>
                   )}
-                  {messages.map((msg, i) => (
-                    <div
-                      key={i}
-                      className={
-                        msg.role === "user"
-                          ? "ml-6 rounded-lg bg-primary/10 px-3 py-2 text-sm leading-relaxed text-foreground"
-                          : "mr-2 rounded-lg bg-muted/60 px-3 py-2 text-sm leading-relaxed text-foreground"
-                      }
-                    >
-                      {msg.role === "user" && (
-                        <span className="mb-1 block text-[10px] font-semibold text-primary">あなた</span>
-                      )}
-                      {msg.role === "assistant" && (
-                        <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">AI</span>
-                      )}
-                      {msg.content}
-                    </div>
-                  ))}
-                  {loading && messages.length > 0 && (
-                    <p className="text-sm text-muted-foreground">考え中…</p>
+                  {msg.role === "assistant" && (
+                    <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">AI</span>
                   )}
+                  {msg.content}
                 </div>
+              ))}
+              {loading && (
+                <p className="text-sm text-muted-foreground">考え中…</p>
+              )}
+            </div>
 
-                {chatError && (
-                  <p className="mb-2 shrink-0 text-sm text-red-600">{chatError}</p>
-                )}
-
-                <form
-                  className="flex shrink-0 gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void handleSend();
-                  }}
-                >
-                  <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="この語について質問…"
-                    disabled={!configured || loading}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="submit"
-                    size="icon"
-                    disabled={!configured || loading || !input.trim()}
-                    aria-label="送信"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
-              </>
+            {chatError && (
+              <p className="mb-2 shrink-0 text-sm text-red-600">{chatError}</p>
             )}
+
+            <form
+              className="flex shrink-0 gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleSend();
+              }}
+            >
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={hasWord ? "この語について質問…" : "ご質問をどうぞ…"}
+                disabled={!configured || loading}
+                className="flex-1"
+              />
+              <Button
+                type="submit"
+                size="icon"
+                disabled={!configured || loading || !input.trim()}
+                aria-label="送信"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
           </>
         )}
       </div>

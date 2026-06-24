@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { ChevronDown } from "lucide-react";
 import {
@@ -16,7 +16,7 @@ import {
   saveLastLocation,
 } from "@/lib/verse-data";
 import { normalizeVerseWords } from "@/lib/verse-text";
-import { buildContextRequest } from "@/lib/context-llm";
+import { buildBaseContextRequest, buildContextRequest } from "@/lib/context-llm";
 import { fetchMnspBook, type MnspBookData } from "@/lib/translations";
 import type { BookData, BookId, CorpusId, PersonalTranslation, VerseWord } from "@/types";
 import {
@@ -216,16 +216,19 @@ export function AppShell() {
     />
   );
 
-  const contextRequest =
-    selectedWord
-      ? buildContextRequest(
-          reference,
-          words,
-          selectedWord,
-          lexiconEntry,
-          corpus,
-        )
-      : null;
+  const contextRequest = useMemo(
+    () =>
+      selectedWord
+        ? buildContextRequest(
+            reference,
+            words,
+            selectedWord,
+            lexiconEntry,
+            corpus,
+          )
+        : buildBaseContextRequest(reference, words, corpus),
+    [selectedWord, reference, words, lexiconEntry, corpus],
+  );
 
   const lexiconPane = (
     <PaneLexicon
