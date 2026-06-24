@@ -145,14 +145,18 @@ function composeWithPrefixes(word: VerseWord, core: string): string {
   return unique.join("・");
 }
 
-/** 2ペイン原文：TBESH 訳語（pane-gloss.json）のみ。辞書本文は使わない */
+/** 2ペイン原文：TBESH 訳語（pane-gloss.json）を優先し、なければ word.glossJa にフォールバック */
 export function resolvePaneGloss(
   word: VerseWord,
   paneGloss?: string | null,
 ): string {
   const core = paneGloss?.trim() ?? "";
-  if (!core) return "";
-  return composeWithPrefixes(word, core);
+  if (core) return composeWithPrefixes(word, core);
+  // フォールバック: word.glossJa の最初のセグメント
+  const fallback = firstSegment(word.glossJa?.trim() ?? "");
+  if (!fallback) return "";
+  const trimmed = fallback.length <= MAX_PANE_LEN ? fallback : fallback.slice(0, MAX_PANE_LEN);
+  return composeWithPrefixes(word, trimmed);
 }
 
 /** 3ペイン「意味（この語）」向けの短い訳語 */

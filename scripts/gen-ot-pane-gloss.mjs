@@ -8,7 +8,7 @@
  *   node scripts/gen-ot-pane-gloss.mjs --bootstrap   # キャッシュのみで出力（API不要）
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -18,7 +18,6 @@ const DATA_DIR = join(ROOT, 'public', 'data', 'ot');
 const CACHE_DIR = join(ROOT, '.ot-cache');
 const OUTPUT = join(DATA_DIR, 'pane-gloss.json');
 const CACHE_FILE = join(CACHE_DIR, 'pane-gloss-ja.json');
-const GENESIS_JSON = join(DATA_DIR, 'genesis.json');
 
 const TBESH_URL =
   'https://raw.githubusercontent.com/STEPBible/STEPBible-Data/master/Lexicons/TBESH%20-%20Translators%20Brief%20lexicon%20of%20Extended%20Strongs%20for%20Hebrew%20-%20STEPBible.org%20CC%20BY.txt';
@@ -303,7 +302,8 @@ async function callClaude(batch, apiKey) {
 
   const system =
     'あなたは TBESH 英語 brief gloss を日本語に訳す翻訳者です。' +
-    '辞書解説は書きません。gloss の内容だけを短く日本語にします。';
+    '辞書解説は書きません。gloss の内容だけを短く日本語にします。' +
+    '重要: 英語をそのままカタカナや英語+するにしてはいけません。必ず適切な日本語訳を使ってください。';
 
   const user = `以下は TBESH の gloss 列です。各行 JSON の gloss を日本語に訳してください。
 
@@ -311,7 +311,8 @@ async function callClaude(batch, apiKey) {
 - gloss の意味だけを訳す（語源・説明は不要）
 - 固有名詞（人名・地名）は日本語聖書のカタカナ（Esau→エサウ、Paddan→パダン、Aram→アラム）
 - [Obj.] は（対格）
-- to X は「Xする」など短い動詞訳
+- 動詞は適切な日本語動詞で（例: to go→行く、to take→取る、to ascend→上る、to build→建てる、to fear→恐れる）
+- 「XXXする」形で XXX が英語のままは禁止（例: "ascendする" は不可 → "上る" が正しい）
 - 最大12文字程度、簡潔に
 
 入力:
@@ -348,12 +349,20 @@ ${input}
   throw new Error('Claude API: リトライ上限');
 }
 
-function strongsFromGenesis() {
-  const data = JSON.parse(readFileSync(GENESIS_JSON, 'utf-8'));
+function strongsFromAllBooks() {
   const set = new Set();
-  for (const wordList of Object.values(data.words ?? {})) {
-    for (const w of wordList) {
-      if (w.strongs && w.strongs !== 'H0') set.add(w.strongs);
+  for (const file of readdirSync(DATA_DIR)) {
+    if (!file.endsWith('.json') || file === 'pane-gloss.json' || file === 'lexicon.json') continue;
+    try {
+      const data = JSON.parse(readFileSync(join(DATA_DIR, file), 'utf-8'));
+      if (!data.words) continue;
+      for (const wordList of Object.values(data.words)) {
+        for (const w of wordList) {
+          if (w.strongs && w.strongs !== 'H0') set.add(w.strongs);
+        }
+      }
+    } catch {
+      // skip
     }
   }
   return set;
@@ -368,25 +377,33 @@ console.log('=== Gbible 2ペイン訳語生成 (TBESH gloss → pane-gloss.json)
 
 const tbeshText = await fetchCached(TBESH_URL, 'tbesh.txt');
 const tbeshAll = parseTBESHAll(tbeshText);
-const strongsSet = strongsFromGenesis();
-console.log(`  創世記出現語: ${strongsSet.size} / TBESH: ${tbeshAll.size}`);
+const strongsSet = strongsFromAllBooks();
+console.log(`  全OT書出現語: ${strongsSet.size} / TBESH: ${tbeshAll.size}`);
 
 let cache = {};
 if (existsSync(CACHE_FILE)) {
   cache = JSON.parse(readFileSync(CACHE_FILE, 'utf-8'));
 }
 
+// 英語のままのエントリを検出（例: "walkする"、"takeする"）
+function looksEnglish(text) {
+  if (!text) return false;
+  return /^[a-zA-Z]/.test(text) || /[a-zA-Z]{3,}する$/.test(text);
+}
+
 const pending = [];
 const result = { ...cache };
 
 for (const strongs of strongsSet) {
-  if (useCache && result[strongs]) continue;
+  const existing = result[strongs];
+  // 既存の日本語エントリはスキップ（英語っぽい場合は再翻訳）
+  if (existing && !looksEnglish(existing)) continue;
   const entries = tbeshAll.get(strongs);
   const entry = pickTbeshEntry(entries);
   if (!entry) continue;
 
   const local = translateGlossLocal(entry);
-  if (local) {
+  if (local && !looksEnglish(local)) {
     result[strongs] = local;
     continue;
   }
