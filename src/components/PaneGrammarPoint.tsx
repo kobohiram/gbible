@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
-import { WORD_NUANCE_REQUEST, type ChatMessage, type ContextApiRequest } from "@/lib/context-llm";
+import type { ChatMessage, ContextApiRequest } from "@/lib/context-llm";
 import {
   clearLlmApiKey,
   getLlmApiKey,
@@ -175,15 +175,6 @@ export function PaneGrammarPoint({
     await sendMessages(nextHistory);
   }
 
-  async function handleGenerateNuances() {
-    if (!hasWord || loading) return;
-
-    const userMessage: ChatMessage = { role: "user", content: WORD_NUANCE_REQUEST };
-    const nextHistory = [...messages, userMessage];
-    setMessages(nextHistory);
-    await sendMessages(nextHistory);
-  }
-
   function handleSaveKey() {
     setKeyError(null);
     const trimmed = draftKey.trim();
@@ -220,24 +211,14 @@ export function PaneGrammarPoint({
   const hasUserKey = hasLlmApiKey();
 
   const idleHint = hasWord ? (
-    <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+    <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
       <p>
         <span className="font-medium text-foreground">{contextRequest.word!.greek}</span>
         {contextRequest.word!.glossJa && (
           <span className="text-muted-foreground"> — {contextRequest.word!.glossJa}</span>
         )}
       </p>
-      <p>文法・時制・構文、または日本語↔{langLabel}の語彙について質問できます。</p>
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        disabled={!configured || loading}
-        onClick={() => void handleGenerateNuances()}
-      >
-        ニュアンスを解説
-      </Button>
-      <p className="text-xs">または下の入力欄にご質問をどうぞ。</p>
+      <p>文法・構文、または日本語↔{langLabel}の語彙について、下の入力欄から質問できます。</p>
     </div>
   ) : (
     <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
