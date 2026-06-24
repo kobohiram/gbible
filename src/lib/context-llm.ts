@@ -1,4 +1,9 @@
-import { expandMorphologyJa } from "@/lib/morphology";
+import {
+  expandMorphologyJa,
+  expandMorphologyJaVerbose,
+  explainNounMorphologyJa,
+  explainVerbMorphologyJa,
+} from "@/lib/morphology";
 import { getWordText } from "@/lib/verse-text";
 import type { CorpusId, LexiconEntry, VerseWord } from "@/types";
 
@@ -30,11 +35,20 @@ export const WORD_NUANCE_REQUEST =
 
 const GBIBLE_BOT_GRAMMAR = `【Gbible bot の解説方針】
 - 聖書ギリシャ語（旧約ならヘブル語）の文法から答える。辞書的意味の繰り返しや日本語訳の言い換えだけで終わらない
+- 動詞は必ず「法」（直説法・命令法・接続法など）を先に確認してから時制を説明する。命令法・接続法・不定詞・分詞に、直説法の「過去・現在」の説明をそのまま当てはめない
 - 動詞は時制（アオリスト／未完了／完璧／未来など）が持つニュアンスを最優先で丁寧に説明する
 - 構文・句構造・慣用表現（属格構文、不定詞、前置詞句、ヘブライズムなど）を大事にする
 - 初学者のために文法用語にはやさしい補足を添え、丁寧に説明する
+- 下記「形態論データ（Gbible 解析）」を最優先の根拠とする。一般論で上書きしない
 - 断定的な言い方（「〜である」「必ず〜」）は避け、解釈は「〜かもしれません」「〜とも考えられます」の形にする
 - 神学論争になりうる話題（救恩論・予定論・礼拝論・教派対立など）には踏み込まず、節の文法・語法の範囲にとどめる`;
+
+const MOOD_TENSE_RULES = `【法と時制の基本（よくある誤りを避ける）】
+- 命令法アオリスト（例: ἑτοιμάσατε）: 過去の事実ではない。「一度／全体として〜せよ」。現在命令との対比が重要
+- 命令法現在: 「継続的・習慣的に〜せよ」の含意がありうる
+- 直説法アオリスト: 叙事の基本。点過去・完結・単純過去の事実（文脈で開始・全体・結果のニュアンス）
+- 直説法未完了: 過去の継続・反復・背景
+- 直説法現在: 現在の状態・習慣、叙事文では歴史的現在の可能性も`;
 
 const COMPACT_STYLE = `【表示形式（必ず守る）】
 - 回答は画面右端の狭いペイン用。全体で150〜250字を目安（長くても350字以内）
@@ -101,6 +115,51 @@ export function buildBaseContextRequest(
   };
 }
 
+function buildMorphGrounding(word: ContextWordInfo): string {
+  const verb = explainVerbMorphologyJa(word.morph, {
+    greek: word.greek,
+    lemma: word.lemma,
+    strongs: word.strongs,
+  });
+
+  if (verb) {
+    const lines = [
+      "【形態論データ（Gbible 解析・辞書ペインと同じ）】",
+      `コード: ${word.morph}（${expandMorphologyJaVerbose(word.morph)}）`,
+      `時制: ${verb.tense.label} — ${verb.tense.detail}`,
+      `法: ${verb.mood.label} — ${verb.mood.detail}`,
+      `態: ${verb.voice.label} — ${verb.voice.detail}`,
+    ];
+    if (verb.personNumber.label) {
+      lines.push(`人称・数: ${verb.personNumber.label}`);
+    }
+    if (verb.participleForm?.label) {
+      lines.push(`分詞の格・性・数: ${verb.participleForm.label}`);
+    }
+    for (const note of verb.notes) {
+      lines.push(`補足: ${note}`);
+    }
+    return lines.join("\n");
+  }
+
+  const noun = explainNounMorphologyJa(word.morph);
+  if (noun) {
+    const lines = [
+      "【形態論データ（Gbible 解析・辞書ペインと同じ）】",
+      `コード: ${word.morph}（${expandMorphologyJaVerbose(word.morph)}）`,
+      `品詞: ${noun.pos.label} — ${noun.pos.detail}`,
+      `格: ${noun.grammaticalCase.label} — ${noun.grammaticalCase.detail}`,
+      `性・数: ${noun.gender.label}・${noun.number.label}`,
+    ];
+    for (const note of noun.notes) {
+      lines.push(`補足: ${note}`);
+    }
+    return lines.join("\n");
+  }
+
+  return `【形態論データ】\nコード: ${word.morph}（${expandMorphologyJaVerbose(word.morph)}）`;
+}
+
 export function buildContextSystemPrompt(payload: ContextApiRequest): string {
   const { reference, verseGreek, word } = payload;
   const corpus = payload.corpus ?? "nt";
@@ -117,6 +176,8 @@ ${verseGreek ? `節の原文: ${verseGreek}` : ""}
 
 ${GBIBLE_BOT_GRAMMAR}
 
+${MOOD_TENSE_RULES}
+
 ${SITE_USAGE_GUIDE}
 
 ${VOCAB_TRANSLATION_GUIDE}
@@ -128,6 +189,7 @@ ${COMPACT_STYLE}`;
 
   const morphJa = expandMorphologyJa(word.morph);
   const isVerb = /^V-/.test(word.morph);
+  const morphGrounding = buildMorphGrounding(word);
 
   return `あなたは Gbible bot です。${lang}聖書の文法に基づいて、初学者に丁寧に解説します。サイトの使い方について聞かれた場合も案内できます。
 
@@ -141,7 +203,11 @@ ${word.lemma ? `見出し語: ${word.lemma}` : ""}
 文法: ${word.morph}（${morphJa}）
 ${word.definitionJa ? `辞書: ${word.definitionJa}` : ""}
 
+${morphGrounding}
+
 ${GBIBLE_BOT_GRAMMAR}
+
+${MOOD_TENSE_RULES}
 
 【この語の解説で優先すること（要点を絞る）】
 1. ${isVerb ? "動詞の時制・法・態がこの節で持つニュアンス" : "格・語形の文法的働き"}
@@ -168,7 +234,7 @@ export function buildContextPrompt(payload: ContextApiRequest): string {
     return `この節について、${lang}の文法から、初学者向けに要点だけ解説してください。`;
   }
   const isVerb = /^V-/.test(payload.word.morph);
-  return `この節におけるこの語について、${lang}の文法から2〜3文（または箇条書き2〜3行）で要点だけ解説してください。${isVerb ? "動詞の時制のニュアンスを最優先で、" : "構文・慣用句があれば、"}初学者向けに丁寧に。断定と神学論争は避けてください。`;
+  return `この節におけるこの語について、${lang}の文法から2〜3文（または箇条書き2〜3行）で要点だけ解説してください。${isVerb ? "まず法（命令法か直説法か等）を確認し、そのうえで時制のニュアンスを述べてください。" : "構文・慣用句があれば、"}初学者向けに丁寧に。断定と神学論争は避けてください。`;
 }
 
 export function verseGreekFromWords(words: VerseWord[]): string {
