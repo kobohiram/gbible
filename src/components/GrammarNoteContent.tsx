@@ -18,6 +18,7 @@ export function GrammarNoteContent({ content }: { content: string }) {
   const nodes: ReactNode[] = [];
   let paragraphLines: string[] = [];
   let listItems: string[] = [];
+  let listOrdered = false;
   let key = 0;
 
   const flushParagraph = () => {
@@ -33,14 +34,17 @@ export function GrammarNoteContent({ content }: { content: string }) {
 
   const flushList = () => {
     if (listItems.length === 0) return;
+    const ListTag = listOrdered ? "ol" : "ul";
+    const listClass = listOrdered ? "list-decimal" : "list-disc";
     nodes.push(
-      <ul key={key++} className="list-disc space-y-1 pl-4">
+      <ListTag key={key++} className={`${listClass} space-y-1 pl-4`}>
         {listItems.map((item, i) => (
           <li key={i}>{parseInline(item)}</li>
         ))}
-      </ul>,
+      </ListTag>,
     );
     listItems = [];
+    listOrdered = false;
   };
 
   for (const line of lines) {
@@ -81,9 +85,14 @@ export function GrammarNoteContent({ content }: { content: string }) {
       );
       continue;
     }
-    if (/^[-*]\s+/.test(trimmed)) {
+    if (/^[-*]\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed)) {
       flushParagraph();
-      listItems.push(trimmed.replace(/^[-*]\s+/, ""));
+      const ordered = /^\d+\.\s+/.test(trimmed);
+      if (listItems.length > 0 && listOrdered !== ordered) {
+        flushList();
+      }
+      listOrdered = ordered;
+      listItems.push(trimmed.replace(/^[-*]\s+|^\d+\.\s+/, ""));
       continue;
     }
 

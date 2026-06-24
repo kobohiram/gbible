@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GrammarNoteContent } from "./GrammarNoteContent";
 import { Send, ChevronDown } from "lucide-react";
 
 const OPENAI_API_KEYS_URL = "https://platform.openai.com/api-keys";
@@ -355,7 +356,11 @@ export function PaneContext({
                   {msg.role === "assistant" && (
                     <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">AI</span>
                   )}
-                  {msg.content}
+                  {msg.role === "assistant" ? (
+                    <GrammarNoteContent content={msg.content} />
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               ))}
               {loading && (
