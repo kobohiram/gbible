@@ -340,7 +340,7 @@ export function PaneGrammarPoint({
             {configured && !showKeyForm && (
               <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                 <span className="rounded bg-accent/40 px-1.5 py-0.5 font-medium">
-                  {hasUserKey ? "独自 API キー" : "サイト提供の AI"}
+                  Gbible bot
                 </span>
                 {serverKeyAvailable && !hasUserKey && (
                   <button
