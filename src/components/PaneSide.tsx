@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { ContextApiRequest } from "@/lib/context-llm";
 import type { MnspBookData } from "@/lib/translations";
 import type { BookId } from "@/types";
@@ -10,6 +11,17 @@ import {
 } from "@/components/ui/resizable";
 import { PaneContext } from "./PaneContext";
 import { PaneNotes } from "./PaneNotes";
+
+const CONTEXT_COLLAPSED_KEY = "gbible-context-collapsed";
+
+function loadContextCollapsed(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(CONTEXT_COLLAPSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 type Props = {
   contextRequest: ContextApiRequest | null;
@@ -40,10 +52,27 @@ export function PaneSide({
   onSaved,
   stacked,
 }: Props) {
+  const [contextCollapsed, setContextCollapsed] = useState(false);
+
+  useEffect(() => {
+    setContextCollapsed(loadContextCollapsed());
+  }, []);
+
+  function handleContextCollapsedChange(collapsed: boolean) {
+    setContextCollapsed(collapsed);
+    try {
+      localStorage.setItem(CONTEXT_COLLAPSED_KEY, collapsed ? "1" : "0");
+    } catch {
+      // ignore
+    }
+  }
+
   const context = (
     <PaneContext
       embedded={!stacked}
       stacked={stacked}
+      collapsed={contextCollapsed}
+      onCollapsedChange={handleContextCollapsedChange}
       contextRequest={contextRequest}
       reference={reference}
     />
@@ -69,8 +98,17 @@ export function PaneSide({
     return (
       <div className="flex flex-col">
         {context}
-        <div className="border-t border-border" />
+        {!contextCollapsed && <div className="border-t border-border" />}
         {notes}
+      </div>
+    );
+  }
+
+  if (contextCollapsed) {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        {context}
+        <div className="min-h-0 flex-1">{notes}</div>
       </div>
     );
   }

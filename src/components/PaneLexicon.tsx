@@ -4,10 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { BookId, CorpusId, LexiconEntry, VerseWord } from "@/types";
 import { resolveShortGloss } from "@/lib/word-gloss";
 import { getWordScript, getWordText } from "@/lib/verse-text";
-import { verseGreekFromWords } from "@/lib/context-llm";
-import type { GrammarNoteRequest } from "@/app/api/grammar-note/route";
 import { MorphLabels } from "./MorphLabels";
-import { GrammarNoteSection } from "./GrammarNoteSection";
 
 type ConcordanceIndex = Record<string, { total: number; books: Record<string, number> }>;
 type GlobalLexicon = Record<string, LexiconEntry>;
@@ -147,19 +144,6 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
   const surface = word ? getWordText(word) : "";
   const script = word ? getWordScript(word) : "grc";
 
-  const grammarNoteRequest: GrammarNoteRequest | null =
-    corpus === "nt" && word
-      ? {
-          greek: surface,
-          lemma: richEntry?.lemma,
-          morph: word.morph,
-          glossJa: word.glossJa,
-          reference,
-          verseGreek: verseGreekFromWords(verseWords),
-          bookId,
-        }
-      : null;
-
   const concordance = useMemo((): Occurrence[] => {
     if (!word || !allVerseWords) return [];
     const results: Occurrence[] = [];
@@ -275,8 +259,6 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                   </p>
                 </section>
               )}
-
-              {corpus === "nt" && <GrammarNoteSection request={grammarNoteRequest} />}
 
               {concordance.length > 0 && (
                 <section>

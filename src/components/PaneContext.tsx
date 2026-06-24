@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Send } from "lucide-react";
+import { Send, ChevronDown } from "lucide-react";
 
 const OPENAI_API_KEYS_URL = "https://platform.openai.com/api-keys";
 
@@ -22,13 +22,22 @@ type Props = {
   reference: string;
   stacked?: boolean;
   embedded?: boolean;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 };
 
 function chatKey(request: ContextApiRequest): string {
   return `${request.word.id}:${request.reference}`;
 }
 
-export function PaneContext({ contextRequest, reference, stacked, embedded }: Props) {
+export function PaneContext({
+  contextRequest,
+  reference,
+  stacked,
+  embedded,
+  collapsed = false,
+  onCollapsedChange,
+}: Props) {
   const { status } = useSession();
   const isLoggedIn = status === "authenticated";
 
@@ -177,17 +186,33 @@ export function PaneContext({ contextRequest, reference, stacked, embedded }: Pr
   }
 
   return (
-    <div className={embedded ? "flex h-full min-h-0 flex-col" : stacked ? "flex flex-col" : "flex h-full flex-col"}>
+    <div className={embedded && !collapsed ? "flex h-full min-h-0 flex-col" : "flex shrink-0 flex-col"}>
       <header className="pane-header shrink-0 px-4 py-3">
-        <h2 className="pane-header-label">AI 文脈補足</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{reference}</p>
+        <button
+          type="button"
+          onClick={() => onCollapsedChange?.(!collapsed)}
+          className="flex w-full items-center justify-between gap-2 text-left"
+          aria-expanded={!collapsed}
+        >
+          <div className="min-w-0">
+            <h2 className="pane-header-label">AI 文脈補足</h2>
+            {!collapsed && (
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">{reference}</p>
+            )}
+          </div>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${collapsed ? "" : "rotate-180"}`}
+            aria-hidden
+          />
+        </button>
       </header>
 
+      {!collapsed && (
       <div className={embedded ? "flex min-h-0 flex-1 flex-col p-4" : stacked ? "flex flex-col p-4" : "flex min-h-0 flex-1 flex-col p-4"}>
         {!isLoggedIn ? (
           <div className="rounded-lg border border-dashed border-border bg-card/80 p-4 text-left">
             <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-              原文の語を選ぶと、その節の文脈でどう使われているかを AI が解説します。辞書だけでは分かりにくいニュアンスも、チャットで質問しながら調べられます。利用には Google ログインと OpenAI API キー（ご自身のもの）が必要です。
+              原文の語を選ぶと、その節の文法・構文・時制のニュアンスを AI が解説します。日本語訳だけでは分からない原文の含意も、チャットで深掘りできます。利用には Google ログインと OpenAI API キー（ご自身のもの）が必要です。
             </p>
             <button
               type="button"
@@ -274,7 +299,7 @@ export function PaneContext({ contextRequest, reference, stacked, embedded }: Pr
 
             {!contextRequest ? (
               <p className="text-sm text-muted-foreground">
-                原文の単語をクリックすると、文脈について AI と対話できます。
+                原文の単語をクリックすると、文法・時制・構文のニュアンスについて AI と対話できます。
               </p>
             ) : (
               <>
@@ -346,6 +371,7 @@ export function PaneContext({ contextRequest, reference, stacked, embedded }: Pr
           </>
         )}
       </div>
+      )}
     </div>
   );
 }
