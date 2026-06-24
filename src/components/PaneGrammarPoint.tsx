@@ -259,7 +259,7 @@ export function PaneGrammarPoint({
           aria-expanded={!collapsed}
         >
           <div className="min-w-0">
-            <h2 className="pane-header-label">文法のポイント</h2>
+            <h2 className="pane-header-label">Gbible bot</h2>
             {!collapsed && (
               <p className="mt-0.5 truncate text-xs text-muted-foreground">{reference}</p>
             )}
@@ -337,11 +337,8 @@ export function PaneGrammarPoint({
               </div>
             )}
 
-            {configured && !showKeyForm && (
+            {configured && !showKeyForm && (serverKeyAvailable || hasUserKey) && (
               <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                <span className="rounded bg-accent/40 px-1.5 py-0.5 font-medium">
-                  Gbible bot
-                </span>
                 {serverKeyAvailable && !hasUserKey && (
                   <button
                     type="button"
@@ -404,7 +401,7 @@ export function PaneGrammarPoint({
                     <span className="mb-1 block text-[10px] font-semibold text-primary">あなた</span>
                   )}
                   {msg.role === "assistant" && (
-                    <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">AI</span>
+                    <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">Gbible bot</span>
                   )}
                   {msg.role === "assistant" ? (
                     <GrammarNoteContent content={msg.content} />
