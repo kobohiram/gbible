@@ -258,11 +258,11 @@ export function PaneGrammarPoint({
           className="flex w-full items-center justify-between gap-2 text-left"
           aria-expanded={!collapsed}
         >
-          <div className="min-w-0">
-            <h2 className="pane-header-label">Gbible bot</h2>
-            {!collapsed && (
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">{reference}</p>
-            )}
+          <div className="min-w-0 flex-1 truncate">
+            <h2 className="truncate text-sm leading-tight">
+              <span className="pane-header-label normal-case">Gbible bot</span>
+              <span className="font-semibold text-foreground">　{reference}</span>
+            </h2>
           </div>
           <ChevronDown
             className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${collapsed ? "" : "rotate-180"}`}

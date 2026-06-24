@@ -75,6 +75,7 @@ export function PaneSide({
       stacked={stacked}
       bookId={bookId}
       bookName={bookName}
+      reference={reference}
       chapter={chapter}
       verse={verse}
       mnspData={mnspData}

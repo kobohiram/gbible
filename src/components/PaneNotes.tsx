@@ -10,6 +10,7 @@ import { useAutoSave, SaveStatus } from "@/lib/use-auto-save";
 type Props = {
   bookId: BookId;
   bookName: string;
+  reference: string;
   chapter: number;
   verse: number;
   mnspData: MnspBookData | null;
@@ -34,6 +35,7 @@ function timeAgo(iso: string): string {
 export function PaneNotes({
   bookId,
   bookName,
+  reference,
   chapter,
   verse,
   mnspData,
@@ -134,10 +136,10 @@ export function PaneNotes({
   return (
     <div className={embedded ? "flex h-full min-h-0 flex-col" : stacked ? "flex flex-col" : "flex h-full flex-col"}>
       <header className="pane-header px-4 py-3">
-        <h2 className="pane-header-label">メモ</h2>
-        <p className="mt-1 font-bold text-foreground">
-          {bookName} {chapter}:{verse}
-        </p>
+        <h2 className="truncate text-sm leading-tight">
+          <span className="pane-header-label">メモ</span>
+          <span className="font-semibold text-foreground">　{reference}</span>
+        </h2>
       </header>
 
       <div
