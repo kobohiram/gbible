@@ -9,19 +9,10 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { PaneContext } from "./PaneContext";
+import { loadGrammarCollapsed, PaneGrammarPoint } from "./PaneGrammarPoint";
 import { PaneNotes } from "./PaneNotes";
 
-const CONTEXT_COLLAPSED_KEY = "gbible-context-collapsed";
-
-function loadContextCollapsed(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return localStorage.getItem(CONTEXT_COLLAPSED_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
+const GRAMMAR_COLLAPSED_KEY = "gbible-grammar-collapsed";
 
 type Props = {
   contextRequest: ContextApiRequest;
@@ -52,27 +43,27 @@ export function PaneSide({
   onSaved,
   stacked,
 }: Props) {
-  const [contextCollapsed, setContextCollapsed] = useState(false);
+  const [grammarCollapsed, setGrammarCollapsed] = useState(false);
 
   useEffect(() => {
-    setContextCollapsed(loadContextCollapsed());
+    setGrammarCollapsed(loadGrammarCollapsed());
   }, []);
 
-  function handleContextCollapsedChange(collapsed: boolean) {
-    setContextCollapsed(collapsed);
+  function handleGrammarCollapsedChange(collapsed: boolean) {
+    setGrammarCollapsed(collapsed);
     try {
-      localStorage.setItem(CONTEXT_COLLAPSED_KEY, collapsed ? "1" : "0");
+      localStorage.setItem(GRAMMAR_COLLAPSED_KEY, collapsed ? "1" : "0");
     } catch {
       // ignore
     }
   }
 
-  const context = (
-    <PaneContext
+  const grammar = (
+    <PaneGrammarPoint
       embedded={!stacked}
       stacked={stacked}
-      collapsed={contextCollapsed}
-      onCollapsedChange={handleContextCollapsedChange}
+      collapsed={grammarCollapsed}
+      onCollapsedChange={handleGrammarCollapsedChange}
       contextRequest={contextRequest}
       reference={reference}
     />
@@ -97,17 +88,17 @@ export function PaneSide({
   if (stacked) {
     return (
       <div className="flex flex-col">
-        {context}
-        {!contextCollapsed && <div className="border-t border-border" />}
+        {grammar}
+        {!grammarCollapsed && <div className="border-t border-border" />}
         {notes}
       </div>
     );
   }
 
-  if (contextCollapsed) {
+  if (grammarCollapsed) {
     return (
       <div className="flex h-full min-h-0 flex-col">
-        {context}
+        {grammar}
         <div className="min-h-0 flex-1">{notes}</div>
       </div>
     );
@@ -123,10 +114,10 @@ export function PaneSide({
         className="min-h-0"
         collapsible={false}
         defaultSize="48%"
-        id="context"
+        id="grammar"
         minSize="22%"
       >
-        {context}
+        {grammar}
       </ResizablePanel>
 
       <ResizableHandle withHandle />
