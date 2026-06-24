@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ContextApiRequest } from "@/lib/context-llm";
+import type { BibleLocation } from "@/lib/bible-reference";
 import type { MnspBookData } from "@/lib/translations";
 import type { BookId } from "@/types";
 import {
@@ -26,6 +27,7 @@ type Props = {
   savedMemo: string;
   savedMemoIsPublic: boolean;
   onSaved: () => void;
+  onNavigateToVerse?: (location: BibleLocation) => void;
   stacked?: boolean;
 };
 
@@ -41,6 +43,7 @@ export function PaneSide({
   savedMemo,
   savedMemoIsPublic,
   onSaved,
+  onNavigateToVerse,
   stacked,
 }: Props) {
   const [grammarCollapsed, setGrammarCollapsed] = useState(false);
@@ -66,6 +69,8 @@ export function PaneSide({
       onCollapsedChange={handleGrammarCollapsedChange}
       contextRequest={contextRequest}
       reference={reference}
+      contextBookId={bookId}
+      onNavigateToVerse={onNavigateToVerse}
     />
   );
 

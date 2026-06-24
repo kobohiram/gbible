@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import {
   getBook,
   getBooksForCorpus,
+  getCorpus,
   getVerseCount,
 } from "@/data/bible";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/lib/verse-data";
 import { normalizeVerseWords } from "@/lib/verse-text";
 import { buildBaseContextRequest, buildContextRequest } from "@/lib/context-llm";
+import type { BibleLocation } from "@/lib/bible-reference";
 import { fetchMnspBook, type MnspBookData } from "@/lib/translations";
 import type { BookData, BookId, CorpusId, PersonalTranslation, VerseWord } from "@/types";
 import {
@@ -63,6 +65,7 @@ export function AppShell() {
   const [bookData, setBookData] = useState<BookData | null>(null);
   const [mnspData, setMnspData] = useState<MnspBookData | null>(null);
   const mobileLexiconRef = useRef<HTMLDivElement>(null);
+  const mobileVerseRef = useRef<HTMLDivElement>(null);
 
   const books = getBooksForCorpus(corpus);
 
@@ -175,6 +178,27 @@ export function AppShell() {
     }, 50);
   }
 
+  const handleNavigateToVerse = useCallback(
+    (loc: BibleLocation) => {
+      const targetCorpus = getCorpus(loc.bookId);
+      const maxVerse = getVerseCount(loc.bookId, loc.chapter);
+      const verse = maxVerse > 0 ? Math.min(loc.verse, maxVerse) : loc.verse;
+
+      if (targetCorpus !== corpus) {
+        setCorpus(targetCorpus);
+      }
+      setBookId(loc.bookId);
+      setChapter(loc.chapter);
+      setSelectedVerse(verse);
+      setSelectedWord(null);
+      setNavOpen(false);
+      setTimeout(() => {
+        mobileVerseRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    },
+    [corpus],
+  );
+
   const reference = `${book.name} ${chapter}:${selectedVerse}`;
   const currentTranslation = translations.find((t) => t.verse === selectedVerse);
   const savedTranslation = currentTranslation?.translation ?? "";
@@ -256,6 +280,7 @@ export function AppShell() {
       savedMemo={savedMemo}
       savedMemoIsPublic={savedMemoIsPublic}
       onSaved={() => { void refreshTranslations(); }}
+      onNavigateToVerse={handleNavigateToVerse}
     />
   );
 
@@ -376,7 +401,7 @@ export function AppShell() {
           )}
         </div>
 
-        <div className="pane-surface border-b border-border" data-pane="verse">
+        <div ref={mobileVerseRef} className="pane-surface border-b border-border" data-pane="verse">
           <PaneVerse
             stacked
             bookId={bookId}
@@ -423,6 +448,7 @@ export function AppShell() {
             savedMemo={savedMemo}
             savedMemoIsPublic={savedMemoIsPublic}
             onSaved={() => { void refreshTranslations(); }}
+            onNavigateToVerse={handleNavigateToVerse}
           />
         </div>
       </div>

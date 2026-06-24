@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 import type { ChatMessage, ContextApiRequest } from "@/lib/context-llm";
+import type { BibleLocation } from "@/lib/bible-reference";
+import type { BookId } from "@/types";
 import {
   clearLlmApiKey,
   getLlmApiKey,
@@ -26,6 +28,8 @@ type Props = {
   embedded?: boolean;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  contextBookId?: BookId;
+  onNavigateToVerse?: (location: BibleLocation) => void;
 };
 
 function chatSessionKey(request: ContextApiRequest): string {
@@ -51,6 +55,8 @@ export function PaneGrammarPoint({
   embedded,
   collapsed = false,
   onCollapsedChange,
+  contextBookId,
+  onNavigateToVerse,
 }: Props) {
   const { status } = useSession();
   const isLoggedIn = status === "authenticated";
@@ -343,7 +349,11 @@ export function PaneGrammarPoint({
                     <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">Gbible bot</span>
                   )}
                   {msg.role === "assistant" ? (
-                    <GrammarNoteContent content={msg.content} />
+                    <GrammarNoteContent
+                      content={msg.content}
+                      contextBookId={contextBookId}
+                      onNavigateToVerse={onNavigateToVerse}
+                    />
                   ) : (
                     msg.content
                   )}
