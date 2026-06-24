@@ -245,10 +245,32 @@ export function PaneGrammarPoint({
   const hasUserKey = hasLlmApiKey();
   const hasChat = displayItems.some((item) => item.kind === "chat");
 
+  const chatAreaClassName = embedded
+    ? "mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
+    : stacked
+      ? "mb-3 max-h-64 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
+      : "mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3";
+
   const idleHint = (
     <p className="text-sm leading-relaxed text-muted-foreground">
       使い方などご質問をどうぞ。
     </p>
+  );
+
+  const loggedOutHint = (
+    <div className="mr-2 rounded-lg bg-muted/60 px-3 py-2 text-sm leading-relaxed text-foreground">
+      <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">Gbible bot</span>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        ログインするとチャットボットが利用できます。
+      </p>
+      <button
+        type="button"
+        onClick={() => signIn("google")}
+        className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+      >
+        Googleでログイン
+      </button>
+    </div>
   );
 
   return (
@@ -275,22 +297,7 @@ export function PaneGrammarPoint({
 
       {!collapsed && (
       <div className={embedded ? "flex min-h-0 flex-1 flex-col p-4" : stacked ? "flex flex-col p-4" : "flex min-h-0 flex-1 flex-col p-4"}>
-        {!isLoggedIn ? (
-          <div className="rounded-lg border border-dashed border-border bg-card/80 p-4 text-left">
-            <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-              このサイトの使い方や原文の語について文法・語彙を質問できます。利用には Google ログインが必要です。
-            </p>
-            <button
-              type="button"
-              onClick={() => signIn("google")}
-              className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 sm:w-auto"
-            >
-              Googleでログイン
-            </button>
-          </div>
-        ) : (
-          <>
-            {showKeyForm && (
+        {isLoggedIn && showKeyForm && (
               <div className="mb-3 shrink-0 space-y-2 rounded-lg border border-border bg-card/60 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <Label htmlFor="grammar-api-key" className="text-xs font-semibold">
@@ -339,7 +346,7 @@ export function PaneGrammarPoint({
               </div>
             )}
 
-            {configured && !showKeyForm && serverKeyAvailable && !hasUserKey && (
+            {isLoggedIn && configured && !showKeyForm && serverKeyAvailable && !hasUserKey && (
               <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                 <button
                   type="button"
@@ -354,66 +361,63 @@ export function PaneGrammarPoint({
               </div>
             )}
 
-            <div
-              ref={scrollRef}
-              className={
-                embedded
-                  ? "mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
-                  : stacked
-                    ? "mb-3 max-h-64 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
-                    : "mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3"
-              }
-            >
-              {!hasChat && idleHint}
-              {displayItems.map((item, i) => {
-                if (item.kind === "divider") {
-                  return (
-                    <div
-                      key={`divider-${i}`}
-                      className="flex items-center gap-2 py-1 text-[11px] text-muted-foreground"
-                      aria-label={`${item.label} へ移動`}
-                    >
-                      <span className="h-px flex-1 bg-border" aria-hidden />
-                      <span className="shrink-0 font-medium">{item.label}</span>
-                      <span className="h-px flex-1 bg-border" aria-hidden />
-                    </div>
-                  );
-                }
-
-                const msg = item.message;
-                return (
-                  <div
-                    key={`chat-${i}`}
-                    className={
-                      msg.role === "user"
-                        ? "ml-6 rounded-lg bg-primary/10 px-3 py-2 text-sm leading-relaxed text-foreground"
-                        : "mr-2 rounded-lg bg-muted/60 px-3 py-2 text-sm leading-relaxed text-foreground"
+            <div ref={scrollRef} className={chatAreaClassName}>
+              {!isLoggedIn ? (
+                loggedOutHint
+              ) : (
+                <>
+                  {!hasChat && idleHint}
+                  {displayItems.map((item, i) => {
+                    if (item.kind === "divider") {
+                      return (
+                        <div
+                          key={`divider-${i}`}
+                          className="flex items-center gap-2 py-1 text-[11px] text-muted-foreground"
+                          aria-label={`${item.label} へ移動`}
+                        >
+                          <span className="h-px flex-1 bg-border" aria-hidden />
+                          <span className="shrink-0 font-medium">{item.label}</span>
+                          <span className="h-px flex-1 bg-border" aria-hidden />
+                        </div>
+                      );
                     }
-                  >
-                    {msg.role === "user" && (
-                      <span className="mb-1 block text-[10px] font-semibold text-primary">あなた</span>
-                    )}
-                    {msg.role === "assistant" && (
-                      <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">Gbible bot</span>
-                    )}
-                    {msg.role === "assistant" ? (
-                      <GrammarNoteContent
-                        content={msg.content}
-                        contextBookId={contextBookId}
-                        onNavigateToVerse={onNavigateToVerse}
-                      />
-                    ) : (
-                      msg.content
-                    )}
-                  </div>
-                );
-              })}
-              {loading && (
-                <p className="text-sm text-muted-foreground">考え中…</p>
+
+                    const msg = item.message;
+                    return (
+                      <div
+                        key={`chat-${i}`}
+                        className={
+                          msg.role === "user"
+                            ? "ml-6 rounded-lg bg-primary/10 px-3 py-2 text-sm leading-relaxed text-foreground"
+                            : "mr-2 rounded-lg bg-muted/60 px-3 py-2 text-sm leading-relaxed text-foreground"
+                        }
+                      >
+                        {msg.role === "user" && (
+                          <span className="mb-1 block text-[10px] font-semibold text-primary">あなた</span>
+                        )}
+                        {msg.role === "assistant" && (
+                          <span className="mb-1 block text-[10px] font-semibold text-[var(--grammar)]">Gbible bot</span>
+                        )}
+                        {msg.role === "assistant" ? (
+                          <GrammarNoteContent
+                            content={msg.content}
+                            contextBookId={contextBookId}
+                            onNavigateToVerse={onNavigateToVerse}
+                          />
+                        ) : (
+                          msg.content
+                        )}
+                      </div>
+                    );
+                  })}
+                  {loading && (
+                    <p className="text-sm text-muted-foreground">考え中…</p>
+                  )}
+                </>
               )}
             </div>
 
-            {chatError && (
+            {isLoggedIn && chatError && (
               <p className="mb-2 shrink-0 text-sm text-red-600">{chatError}</p>
             )}
 
@@ -421,26 +425,28 @@ export function PaneGrammarPoint({
               className="flex shrink-0 gap-2"
               onSubmit={(e) => {
                 e.preventDefault();
+                if (!isLoggedIn) {
+                  void signIn("google");
+                  return;
+                }
                 void handleSend();
               }}
             >
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                disabled={!configured || loading}
+                disabled={!isLoggedIn || !configured || loading}
                 className="flex-1"
               />
               <Button
                 type="submit"
                 size="icon"
-                disabled={!configured || loading || !input.trim()}
+                disabled={!isLoggedIn || !configured || loading || !input.trim()}
                 aria-label="送信"
               >
                 <Send className="h-4 w-4" />
               </Button>
             </form>
-          </>
-        )}
       </div>
       )}
     </div>
