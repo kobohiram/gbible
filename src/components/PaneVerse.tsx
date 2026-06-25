@@ -93,7 +93,6 @@ export function PaneVerse({
     <div className={stacked ? "flex flex-col" : "flex h-full flex-col"}>
       <header className="pane-header px-4 py-3 text-center">
         <h2 className="text-lg font-bold text-foreground">{reference}</h2>
-        <p className="text-xs text-muted-foreground">単語をタップすると辞書に表示</p>
       </header>
       <MorphLegend corpus={corpus} />
       <div className={stacked ? "overflow-x-auto p-4" : "flex-1 overflow-x-auto overflow-y-auto p-4"}>
@@ -103,7 +102,7 @@ export function PaneVerse({
           </p>
         ) : (
           <div
-            className={`flex flex-wrap items-end gap-x-4 gap-y-6 ${isRtl ? "flex-row-reverse justify-end" : ""}`}
+            className="flex flex-wrap items-end gap-x-4 gap-y-6"
             dir={isRtl ? "rtl" : "ltr"}
           >
             {words.map((word) => {
