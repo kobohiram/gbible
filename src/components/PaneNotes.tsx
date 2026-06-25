@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
-import type { BookId, CommunityMemo } from "@/types";
+import type { BookId, CommunityMemo, MemoReactions } from "@/types";
+import { REACTION_EMOJIS } from "@/types";
 import type { MnspBookData } from "@/lib/translations";
 import { getMnspSotaku } from "@/lib/translations";
 import { useAutoSave, SaveStatus } from "@/lib/use-auto-save";
@@ -23,6 +24,45 @@ type Props = {
 };
 
 const MNSP_SOTAKU_LABEL = "みんなの聖書（素訳）";
+
+function ReactionBar({
+  memoId,
+  reactions,
+  isLoggedIn,
+  onReact,
+}: {
+  memoId: number;
+  reactions: MemoReactions | undefined;
+  isLoggedIn: boolean;
+  onReact: (memoId: number, emoji: string) => void;
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-1">
+      {REACTION_EMOJIS.map((emoji) => {
+        const count = reactions?.counts[emoji] ?? 0;
+        const active = reactions?.mine.includes(emoji) ?? false;
+        return (
+          <button
+            key={emoji}
+            type="button"
+            onClick={() => (isLoggedIn ? onReact(memoId, emoji) : signIn("google"))}
+            title={isLoggedIn ? undefined : "ログインしてリアクションする"}
+            className={`flex items-center gap-0.5 rounded-full border px-2 py-0.5 text-xs transition-colors ${
+              active
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border bg-muted/50 text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-foreground"
+            }`}
+          >
+            <span>{emoji}</span>
+            {count > 0 && (
+              <span className={active ? "font-semibold" : ""}>{count}</span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function timeAgo(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -55,6 +95,7 @@ export function PaneNotes({
   const [memo, setMemo] = useState(savedMemo);
   const [memoIsPublic, setMemoIsPublic] = useState(savedMemoIsPublic);
   const [communityMemos, setCommunityMemos] = useState<CommunityMemo[]>([]);
+  const [reactions, setReactions] = useState<Record<number, MemoReactions>>({});
 
   useEffect(() => {
     setMemo(savedMemo);
@@ -90,9 +131,18 @@ export function PaneNotes({
 
   useEffect(() => {
     setCommunityMemos([]);
+    setReactions({});
     fetch(`/api/community-memos?bookId=${bookId}&chapter=${chapter}&verse=${verse}`)
       .then((r) => (r.ok ? (r.json() as Promise<CommunityMemo[]>) : []))
-      .then(setCommunityMemos)
+      .then((memos) => {
+        setCommunityMemos(memos);
+        if (memos.length === 0) return;
+        const ids = memos.map((m) => m.id).join(",");
+        return fetch(`/api/memo-reactions?memoIds=${ids}`)
+          .then((r) => (r.ok ? (r.json() as Promise<Record<number, MemoReactions>>) : {}))
+          .then(setReactions)
+          .catch(() => {});
+      })
       .catch(() => {});
   }, [bookId, chapter, verse]);
 
@@ -124,6 +174,43 @@ export function PaneNotes({
     memoIsPublic,
     onSaved,
   ]);
+
+  const handleReact = useCallback(async (memoId: number, emoji: string) => {
+    // 楽観的更新
+    setReactions((prev) => {
+      const cur = prev[memoId] ?? { counts: {}, mine: [] };
+      const alreadyReacted = cur.mine.includes(emoji);
+      return {
+        ...prev,
+        [memoId]: {
+          counts: {
+            ...cur.counts,
+            [emoji]: Math.max(0, (cur.counts[emoji] ?? 0) + (alreadyReacted ? -1 : 1)),
+          },
+          mine: alreadyReacted
+            ? cur.mine.filter((e) => e !== emoji)
+            : [...cur.mine, emoji],
+        },
+      };
+    });
+
+    try {
+      const res = await fetch("/api/memo-reactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ translationId: memoId, emoji }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      // ロールバック: 再取得
+      const ids = communityMemos.map((m) => m.id).join(",");
+      if (!ids) return;
+      fetch(`/api/memo-reactions?memoIds=${ids}`)
+        .then((r) => (r.ok ? (r.json() as Promise<Record<number, MemoReactions>>) : {}))
+        .then(setReactions)
+        .catch(() => {});
+    }
+  }, [communityMemos]);
 
   const saveStatus = useAutoSave(
     `${memo}\0${memoIsPublic}`,
@@ -234,6 +321,14 @@ export function PaneNotes({
                   <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
                     {m.memo}
                   </p>
+                  {!m.isProject && (
+                    <ReactionBar
+                      memoId={Number(m.key)}
+                      reactions={reactions[Number(m.key)]}
+                      isLoggedIn={isLoggedIn}
+                      onReact={handleReact}
+                    />
+                  )}
                 </li>
               ))}
             </ul>

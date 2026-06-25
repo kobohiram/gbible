@@ -72,6 +72,13 @@ export type CommunityMemo = {
   updatedAt: string;
 };
 
+export type MemoReactions = {
+  counts: Record<string, number>;
+  mine: string[];
+};
+
+export const REACTION_EMOJIS = ["❤️", "🙏", "💡", "✨"] as const;
+
 export type BookData = {
   version: number;
   book: BookId;
