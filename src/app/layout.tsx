@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cardo, Geist, Geist_Mono, Gentium_Plus } from "next/font/google";
+import Script from "next/script";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
 
@@ -89,6 +90,20 @@ export default function RootLayout({
       lang="ja"
       className={`${geistSans.variable} ${geistMono.variable} ${cardo.variable} ${gentiumPlus.variable}`}
     >
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-PYZNNRHHFQ"
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-PYZNNRHHFQ');
+          `}
+        </Script>
+      </head>
       <body className="antialiased">
         <Providers>{children}</Providers>
       </body>
