@@ -35,8 +35,12 @@ async function syncProgressFromDB(chapterNumber: number): Promise<Record<string,
     if (!res.ok) return {};
     const { passed } = await res.json();
     const map: Record<string, boolean> = {};
-    for (const row of passed as { chapter_number: number; lesson_number: number }[]) {
-      map[`${row.chapter_number}-${row.lesson_number}`] = true;
+    for (const row of passed as {
+      chapter_number: number;
+      lesson_number: number;
+      balloon_index: number;
+    }[]) {
+      map[`${row.chapter_number}-${row.lesson_number}-${row.balloon_index}`] = true;
     }
     return map;
   } catch {
@@ -44,12 +48,16 @@ async function syncProgressFromDB(chapterNumber: number): Promise<Record<string,
   }
 }
 
-async function postProgressToDb(chapterNumber: number, lessonNumber: number) {
+async function postProgressToDb(
+  chapterNumber: number,
+  lessonNumber: number,
+  balloonIndex: number,
+) {
   try {
     await fetch("/api/grammar-progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chapterNumber, lessonNumber }),
+      body: JSON.stringify({ chapterNumber, lessonNumber, balloonIndex }),
     });
   } catch {
     // silent fail — localStorage already saved
@@ -115,15 +123,15 @@ export function GrammarShell({ chapters, chapter, lesson }: Props) {
   }, [highlightId]);
 
   const handlePass = useCallback(
-    (lessonNumber: number) => {
-      const key = `${chapter.chapterNumber}-${lessonNumber}`;
+    (lessonNumber: number, balloonIdx: number) => {
+      const key = `${chapter.chapterNumber}-${lessonNumber}-${balloonIdx}`;
       setPassedMap((prev) => {
         const next = { ...prev, [key]: true };
         saveProgress(next);
         return next;
       });
       if (session?.user?.email) {
-        postProgressToDb(chapter.chapterNumber, lessonNumber);
+        postProgressToDb(chapter.chapterNumber, lessonNumber, balloonIdx);
       }
     },
     [chapter.chapterNumber, session?.user?.email],
@@ -144,10 +152,20 @@ export function GrammarShell({ chapters, chapter, lesson }: Props) {
     [displayLessonNum],
   );
 
-  const passedSet = new Set(
-    chapter.lessons
-      .filter((l) => passedMap[`${chapter.chapterNumber}-${l.lessonNumber}`])
-      .map((l) => l.lessonNumber),
+  // passedSet: Set of "{lessonNum}-{balloonIdx}" strings for QuizBalloonPanel
+  const passedSet = new Set<string>(
+    Object.entries(passedMap)
+      .filter(([key, passed]) => {
+        if (!passed) return false;
+        // Key format: "{chapterNum}-{lessonNum}-{balloonIdx}"
+        const [chStr] = key.split("-");
+        return Number(chStr) === chapter.chapterNumber;
+      })
+      .map(([key]) => {
+        // Strip the chapter prefix: "{chapterNum}-{lessonNum}-{balloonIdx}" → "{lessonNum}-{balloonIdx}"
+        const parts = key.split("-");
+        return `${parts[1]}-${parts[2]}`;
+      }),
   );
 
   const lessonBalloons = chapter.lessons.map((l) => ({
