@@ -66,7 +66,7 @@ export function GrammarToc({ chapters, currentChapter, currentLesson, passedMap,
 
             return (
               <Link
-                key={key}
+                key={`${chapter.chapterNumber}-${lesson.lessonNumber}`}
                 href={`/grammar/${chapter.chapterNumber}/${lesson.lessonNumber}`}
                 onClick={onNavigate}
                 className={`flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm transition-colors ${

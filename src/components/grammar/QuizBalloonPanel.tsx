@@ -16,6 +16,24 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return result;
 }
 
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function getShuffledChoices(question: QuizQuestion) {
+  return question.choices
+    .map((choice, originalIndex) => ({
+      choice,
+      originalIndex,
+      sortKey: hashString(`${question.id}:${originalIndex}`),
+    }))
+    .sort((a, b) => a.sortKey - b.sortKey);
+}
+
 // ─── BalloonIcon ─────────────────────────────────────────────────────────────
 
 function BalloonIcon({
@@ -59,11 +77,6 @@ function BalloonIcon({
           {passed ? "✓" : balloonNumber}
         </span>
       </div>
-      {/* String */}
-      <div
-        className="w-px opacity-60"
-        style={{ height: 16, backgroundColor: passed ? "#6ee7b7" : color }}
-      />
     </div>
   );
 }
@@ -91,12 +104,10 @@ function InlineQuizPanel({
 }: InlineQuizPanelProps) {
   const [qIndex, setQIndex] = useState(0);
   const [answerState, setAnswerState] = useState<AnswerState>("unanswered");
-  const [isPopping, setIsPopping] = useState(false);
 
   useEffect(() => {
     setQIndex(0);
     setAnswerState("unanswered");
-    setIsPopping(false);
   }, [balloonKey]);
 
   const currentQ = questions[qIndex];
@@ -112,10 +123,8 @@ function InlineQuizPanel({
       setQIndex((i) => i + 1);
       setAnswerState("unanswered");
     } else {
-      setIsPopping(true);
       setTimeout(() => {
         onPass();
-        setIsPopping(false);
       }, 500);
     }
   }
@@ -125,6 +134,7 @@ function InlineQuizPanel({
   }
 
   const choiceLabels = ["A", "B", "C", "D"];
+  const displayedChoices = getShuffledChoices(currentQ);
 
   return (
     <div
@@ -160,12 +170,12 @@ function InlineQuizPanel({
 
         {/* Choices */}
         <div className="space-y-2">
-          {currentQ.choices.map((choice, i) => {
+          {displayedChoices.map(({ choice, originalIndex }, i) => {
             let cls =
               "w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors flex items-start gap-2 ";
             if (answerState === "unanswered") {
               cls += "border-border hover:bg-muted/50 cursor-pointer";
-            } else if (i === currentQ.correctIndex) {
+            } else if (originalIndex === currentQ.correctIndex) {
               cls +=
                 "border-green-400 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300";
             } else {
@@ -173,9 +183,9 @@ function InlineQuizPanel({
             }
             return (
               <button
-                key={i}
+                key={originalIndex}
                 type="button"
-                onClick={() => handleChoose(i)}
+                onClick={() => handleChoose(originalIndex)}
                 disabled={answerState !== "unanswered"}
                 className={cls}
               >
@@ -339,65 +349,41 @@ export function QuizBalloonPanel({ lessons, passedSet, onPass, onHint }: PanelPr
           </p>
         )}
 
-        {/* Balloon grid — grouped by lesson */}
-        <div className="space-y-4">
-          {lessons.map((lesson) => {
-            const lessonBalloons = balloons.filter((b) => b.lessonNumber === lesson.lessonNumber);
+        {/* Balloon grid — all balloons in one flat row */}
+        <div className="flex flex-wrap gap-x-5 gap-y-6">
+          {balloons.map((entry) => {
+            const isPassed = passedSet.has(entry.balloonKey);
+            const isActive = activeBalloonKey === entry.balloonKey;
+            const isPopping = poppingKey === entry.balloonKey;
             return (
-              <div key={lesson.lessonNumber}>
-                <p
-                  className="mb-2 text-[10px] font-semibold uppercase tracking-wide"
-                  style={{ color: lesson.color }}
+              <div key={entry.balloonKey} className="flex flex-col items-center">
+                <button
+                  type="button"
+                  onClick={() => handleBalloonClick(entry.balloonKey)}
+                  disabled={isPassed}
+                  className={`transition-transform ${
+                    isPassed
+                      ? "cursor-default opacity-70"
+                      : isActive
+                        ? "scale-110 cursor-pointer"
+                        : "cursor-pointer hover:scale-105 active:scale-95"
+                  }`}
+                  title={
+                    isPassed
+                      ? `#${entry.balloonNumber}：合格済み`
+                      : `#${entry.balloonNumber}：${entry.lessonTitle}`
+                  }
+                  aria-pressed={isActive}
                 >
-                  第{lesson.lessonNumber}課　{lesson.title}
-                </p>
-                <div className="flex flex-wrap gap-x-5 gap-y-6">
-                  {lessonBalloons.map((entry) => {
-                    const isPassed = passedSet.has(entry.balloonKey);
-                    const isActive = activeBalloonKey === entry.balloonKey;
-                    const isPopping = poppingKey === entry.balloonKey;
-                    return (
-                      <div key={entry.balloonKey} className="flex flex-col items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleBalloonClick(entry.balloonKey)}
-                          disabled={isPassed}
-                          className={`transition-transform ${
-                            isPassed
-                              ? "cursor-default opacity-70"
-                              : isActive
-                                ? "scale-110 cursor-pointer"
-                                : "cursor-pointer hover:scale-105 active:scale-95"
-                          }`}
-                          title={
-                            isPassed
-                              ? `#${entry.balloonNumber}：合格済み`
-                              : `#${entry.balloonNumber}：${entry.lessonTitle}`
-                          }
-                          aria-pressed={isActive}
-                        >
-                          <BalloonIcon
-                            balloonNumber={entry.balloonNumber}
-                            color={entry.color}
-                            passed={isPassed}
-                            active={isActive}
-                            isPopping={isPopping}
-                            size={68}
-                          />
-                        </button>
-                        {/* Q count badge */}
-                        {!isPassed && (
-                          <span
-                            className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold text-white"
-                            style={{ backgroundColor: entry.color }}
-                          >
-                            {entry.questions.length}問
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                  <BalloonIcon
+                    balloonNumber={entry.balloonNumber}
+                    color={entry.color}
+                    passed={isPassed}
+                    active={isActive}
+                    isPopping={isPopping}
+                    size={68}
+                  />
+                </button>
               </div>
             );
           })}
