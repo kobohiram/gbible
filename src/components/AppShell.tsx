@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { ChevronDown } from "lucide-react";
 import {
   getBook,
   getBooksForCorpus,
@@ -30,8 +29,7 @@ import { PaneSide } from "./PaneSide";
 import { PaneLexicon } from "./PaneLexicon";
 import { PaneNav } from "./PaneNav";
 import { PaneVerse } from "./PaneVerse";
-import { DataBackupMenu } from "./DataBackupMenu";
-import { AuthButton } from "./AuthButton";
+import { SiteHeader } from "./SiteHeader";
 
 type PaneKind = "nav" | "verse" | "lexicon" | "side";
 
@@ -60,7 +58,6 @@ export function AppShell() {
   const [chapter, setChapter] = useState(() => loadLastLocation("nt").chapter);
   const [selectedVerse, setSelectedVerse] = useState(() => loadLastLocation("nt").verse);
   const [selectedWord, setSelectedWord] = useState<VerseWord | null>(null);
-  const [navOpen, setNavOpen] = useState(false);
   const [translations, setTranslations] = useState<PersonalTranslation[]>([]);
   const [bookData, setBookData] = useState<BookData | null>(null);
   const [mnspData, setMnspData] = useState<MnspBookData | null>(null);
@@ -191,7 +188,6 @@ export function AppShell() {
       setChapter(loc.chapter);
       setSelectedVerse(verse);
       setSelectedWord(null);
-      setNavOpen(false);
       setTimeout(() => {
         mobileVerseRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 50);
@@ -286,26 +282,26 @@ export function AppShell() {
 
   return (
     <div className="flex h-dvh flex-col">
-      <header className="flex shrink-0 items-center justify-between border-b border-primary/30 bg-primary px-4 py-2.5 text-primary-foreground">
-        <h1 className="text-lg font-bold tracking-tight">
-          <span className="font-extrabold text-accent">G</span>bible
-          {userCount != null && userCount > 0 && (
-            <span className="ml-2 text-xs font-normal opacity-70">{userCount}人が利用中</span>
-          )}
-        </h1>
-        <div className="flex items-center gap-3">
-          {corpus === "nt" && (
-            <a
-              href="/study/synoptic"
-              className="text-sm font-semibold underline-offset-2 hover:underline"
-            >
-              共観福音書 →
-            </a>
-          )}
-          <DataBackupMenu onImported={refreshTranslations} />
-          <AuthButton />
-        </div>
-      </header>
+      <SiteHeader
+        onDataImported={refreshTranslations}
+        extra={
+          <>
+            {userCount != null && userCount > 0 && (
+              <span className="text-xs text-primary-foreground/60">
+                {userCount}人が利用中
+              </span>
+            )}
+            {corpus === "nt" && (
+              <a
+                href="/study/synoptic"
+                className="text-sm font-semibold text-primary-foreground/70 underline-offset-2 hover:text-primary-foreground hover:underline"
+              >
+                共観福音書
+              </a>
+            )}
+          </>
+        }
+      />
 
       <div className="hidden min-h-0 flex-1 md:flex">
         <ResizablePanelGroup
@@ -364,41 +360,25 @@ export function AppShell() {
 
       <div className="flex flex-1 flex-col overflow-y-auto md:hidden">
         <div className="border-b border-border">
-          <button
-            type="button"
-            onClick={() => setNavOpen((v) => !v)}
-            className="pane-header flex w-full items-center justify-between px-4 py-3"
-          >
-            <div className="flex items-center gap-2">
-              <span className="pane-header-label">目次</span>
-              <span className="text-sm font-medium text-foreground">{reference}</span>
-            </div>
-            <ChevronDown
-              className={`h-4 w-4 text-muted-foreground/70 transition-transform duration-200 ${navOpen ? "rotate-180" : ""}`}
+          <div className="pane-surface" data-pane="nav">
+            <PaneNav
+              stacked
+              corpus={corpus}
+              books={books}
+              bookId={bookId}
+              chapter={chapter}
+              selectedVerse={selectedVerse}
+              translations={translations}
+              mnspData={mnspData}
+              bookDataLoaded={bookData !== null}
+              onCorpusChange={handleCorpusChange}
+              onBookChange={handleBookChange}
+              onChapterChange={handleChapterChange}
+              onSelectVerse={(verse) => {
+                setSelectedVerse(verse);
+              }}
             />
-          </button>
-          {navOpen && (
-            <div className="pane-surface" data-pane="nav">
-              <PaneNav
-                stacked
-                corpus={corpus}
-                books={books}
-                bookId={bookId}
-                chapter={chapter}
-                selectedVerse={selectedVerse}
-                translations={translations}
-                mnspData={mnspData}
-                bookDataLoaded={bookData !== null}
-                onCorpusChange={handleCorpusChange}
-                onBookChange={handleBookChange}
-                onChapterChange={handleChapterChange}
-                onSelectVerse={(verse) => {
-                  setSelectedVerse(verse);
-                  setNavOpen(false);
-                }}
-              />
-            </div>
-          )}
+          </div>
         </div>
 
         <div ref={mobileVerseRef} className="pane-surface border-b border-border" data-pane="verse">

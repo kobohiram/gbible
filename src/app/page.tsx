@@ -3,6 +3,7 @@ import { auth, signIn } from "@/auth";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
   title: "Gbible — 聖書原文をギリシャ語・ヘブル語で読む",
@@ -75,15 +76,18 @@ const OT_SOURCES = [
   },
 ];
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
   const session = await auth();
-  if (session?.user) redirect("/study");
+  const { callbackUrl } = await searchParams;
+  if (session?.user) redirect(callbackUrl ?? "/study");
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="flex items-center border-b border-primary/20 bg-primary px-6 py-3">
-        <Image src="/logo.png" alt="Gbible" width={120} height={40} className="h-8 w-auto" />
-      </header>
+      <SiteHeader />
 
       <main className="flex flex-1 flex-col items-center justify-center gap-10 px-6 py-16 text-center">
         <div className="space-y-3">
@@ -126,7 +130,8 @@ export default async function Home() {
           <form
             action={async () => {
               "use server";
-              await signIn("google", { redirectTo: "/study" });
+              const { callbackUrl: cb } = await searchParams;
+              await signIn("google", { redirectTo: cb ?? "/study" });
             }}
           >
             <button
