@@ -7,6 +7,8 @@ import { buildSession, shuffleChoices } from "@/lib/vocab-quiz";
 import { postVocabProgressToDb, saveVocabProgress } from "@/lib/vocab-quiz-progress";
 import type { VocabQuizDataset } from "@/types/vocab-quiz";
 import { VocabQuizCard, VocabQuizCardBody, VocabQuizCardHeader, QuizCloseButton } from "./VocabQuizCard";
+import { VocabQuizProgressBar } from "./VocabQuizProgressBar";
+import { CheckCircle2 } from "lucide-react";
 
 type Props = {
   dataset: VocabQuizDataset;
@@ -17,6 +19,7 @@ type Props = {
   onLearnedChange: (map: Record<string, boolean>) => void;
   onSessionComplete: () => void;
   onExit: () => void;
+  stageLabel?: string;
   nextSessionLabel?: string;
   onContinueNext?: () => void;
 };
@@ -66,6 +69,7 @@ export function VocabQuizPlayer({
   onLearnedChange,
   onSessionComplete,
   onExit,
+  stageLabel,
   nextSessionLabel,
   onContinueNext,
 }: Props) {
@@ -199,46 +203,68 @@ export function VocabQuizPlayer({
           <span />
           <QuizCloseButton onClick={onExit} />
         </VocabQuizCardHeader>
-        <VocabQuizCardBody className="min-h-0 justify-center">
-          <p className="text-center text-lg font-bold text-emerald-700">10問クリア！</p>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            おつかれさまです。進捗が保存されました。
-          </p>
-
-          <div className="mx-auto mt-5 w-full max-w-xs space-y-3">
-            <div className="text-center text-xs text-muted-foreground">
-              全体 {learnedCount}/{totalWords} 語
+        <VocabQuizCardBody className="min-h-0">
+          <div className="flex flex-1 flex-col items-center justify-center">
+            <div className="w-full rounded-2xl bg-emerald-50 px-5 py-6 text-center">
+              <CheckCircle2 className="mx-auto size-11 text-emerald-600" strokeWidth={1.75} />
+              <p className="mt-3 text-xl font-extrabold tracking-tight text-emerald-800">
+                ステージクリア
+              </p>
+              {stageLabel && (
+                <p className="mt-1 text-sm font-semibold text-emerald-700">{stageLabel}</p>
+              )}
+              <p className="mt-2 text-xs text-muted-foreground">10問完了 · 進捗を保存しました</p>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all"
-                style={{ width: `${totalWords > 0 ? (learnedCount / totalWords) * 100 : 0}%` }}
+
+            <div className="mt-5 w-full">
+              <VocabQuizProgressBar
+                current={learnedCount}
+                total={totalWords}
+                showLabel
               />
             </div>
+
+            {!canContinue && (
+              <p className="mt-4 text-center text-sm font-medium text-emerald-700">
+                おめでとうございます！
+              </p>
+            )}
           </div>
 
-          {canContinue ? (
-            <div className="mt-6 space-y-3">
-              <p className="text-center text-sm text-foreground">
-                次の問題は
-                <br />
-                <span className="font-semibold text-primary">{nextSessionLabel}</span>
-                <br />
-                です
+          <div className="mt-4 shrink-0 space-y-2">
+            {canContinue && (
+              <p className="text-center text-xs text-muted-foreground">
+                次のステージ:
+                <span className="ml-1 font-semibold text-foreground">{nextSessionLabel}</span>
               </p>
+            )}
+            {canContinue ? (
+              <>
+                <button
+                  type="button"
+                  onClick={onContinueNext}
+                  className="h-11 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground"
+                >
+                  次へ進む
+                </button>
+                <button
+                  type="button"
+                  onClick={onExit}
+                  className="h-11 w-full rounded-xl bg-slate-100 text-sm font-semibold text-foreground transition-colors hover:bg-slate-200"
+                >
+                  終わる
+                </button>
+              </>
+            ) : (
               <button
                 type="button"
-                onClick={onContinueNext}
+                onClick={onExit}
                 className="h-11 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground"
               >
-                次へ進む
+                終わる
               </button>
-            </div>
-          ) : (
-            <p className="mt-6 text-center text-sm font-medium text-emerald-700">
-              おめでとうございます！
-            </p>
-          )}
+            )}
+          </div>
         </VocabQuizCardBody>
       </VocabQuizCard>
     );

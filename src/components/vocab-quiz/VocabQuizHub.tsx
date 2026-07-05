@@ -2,8 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import type { CoarsePos, QuizMode, VocabQuizGroup } from "@/types/vocab-quiz";
-import { getCurrentUnitNum, getGroupStatus, getNextSessionAfterComplete } from "@/lib/vocab-quiz";
+import type { CoarsePos, QuizMode } from "@/types/vocab-quiz";
+import {
+  getCurrentUnitNum,
+  getNextSessionAfterComplete,
+  formatGroupSessionLabel,
+  getUnitSummaries,
+} from "@/lib/vocab-quiz";
 import {
   loadVocabProgress,
   saveVocabProgress,
@@ -15,6 +20,7 @@ import { VocabQuizModal } from "./VocabQuizModal";
 import { VocabQuizCard, VocabQuizCardBody, VocabQuizCardHeader, QuizCloseButton } from "./VocabQuizCard";
 import { VocabQuizProgressBar } from "./VocabQuizProgressBar";
 import { VocabQuizWordMatrix } from "./VocabQuizWordMatrix";
+import { VocabQuizUnitPicker } from "./VocabQuizUnitPicker";
 
 const COARSE_POS: CoarsePos[] = ["verb", "noun", "adj", "prep", "other"];
 
@@ -30,24 +36,13 @@ type PlayState = {
   coarsePos?: CoarsePos;
 } | null;
 
-function findActiveGroupId(
-  groups: VocabQuizGroup[],
-  learned: Record<string, boolean>,
-  unitNum: number,
-): string | undefined {
-  const unitGroups = groups
-    .filter((g) => g.unitNum === unitNum)
-    .sort((a, b) => a.chunkIndex - b.chunkIndex);
-  const next = unitGroups.find((g) => getGroupStatus(g, learned) !== "green");
-  return next?.id ?? unitGroups[0]?.id;
-}
-
 export function VocabQuizHub() {
   const { data: session } = useSession();
   const { dataset, loading, error } = useVocabQuizDataset();
   const [learned, setLearned] = useState<Record<string, boolean>>({});
   const [play, setPlay] = useState<PlayState>(null);
   const [posPickerOpen, setPosPickerOpen] = useState(false);
+  const [unitPickerOpen, setUnitPickerOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
 
   useEffect(() => {
@@ -72,21 +67,22 @@ export function VocabQuizHub() {
   const currentUnitLabel =
     dataset?.groups.find((g) => g.unitNum === currentUnit)?.unitLabel ?? "";
 
-  const activeGroupId = useMemo(
-    () => (dataset ? findActiveGroupId(dataset.groups, learned, currentUnit) : undefined),
-    [dataset, learned, currentUnit],
+  const unitSummaries = useMemo(
+    () => (dataset ? getUnitSummaries(dataset.groups, dataset.words, learned) : []),
+    [dataset, learned],
   );
 
   const closeAll = useCallback(() => {
     setPlay(null);
     setPosPickerOpen(false);
+    setUnitPickerOpen(false);
   }, []);
 
-  const startLevel = useCallback(() => {
-    if (!activeGroupId) return;
+  const startLevel = useCallback((groupId: string) => {
+    setUnitPickerOpen(false);
     setSessionKey((k) => k + 1);
-    setPlay({ mode: "level", groupId: activeGroupId });
-  }, [activeGroupId]);
+    setPlay({ mode: "level", groupId });
+  }, []);
 
   const startRandom = useCallback(() => {
     setSessionKey((k) => k + 1);
@@ -105,6 +101,19 @@ export function VocabQuizHub() {
       groupId: play.groupId,
       coarsePos: play.coarsePos,
     });
+  }, [dataset, play]);
+
+  const stageLabel = useMemo(() => {
+    if (!dataset || !play) return "";
+    if (play.mode === "level" && play.groupId) {
+      const group = dataset.groupsById[play.groupId];
+      if (group) return formatGroupSessionLabel(group, dataset.groups);
+    }
+    if (play.mode === "random") return "ランダム";
+    if (play.mode === "pos" && play.coarsePos) {
+      return dataset.meta.coarsePosLabels[play.coarsePos];
+    }
+    return "";
   }, [dataset, play]);
 
   const continueNext = useCallback(() => {
@@ -165,7 +174,7 @@ export function VocabQuizHub() {
               title="単元別"
               preview={MODE_PREVIEW.level}
               subtitle={currentUnitLabel || `第${currentUnit}単元`}
-              onClick={startLevel}
+              onClick={() => setUnitPickerOpen(true)}
             />
           </div>
 
@@ -185,10 +194,19 @@ export function VocabQuizHub() {
             onLearnedChange={setLearned}
             onSessionComplete={() => {}}
             onExit={closeAll}
+            stageLabel={stageLabel}
             nextSessionLabel={nextSession?.label}
             onContinueNext={nextSession?.play ? continueNext : undefined}
           />
         )}
+      </VocabQuizModal>
+
+      <VocabQuizModal open={unitPickerOpen} onClose={() => setUnitPickerOpen(false)}>
+        <VocabQuizUnitPicker
+          units={unitSummaries}
+          onClose={() => setUnitPickerOpen(false)}
+          onStart={startLevel}
+        />
       </VocabQuizModal>
 
       <VocabQuizModal open={posPickerOpen} onClose={() => setPosPickerOpen(false)}>

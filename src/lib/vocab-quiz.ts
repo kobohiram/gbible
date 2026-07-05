@@ -44,6 +44,78 @@ export function getCurrentUnitNum(
   return groups[groups.length - 1]?.unitNum ?? 1;
 }
 
+export type UnitProgressState = "cleared" | "current" | "locked";
+
+export type UnitSummary = {
+  unitNum: number;
+  unitLabel: string;
+  state: UnitProgressState;
+  learnedCount: number;
+  totalWords: number;
+  chunksCleared: number;
+  chunksTotal: number;
+  activeGroupId?: string;
+};
+
+export function isUnitCleared(
+  unitGroups: VocabQuizGroup[],
+  learned: Record<string, boolean>,
+): boolean {
+  return unitGroups.length > 0 && unitGroups.every((g) => getGroupStatus(g, learned) === "green");
+}
+
+export function getUnitSummaries(
+  groups: VocabQuizGroup[],
+  words: VocabQuizWord[],
+  learned: Record<string, boolean>,
+): UnitSummary[] {
+  const currentUnitNum = getCurrentUnitNum(groups, learned);
+  const unitNums = [...new Set(groups.map((g) => g.unitNum))].sort((a, b) => a - b);
+
+  return unitNums.map((unitNum) => {
+    const unitGroups = groups
+      .filter((g) => g.unitNum === unitNum)
+      .sort((a, b) => a.chunkIndex - b.chunkIndex);
+    const unitWords = words.filter((w) => w.unitNum === unitNum);
+    const learnedCount = unitWords.filter((w) => learned[w.id]).length;
+    const chunksCleared = unitGroups.filter((g) => getGroupStatus(g, learned) === "green").length;
+
+    let state: UnitProgressState;
+    if (isUnitCleared(unitGroups, learned)) {
+      state = "cleared";
+    } else if (unitNum === currentUnitNum) {
+      state = "current";
+    } else {
+      state = "locked";
+    }
+
+    const activeGroup = unitGroups.find((g) => getGroupStatus(g, learned) !== "green");
+
+    return {
+      unitNum,
+      unitLabel: unitGroups[0]?.unitLabel ?? `第${unitNum}単元`,
+      state,
+      learnedCount,
+      totalWords: unitWords.length,
+      chunksCleared,
+      chunksTotal: unitGroups.length,
+      activeGroupId: state === "current" ? activeGroup?.id : undefined,
+    };
+  });
+}
+
+export function findActiveGroupId(
+  groups: VocabQuizGroup[],
+  learned: Record<string, boolean>,
+  unitNum: number,
+): string | undefined {
+  const unitGroups = groups
+    .filter((g) => g.unitNum === unitNum)
+    .sort((a, b) => a.chunkIndex - b.chunkIndex);
+  const next = unitGroups.find((g) => getGroupStatus(g, learned) !== "green");
+  return next?.id ?? unitGroups[0]?.id;
+}
+
 export function pickReviewWords(
   dataset: VocabQuizDataset,
   learned: Record<string, boolean>,
