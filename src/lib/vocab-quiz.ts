@@ -108,14 +108,12 @@ export function buildSession(
     preferUnit = group.unitNum;
     nativeWords = group.wordIds.map((id) => dataset.wordsById[id]).filter(Boolean);
   } else if (mode === "pos" && options.coarsePos) {
-    preferUnit = getCurrentUnitNum(dataset.groups, learned);
     const coarsePos = options.coarsePos;
-    const inUnit = dataset.words.filter(
-      (w) => w.unitNum === preferUnit && w.coarsePos === coarsePos,
-    );
-    const unlearned = shufflePool(inUnit.filter((w) => !learned[w.id]));
-    const learnedInUnit = shufflePool(inUnit.filter((w) => learned[w.id]));
-    nativeWords = [...unlearned, ...learnedInUnit].slice(0, 10);
+    const inPos = dataset.words.filter((w) => w.coarsePos === coarsePos);
+    const unlearned = shufflePool(inPos.filter((w) => !learned[w.id]));
+    const learnedInPos = shufflePool(inPos.filter((w) => learned[w.id]));
+    nativeWords = [...unlearned, ...learnedInPos].slice(0, 10);
+    preferUnit = nativeWords[0]?.unitNum ?? preferUnit;
   } else if (mode === "random") {
     nativeWords = shufflePool(dataset.words.filter((w) => !learned[w.id])).slice(0, 10);
     if (nativeWords.length < 10) {
@@ -175,4 +173,56 @@ export function isSessionComplete(queue: PlayQueueItem[]): boolean {
 export function groupProgressLabel(group: VocabQuizGroup, learned: Record<string, boolean>): string {
   const n = group.wordIds.filter((id) => learned[id]).length;
   return `${n}/${group.nativeCount}`;
+}
+
+export function formatGroupSessionLabel(
+  group: VocabQuizGroup,
+  groups: VocabQuizGroup[],
+): string {
+  const chunksInUnit = groups.filter((g) => g.unitNum === group.unitNum).length;
+  return `${group.unitLabel}（${group.chunkIndex + 1}/${chunksInUnit}）`;
+}
+
+export type NextSessionPlay = {
+  mode: QuizMode;
+  groupId?: string;
+  coarsePos?: CoarsePos;
+};
+
+export type NextSessionInfo = {
+  label: string;
+  play: NextSessionPlay | null;
+};
+
+export function getNextSessionAfterComplete(
+  dataset: VocabQuizDataset,
+  mode: QuizMode,
+  options: { groupId?: string; coarsePos?: CoarsePos },
+): NextSessionInfo {
+  const sorted = [...dataset.groups].sort(
+    (a, b) => a.unitNum - b.unitNum || a.chunkIndex - b.chunkIndex,
+  );
+
+  if (mode === "level" && options.groupId) {
+    const idx = sorted.findIndex((g) => g.id === options.groupId);
+    const next = idx >= 0 ? sorted[idx + 1] : undefined;
+    if (next) {
+      return {
+        label: formatGroupSessionLabel(next, sorted),
+        play: { mode: "level", groupId: next.id },
+      };
+    }
+    return { label: "", play: null };
+  }
+
+  if (mode === "random") {
+    return { label: "ランダム出題", play: { mode: "random" } };
+  }
+
+  if (mode === "pos" && options.coarsePos) {
+    const label = dataset.meta.coarsePosLabels[options.coarsePos];
+    return { label: `${label}（もう一度）`, play: { mode: "pos", coarsePos: options.coarsePos } };
+  }
+
+  return { label: "", play: null };
 }

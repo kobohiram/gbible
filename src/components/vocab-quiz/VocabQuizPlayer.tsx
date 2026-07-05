@@ -17,6 +17,8 @@ type Props = {
   onLearnedChange: (map: Record<string, boolean>) => void;
   onSessionComplete: () => void;
   onExit: () => void;
+  nextSessionLabel?: string;
+  onContinueNext?: () => void;
 };
 
 function normalizeChoice(s: string): string {
@@ -64,6 +66,8 @@ export function VocabQuizPlayer({
   onLearnedChange,
   onSessionComplete,
   onExit,
+  nextSessionLabel,
+  onContinueNext,
 }: Props) {
   const { data: session } = useSession();
 
@@ -164,6 +168,10 @@ export function VocabQuizPlayer({
     advanceQueue(newCleared, pending);
   }
 
+  const totalWords = dataset.words.length;
+  const learnedCount = dataset.words.filter((w) => learned[w.id]).length;
+  const sessionPct = totalSlots > 0 ? Math.round((clearedCount / totalSlots) * 100) : 0;
+
   if (sessionQuestions.length === 0) {
     return (
       <VocabQuizCard fixedHeight>
@@ -174,7 +182,7 @@ export function VocabQuizPlayer({
         <VocabQuizCardBody className="justify-center">
           <p className="text-center text-sm text-muted-foreground">
             {mode === "pos"
-              ? "この単元に該当する品詞の単語がありません。"
+              ? "この品詞の単語がありません。"
               : "出題できる単語がありません。"}
           </p>
         </VocabQuizCardBody>
@@ -183,17 +191,54 @@ export function VocabQuizPlayer({
   }
 
   if (done || (!current && clearedCount >= totalSlots)) {
+    const canContinue = !!nextSessionLabel && !!onContinueNext;
+
     return (
       <VocabQuizCard fixedHeight>
         <VocabQuizCardHeader borderless>
           <span />
           <QuizCloseButton onClick={onExit} />
         </VocabQuizCardHeader>
-        <VocabQuizCardBody className="justify-center">
+        <VocabQuizCardBody className="min-h-0 justify-center">
           <p className="text-center text-lg font-bold text-emerald-700">10問クリア！</p>
           <p className="mt-2 text-center text-sm text-muted-foreground">
             おつかれさまです。進捗が保存されました。
           </p>
+
+          <div className="mx-auto mt-5 w-full max-w-xs space-y-3">
+            <div className="text-center text-xs text-muted-foreground">
+              全体 {learnedCount}/{totalWords} 語
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-all"
+                style={{ width: `${totalWords > 0 ? (learnedCount / totalWords) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+
+          {canContinue ? (
+            <div className="mt-6 space-y-3">
+              <p className="text-center text-sm text-foreground">
+                次の問題は
+                <br />
+                <span className="font-semibold text-primary">{nextSessionLabel}</span>
+                <br />
+                です
+              </p>
+              <button
+                type="button"
+                onClick={onContinueNext}
+                className="h-11 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground"
+              >
+                次へ進む
+              </button>
+            </div>
+          ) : (
+            <p className="mt-6 text-center text-sm font-medium text-emerald-700">
+              おめでとうございます！
+            </p>
+          )}
         </VocabQuizCardBody>
       </VocabQuizCard>
     );
@@ -218,6 +263,15 @@ export function VocabQuizPlayer({
         </div>
         <QuizCloseButton onClick={onExit} />
       </VocabQuizCardHeader>
+
+      <div className="shrink-0 px-6">
+        <div className="h-1 overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+            style={{ width: `${sessionPct}%` }}
+          />
+        </div>
+      </div>
 
       <VocabQuizCardBody className="min-h-0">
         <div className="shrink-0 text-center">

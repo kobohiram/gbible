@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import type { CoarsePos, QuizMode, VocabQuizGroup } from "@/types/vocab-quiz";
-import { getCurrentUnitNum, getGroupStatus } from "@/lib/vocab-quiz";
+import { getCurrentUnitNum, getGroupStatus, getNextSessionAfterComplete } from "@/lib/vocab-quiz";
 import {
   loadVocabProgress,
   saveVocabProgress,
@@ -13,13 +13,15 @@ import { useVocabQuizDataset } from "./useVocabQuizDataset";
 import { VocabQuizPlayer } from "./VocabQuizPlayer";
 import { VocabQuizModal } from "./VocabQuizModal";
 import { VocabQuizCard, VocabQuizCardBody, VocabQuizCardHeader, QuizCloseButton } from "./VocabQuizCard";
+import { VocabQuizProgressBar } from "./VocabQuizProgressBar";
+import { VocabQuizWordMatrix } from "./VocabQuizWordMatrix";
 
 const COARSE_POS: CoarsePos[] = ["verb", "noun", "adj", "prep", "other"];
 
 const MODE_PREVIEW: Record<QuizMode, { greek: string; hint: string }> = {
-  level: { greek: "λόγος", hint: "単元順に10問" },
-  random: { greek: "ἀγάπη", hint: "未習得から出題" },
   pos: { greek: "ποιέω", hint: "品詞で絞り込み" },
+  random: { greek: "ἀγάπη", hint: "未習得から出題" },
+  level: { greek: "λόγος", hint: "単元順に10問" },
 };
 
 type PlayState = {
@@ -46,6 +48,7 @@ export function VocabQuizHub() {
   const [learned, setLearned] = useState<Record<string, boolean>>({});
   const [play, setPlay] = useState<PlayState>(null);
   const [posPickerOpen, setPosPickerOpen] = useState(false);
+  const [sessionKey, setSessionKey] = useState(0);
 
   useEffect(() => {
     const local = loadVocabProgress();
@@ -81,17 +84,34 @@ export function VocabQuizHub() {
 
   const startLevel = useCallback(() => {
     if (!activeGroupId) return;
+    setSessionKey((k) => k + 1);
     setPlay({ mode: "level", groupId: activeGroupId });
   }, [activeGroupId]);
 
   const startRandom = useCallback(() => {
+    setSessionKey((k) => k + 1);
     setPlay({ mode: "random" });
   }, []);
 
   const startPos = useCallback((pos: CoarsePos) => {
     setPosPickerOpen(false);
+    setSessionKey((k) => k + 1);
     setPlay({ mode: "pos", coarsePos: pos });
   }, []);
+
+  const nextSession = useMemo(() => {
+    if (!dataset || !play) return null;
+    return getNextSessionAfterComplete(dataset, play.mode, {
+      groupId: play.groupId,
+      coarsePos: play.coarsePos,
+    });
+  }, [dataset, play]);
+
+  const continueNext = useCallback(() => {
+    if (!nextSession?.play) return;
+    setSessionKey((k) => k + 1);
+    setPlay(nextSession.play);
+  }, [nextSession]);
 
   if (loading) {
     return (
@@ -120,20 +140,20 @@ export function VocabQuizHub() {
             <p className="mt-2 text-sm text-muted-foreground">
               新約ギリシャ語エレメンツ準拠・全{dataset.meta.totalWords}語
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              進捗 {learnedCount}/{dataset.meta.totalWords} 語
-              {currentUnitLabel && (
-                <span className="ml-2">· {currentUnitLabel}</span>
-              )}
-            </p>
+            <div className="mx-auto mt-4 max-w-md">
+              <VocabQuizProgressBar current={learnedCount} total={dataset.meta.totalWords} />
+            </div>
+            {currentUnitLabel && (
+              <p className="mt-2 text-xs text-muted-foreground">現在の単元: {currentUnitLabel}</p>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <ModeCard
-              title="レベル別"
-              preview={MODE_PREVIEW.level}
-              subtitle={currentUnitLabel || `第${currentUnit}単元`}
-              onClick={startLevel}
+              title="品詞別"
+              preview={MODE_PREVIEW.pos}
+              subtitle="全単元から出題"
+              onClick={() => setPosPickerOpen(true)}
             />
             <ModeCard
               title="ランダム"
@@ -142,19 +162,21 @@ export function VocabQuizHub() {
               onClick={startRandom}
             />
             <ModeCard
-              title="品詞別"
-              preview={MODE_PREVIEW.pos}
+              title="単元別"
+              preview={MODE_PREVIEW.level}
               subtitle={currentUnitLabel || `第${currentUnit}単元`}
-              onClick={() => setPosPickerOpen(true)}
+              onClick={startLevel}
             />
           </div>
+
+          <VocabQuizWordMatrix words={dataset.words} learned={learned} />
         </div>
       </section>
 
       <VocabQuizModal open={!!play} onClose={closeAll}>
         {play && (
           <VocabQuizPlayer
-            key={`${play.mode}-${play.groupId ?? ""}-${play.coarsePos ?? ""}`}
+            key={`${play.mode}-${play.groupId ?? ""}-${play.coarsePos ?? ""}-${sessionKey}`}
             dataset={dataset}
             mode={play.mode}
             groupId={play.groupId}
@@ -163,6 +185,8 @@ export function VocabQuizHub() {
             onLearnedChange={setLearned}
             onSessionComplete={() => {}}
             onExit={closeAll}
+            nextSessionLabel={nextSession?.label}
+            onContinueNext={nextSession?.play ? continueNext : undefined}
           />
         )}
       </VocabQuizModal>
@@ -175,24 +199,24 @@ export function VocabQuizHub() {
           </VocabQuizCardHeader>
           <VocabQuizCardBody>
             <p className="mb-4 text-center text-xs text-muted-foreground">
-              {currentUnitLabel} の単語から出題します
+              全単元の単語から出題します
             </p>
             <div className="grid gap-2">
               {COARSE_POS.map((pos) => {
-                const count = dataset.words.filter(
-                  (w) => w.unitNum === currentUnit && w.coarsePos === pos,
-                ).length;
+                const inPos = dataset.words.filter((w) => w.coarsePos === pos);
+                const total = inPos.length;
+                const learnedInPos = inPos.filter((w) => learned[w.id]).length;
                 return (
                   <button
                     key={pos}
                     type="button"
-                    disabled={count === 0}
+                    disabled={total === 0}
                     onClick={() => startPos(pos)}
-                    className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm font-semibold transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent/80 active:bg-accent/70 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {dataset.meta.coarsePosLabels[pos]}
                     <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      {count}語
+                      {learnedInPos}/{total}語
                     </span>
                   </button>
                 );
