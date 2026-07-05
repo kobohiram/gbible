@@ -10,7 +10,8 @@
     "generate:ot": "node scripts/generate-ot-data.mjs",
     "generate:ot-lexicon": "node scripts/gen-ot-lexicon.mjs --book genesis",
     "generate:ot-pane-gloss": "node scripts/gen-ot-pane-gloss.mjs",
-    "build:ot-stub": "node scripts/build-genesis-stub.mjs"
+    "build:ot-stub": "node scripts/build-genesis-stub.mjs",
+    "import:vocab-quiz": "node scripts/import-vocab-quiz.mjs --enrich-kaisetsu"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

@@ -104,9 +104,8 @@ body {
 
 /* Tailwind font-greek ユーティリティと併用（font-family は @theme で定義） */
 @utility font-greek {
-  --font-greek: var(--font-cardo), "GentiumAlt", var(--font-gentium-plus),
-    "Galilee Unicode Gk", "Galatia SIL", "Palatino Linotype", Arial, Helvetica,
-    sans-serif;
+  --font-greek: var(--font-gentium-plus), var(--font-cardo), "Gentium Plus", "GentiumAlt",
+    "Galilee Unicode Gk", "Galatia SIL", "Palatino Linotype", serif;
   font-family: var(--font-greek);
   font-feature-settings: "kern" 1;
 }

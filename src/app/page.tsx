@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { auth, signIn } from "@/auth";
-import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
+import { VocabQuizHub } from "@/components/vocab-quiz/VocabQuizHub";
 
 export const metadata: Metadata = {
-  title: "Gbible — 聖書原文をギリシャ語・ヘブル語で読む",
+  title: "Gbible — ギリシャ語単語クイズ・聖書原文リーダー",
   description:
-    "新約（ギリシャ語）・旧約（ヘブル語）の原文を、語形解析・日本語辞書・私訳メモと一緒に読めるツール。工房ヒラム運営。",
+    "ギリシャ語クイズ（新約エレメンツ準拠・600語）と、新約・旧約原文を語形解析・辞書・私訳メモと一緒に読めるツール。工房ヒラム運営。",
   openGraph: {
     url: "https://gbible.online",
   },
@@ -81,13 +81,13 @@ export default async function Home({
 }: {
   searchParams: Promise<{ callbackUrl?: string }>;
 }) {
-  const session = await auth();
-  const { callbackUrl } = await searchParams;
-  if (session?.user) redirect(callbackUrl ?? "/study");
+  await auth();
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <SiteHeader />
+
+      <VocabQuizHub />
 
       <main className="flex flex-1 flex-col items-center justify-center gap-10 px-6 py-16 text-center">
         <div className="space-y-3">

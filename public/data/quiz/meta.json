@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "totalWords": 610,
+  "totalGroups": 73,
+  "chunkSize": 10,
+  "coarsePosLabels": {
+    "verb": "動詞",
+    "noun": "名詞",
+    "adj": "形容詞",
+    "prep": "前置詞",
+    "other": "その他"
+  }
+}
