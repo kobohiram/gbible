@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV = [
-  { href: "/",        label: "トップ" },
   { href: "/study",   label: "聖書を読む" },
   { href: "/grammar", label: "文法" },
 ];

@@ -19,6 +19,7 @@ export function SiteHeader({ extra, onDataImported }: Props) {
         <Link
           href="/"
           className="text-lg font-bold tracking-tight text-primary-foreground hover:opacity-80"
+          aria-label="GBIBLE トップへ"
         >
           <span className="font-extrabold text-accent">G</span>BIBLE
         </Link>
