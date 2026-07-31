@@ -64,6 +64,10 @@ const OSHB_BOOKS = {
     id: 'exodus', file: 'Exod.xml', osis: 'Exod', name: '出エジプト記', chapters: 40,
     verseData: [22,25,22,31,23,30,25,32,35,29,10,51,22,31,27,36,16,27,25,26,36,31,33,18,40,37,21,43,46,38,18,35,23,35,35,38,29,31,43,38],
   },
+  leviticus: {
+    id: 'leviticus', file: 'Lev.xml', osis: 'Lev', name: 'レビ記', chapters: 27,
+    verseData: [17,16,17,35,19,30,38,36,24,20,47,8,59,57,33,34,16,30,37,27,24,33,44,23,55,46,34],
+  },
 };
 
 const STUB_LEXICON = join(__dirname, 'genesis-1-stub-lexicon.json');
@@ -283,6 +287,18 @@ function parseOshbChapter(xml, osisPrefix, chapter) {
     verses.set(verse, words);
   }
   return verses;
+}
+
+/**
+ * WLC/OSHB（ヘブル語聖書）の章節 → 日本語聖書（プロテスタント）番号。
+ * レビ記5–6章のみ差がある（ヘブ5:20–26 = 日6:1–7、ヘブ6 = 日6:8–30）。
+ */
+function remapToProtestant(bookId, chapter, verse) {
+  if (bookId === 'leviticus') {
+    if (chapter === 5 && verse >= 20) return { chapter: 6, verse: verse - 19 };
+    if (chapter === 6) return { chapter: 6, verse: verse + 7 };
+  }
+  return { chapter, verse };
 }
 
 async function callClaude(model, system, user, apiKey, maxTokens = 4096) {
@@ -663,7 +679,8 @@ async function main() {
     for (let chapter = fromChapter; chapter <= toChapter; chapter++) {
       const verses = chapterVerses.get(chapter);
       for (const [verse, wordList] of verses.entries()) {
-        const key = `${chapter}:${verse}`;
+        const mapped = remapToProtestant(book.id, chapter, verse);
+        const key = `${mapped.chapter}:${mapped.verse}`;
         wordsObj[key] = wordList.map((w, idx) => {
           const strongs = lemmaToStrongs(w.lemma);
           const merged = mergeLexiconSources(strongs, tbeshMap, strongMap, indexMap, bdbMap);
@@ -676,7 +693,7 @@ async function main() {
           }
 
           return {
-            id: `${book.id}-${chapter}-${verse}-w${idx + 1}`,
+            id: `${book.id}-${mapped.chapter}-${mapped.verse}-w${idx + 1}`,
             strongs,
             text: w.text,
             script: 'heb',

@@ -39,6 +39,7 @@ export const BOOKS_WITH_FULL_DATA = new Set<NtBookId>([
 export const OT_CHAPTER_DATA: Partial<Record<OtBookId, Set<number>>> = {
   genesis: new Set(Array.from({ length: 50 }, (_, i) => i + 1)),
   exodus: new Set(Array.from({ length: 40 }, (_, i) => i + 1)),
+  leviticus: new Set(Array.from({ length: 27 }, (_, i) => i + 1)),
 };
 
 const legacyLexicon: Record<string, LexiconEntry> = {

@@ -129,7 +129,7 @@ export function isOtBookId(bookId: BookId): bookId is OtBookId {
 }
 
 /** 節データ JSON が存在する旧約書（段階的に追加） */
-export const OT_BOOKS_WITH_DATA = new Set<OtBookId>(["genesis", "exodus"]);
+export const OT_BOOKS_WITH_DATA = new Set<OtBookId>(["genesis", "exodus", "leviticus"]);
 
 export function bookHasOtData(bookId: BookId): boolean {
   return isOtBookId(bookId) && OT_BOOKS_WITH_DATA.has(bookId);
