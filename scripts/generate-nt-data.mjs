@@ -196,8 +196,17 @@ function stripDiacritics(s) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
+/** MorphGNT 見出し語 → Strong's 見出し語の差分（照合失敗で G0 になるのを防ぐ） */
+const LEMMA_STRONGS_ALIASES = new Map([
+  // Strong's は δεικνύω、MorphGNT は δείκνυμι
+  ['δείκνυμι', 'G1166'],
+  ['δεικνυμι', 'G1166'],
+]);
+
 function lookupStrongs(lemma, strongsMap, stripMap) {
   const key = lemma.toLowerCase().normalize('NFC');
+  const alias = LEMMA_STRONGS_ALIASES.get(key) ?? LEMMA_STRONGS_ALIASES.get(stripDiacritics(key));
+  if (alias) return alias;
   return strongsMap.get(key) ?? stripMap.get(stripDiacritics(key)) ?? 'G0';
 }
 
