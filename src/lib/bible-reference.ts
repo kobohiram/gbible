@@ -18,6 +18,8 @@ function registerBookAliases() {
   for (const book of BOOKS) {
     addAlias(book.name, book.id);
     addAlias(book.name.replace(/による/g, ""), book.id);
+    // 「イザヤ書」→「イザヤ」、「レビ記」→「レビ」
+    if (/[^の](書|記)$/.test(book.name)) addAlias(book.name.slice(0, -1), book.id);
     if (book.name.endsWith("による福音書")) {
       const short = book.name.replace("による福音書", "");
       addAlias(short, book.id);
@@ -73,6 +75,15 @@ function registerBookAliases() {
     ["エレ", "jeremiah"], ["Jer", "jeremiah"],
     ["エゼ", "ezekiel"], ["Eze", "ezekiel"],
     ["ダニ", "daniel"], ["Dan", "daniel"],
+    // 辞書の説明で使う略号（新改訳2017 風）
+    ["マタ", "matthew"], ["マル", "mark"], ["ヨハ", "john"], ["使", "acts"], ["ロマ", "romans"],
+    ["1コリ", "1corinthians"], ["2コリ", "2corinthians"],
+    ["ヨシュ", "joshua"], ["士", "judges"], ["ルツ", "ruth"],
+    ["1サム", "1samuel"], ["2サム", "2samuel"], ["1列", "1kings"], ["2列", "2kings"],
+    ["1歴", "1chronicles"], ["2歴", "2chronicles"], ["エズ", "ezra"], ["ネヘ", "nehemiah"],
+    ["ヨブ", "job"], ["哀", "lamentations"], ["ホセ", "hosea"], ["ヨエ", "joel"], ["アモ", "amos"],
+    ["オバ", "obadiah"], ["ヨナ", "jonah"], ["ミカ", "micah"], ["ナホ", "nahum"], ["ハバ", "habakkuk"],
+    ["ゼパ", "zephaniah"], ["ハガ", "haggai"], ["ゼカ", "zechariah"], ["マラ", "malachi"],
   ];
   for (const [alias, id] of extras) addAlias(alias, id);
 }
