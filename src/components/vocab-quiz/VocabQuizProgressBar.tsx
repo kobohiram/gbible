@@ -3,9 +3,11 @@ type Props = {
   total: number;
   className?: string;
   showLabel?: boolean;
+  /** 数の単位（単語クイズは「語」、アルファベットは「問」） */
+  unit?: string;
 };
 
-export function VocabQuizProgressBar({ current, total, className = "", showLabel = true }: Props) {
+export function VocabQuizProgressBar({ current, total, className = "", showLabel = true, unit = "語" }: Props) {
   const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
 
   return (
@@ -14,7 +16,7 @@ export function VocabQuizProgressBar({ current, total, className = "", showLabel
         <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
           <span>習得進捗</span>
           <span>
-            {current}/{total} 語（{pct}%）
+            {current}/{total} {unit}（{pct}%）
           </span>
         </div>
       )}
