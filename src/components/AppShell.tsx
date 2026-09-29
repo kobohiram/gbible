@@ -60,7 +60,6 @@ function PaneFrame({
 
 export function AppShell() {
   const { data: session } = useSession();
-  const [userCount, setUserCount] = useState<number | null>(null);
   const [corpus, setCorpus] = useState<CorpusId>("nt");
   const [bookId, setBookId] = useState<BookId>(() => loadLastLocation("nt").bookId);
   const [chapter, setChapter] = useState(() => loadLastLocation("nt").chapter);
@@ -73,12 +72,6 @@ export function AppShell() {
   const mobileVerseRef = useRef<HTMLDivElement>(null);
 
   const books = getBooksForCorpus(corpus);
-
-  useEffect(() => {
-    fetch('/api/stats').then(r => r.ok ? r.json() : null).then(d => {
-      if (d?.users != null) setUserCount(d.users);
-    }).catch(() => {});
-  }, []);
 
   useEffect(() => {
     saveLastLocation(corpus, bookId, chapter, selectedVerse);
@@ -324,26 +317,7 @@ export function AppShell() {
 
   return (
     <div className="flex h-dvh flex-col">
-      <SiteHeader
-        onDataImported={refreshTranslations}
-        extra={
-          <>
-            {userCount != null && userCount > 0 && (
-              <span className="text-xs text-primary-foreground/60">
-                {userCount}人が利用中
-              </span>
-            )}
-            {corpus === "nt" && (
-              <a
-                href="/study/synoptic"
-                className="text-sm font-semibold text-primary-foreground/70 underline-offset-2 hover:text-primary-foreground hover:underline"
-              >
-                共観福音書
-              </a>
-            )}
-          </>
-        }
-      />
+      <SiteHeader onDataImported={refreshTranslations} />
 
       <div className="hidden min-h-0 flex-1 md:flex">
         <ResizablePanelGroup
