@@ -21,6 +21,8 @@ npm run ot:lexicon -- psalms --chapters 1-41 --dry-run     #    費用の確認
 npm run ot:lexicon -- psalms --chapters 1-41               # 2. 辞書（この書で初めて出る語）
 npm run ot:gloss -- psalms --chapters 1-41                 # 3. 文脈訳
 npm run ot:verify -- psalms --chapters 1-41                # 4. AI による二重チェック
+npm run ot:revise -- psalms --chapters 1-41                # 4.5 指摘を受けて自動修正（作成側の AI が判断）
+npm run ot:verify -- psalms --chapters 1-41 --revised      #     直した項目だけを再点検（新たな指摘があれば 4.5 をもう一度。2回まで）
 npm run ot:check -- psalms --chapters 1-41                 # 5. 自動チェック＋レビュー画面の作成（任意）
 npm run ot:apply-review -- ~/Downloads/psalms-review.json  # 6. レビュー画面の判断を反映（任意）
 npm run ot:publish -- psalms --chapters 1-41               # 7. 公開（訳・辞書の抜けや AI 点検漏れがあれば止まる）

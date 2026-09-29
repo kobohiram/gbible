@@ -19,7 +19,8 @@
     "ot:check": "node scripts/ot/check.mjs",
     "ot:apply-review": "node scripts/ot/apply-review.mjs",
     "ot:publish": "node scripts/ot/publish.mjs",
-    "ot:pull-reviews": "node scripts/ot/pull-reviews.mjs"
+    "ot:pull-reviews": "node scripts/ot/pull-reviews.mjs",
+    "ot:revise": "node scripts/ot/revise.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

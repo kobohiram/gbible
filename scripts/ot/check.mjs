@@ -77,9 +77,8 @@ export function checkLexicon(e, verseCounts, texts) {
   const len = [...(e.detailJa ?? '')].length;
   if (len < 150) problems.push(`detailJa が短すぎます（${len}字）`);
   if (len > 650) problems.push(`detailJa が長すぎます（${len}字）`);
-  if (/[A-Za-z]{4,}/.test(e.detailJa ?? '') && !/(LXX|YHWH|BDB|TBESH)/.test(e.detailJa)) {
-    problems.push('detailJa に英語が残っている可能性があります');
-  }
+  const english = ((e.detailJa ?? '').replace(/\b(LXX|YHWH|BDB|TBESH|Strong's|Strong)\b/g, '').match(/[A-Za-z]{4,}/g) ?? []);
+  if (english.length) problems.push(`detailJa に英語が残っています（${[...new Set(english)].slice(0, 3).join(', ')}）`);
   const name = NAMES[e.strongs];
   if (name && e.glossJa !== name) problems.push(`固有名詞は「${name}」と表記してください`);
   if (e.nameUncertain) problems.push('固有名詞の新改訳2017表記に AI が確信を持てていません');
@@ -104,6 +103,14 @@ export function checkLexicon(e, verseCounts, texts) {
 
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+}
+
+/** AI 校閲の指摘（作成側と意見が分かれたものは両方の見解を並べる） */
+function aiIssueProblem(v) {
+  const text = v.resolution === 'disputed'
+    ? `AI の意見が分かれました。校閲: ${v.problem} ／ 作成側: ${v.resolutionNote}`
+    : `AI校閲: ${v.problem}`;
+  return { level: v.severity, text, suggestion: v.suggestion };
 }
 
 export function reviewPath(bookId) {
@@ -221,7 +228,7 @@ export function collectReview(bookId, chapters) {
         else problems.push({ level: 'warn', text: `異読: 書かれた形 ${w.kq.ketiv} →「${g.ketivGloss}」（読む形の訳と見比べてください）` });
       }
       const v = verify.gloss[w.id];
-      if (v) problems.push({ level: v.severity, text: `AI校閲: ${v.problem}`, suggestion: v.suggestion });
+      if (v && v.resolution !== 'fixed') problems.push(aiIssueProblem(v));
       if (!problems.length) continue;
       glossStats.flagged++;
       glossItems.push({
@@ -253,7 +260,7 @@ export function collectReview(bookId, chapters) {
     lexStats.draft++;
     const problems = checkLexicon(e, verseCounts, texts).map((t) => (typeof t === 'string' ? { level: 'error', text: t } : t));
     const v = verify.lexicon[s];
-    if (v) problems.push({ level: v.severity, text: `AI校閲: ${v.problem}`, suggestion: v.suggestion });
+    if (v && v.resolution !== 'fixed') problems.push(aiIssueProblem(v));
     const reasons = [];
     if (problems.length) reasons.push('指摘あり');
     if (e.isProperNoun) reasons.push('固有名詞');
