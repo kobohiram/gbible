@@ -9,6 +9,7 @@
 export const OT_BOOKS = {
   genesis: { id: 'genesis', name: '創世記', abbr: '創', osis: 'Gen', oshbFile: 'Gen.xml', versification: 'wlc' },
   exodus: { id: 'exodus', name: '出エジプト記', abbr: '出', osis: 'Exod', oshbFile: 'Exod.xml', versification: 'wlc' },
+  leviticus: { id: 'leviticus', name: 'レビ記', abbr: 'レ', osis: 'Lev', oshbFile: 'Lev.xml', versification: 'kjv' },
   psalms: { id: 'psalms', name: '詩篇', abbr: '詩', osis: 'Ps', oshbFile: 'Ps.xml', versification: 'kjv', psalmTitles: true },
   isaiah: { id: 'isaiah', name: 'イザヤ書', abbr: 'イザ', osis: 'Isa', oshbFile: 'Isa.xml', versification: 'kjv' },
   proverbs: { id: 'proverbs', name: '箴言', abbr: '箴', osis: 'Prov', oshbFile: 'Prov.xml', versification: 'kjv' },
