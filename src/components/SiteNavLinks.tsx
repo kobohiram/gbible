@@ -4,9 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV = [
-  { href: "/study",   label: "聖書を読む" },
-  { href: "/grammar", label: "文法" },
+  { href: "/study",          label: "聖書を読む" },
+  { href: "/study/synoptic", label: "共観福音書" },
+  { href: "/grammar",        label: "文法" },
 ];
+
+/** 今のページに最も具体的に当てはまるメニュー（/study/synoptic では「共観福音書」だけを強調） */
+function activeHref(pathname: string): string | null {
+  const matches = NAV.filter(({ href }) => pathname === href || pathname.startsWith(href + "/"));
+  return matches.sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
+}
 
 type Props = {
   /** ヘッダー背景が primary（暗色）のとき true */
@@ -17,12 +24,9 @@ export function SiteNavLinks({ onDark = true }: Props) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-0.5" aria-label="サイトナビゲーション">
+    <nav className="flex items-center gap-0.5 whitespace-nowrap" aria-label="サイトナビゲーション">
       {NAV.map(({ href, label }) => {
-        const active =
-          href === "/"
-            ? pathname === "/"
-            : pathname === href || pathname.startsWith(href + "/");
+        const active = href === activeHref(pathname);
 
         const base =
           "rounded px-2.5 py-1 text-sm font-semibold transition-colors";
@@ -36,7 +40,7 @@ export function SiteNavLinks({ onDark = true }: Props) {
             : "text-muted-foreground hover:bg-muted/60 hover:text-foreground";
 
         return (
-          <Link key={href} href={href} className={`${base} ${colorClass}`}>
+          <Link key={href} href={href} className={`${base} ${colorClass}`} aria-current={active ? "page" : undefined}>
             {label}
           </Link>
         );

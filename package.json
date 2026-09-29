@@ -20,7 +20,8 @@
     "ot:apply-review": "node scripts/ot/apply-review.mjs",
     "ot:publish": "node scripts/ot/publish.mjs",
     "ot:pull-reviews": "node scripts/ot/pull-reviews.mjs",
-    "build:chat-index": "node scripts/build-chat-index.mjs"
+    "build:chat-index": "node scripts/build-chat-index.mjs",
+    "ot:revise": "node scripts/ot/revise.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.129.0",

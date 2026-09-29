@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { SiteHeader } from "@/components/SiteHeader";
 import type { BookData, BookId, LexiconEntry } from "@/types";
 import type { Pericope } from "@/types/synoptic";
 import { loadPericopes, buildWordMarkMap } from "@/lib/synoptic-data";
@@ -137,34 +137,22 @@ export function SynopticShell() {
 
   return (
     <div className="flex h-dvh flex-col">
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-primary/30 bg-primary px-4 py-2.5 text-primary-foreground">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/study"
-            className="text-sm font-semibold underline-offset-2 hover:underline"
-          >
-            ← 戻る
-          </Link>
-          <h1 className="text-lg font-bold tracking-tight">
-            <span className="font-extrabold text-accent">G</span>bible 共観福音書
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setShowJohn((v) => !v)}
-            className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors ${
-              showJohn
-                ? "border-primary-foreground bg-primary-foreground/20"
-                : "border-primary-foreground/40 hover:bg-primary-foreground/10"
-            }`}
-          >
-            {showJohn ? "− ヨハネ" : "+ ヨハネ"}
-          </button>
-        </div>
-      </header>
+      <SiteHeader />
 
       <div className="flex shrink-0 flex-wrap items-center gap-4 border-b border-border bg-muted/30 px-4 py-1.5 text-xs text-muted-foreground">
+        <h1 className="text-sm font-bold text-foreground">共観福音書</h1>
+        <button
+          type="button"
+          onClick={() => setShowJohn((v) => !v)}
+          aria-pressed={showJohn}
+          className={`rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors ${
+            showJohn
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border text-foreground hover:bg-muted"
+          }`}
+        >
+          {showJohn ? "− ヨハネを隠す" : "+ ヨハネも並べる"}
+        </button>
         <span className="font-semibold">一致マーカー:</span>
         {LEGEND.map((item) => (
           <span key={item.varName} className="flex items-center gap-1">
