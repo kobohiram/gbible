@@ -120,10 +120,16 @@
     "generatedAt": "2026-09-29T08:49:04.945Z"
   },
   "psalms-1-2-w6": {
-    "gloss": "そして彼の律法を",
+    "gloss": "そしてその律法に",
     "status": "draft",
     "model": "claude-opus-5-5",
-    "generatedAt": "2026-09-29T08:49:04.945Z"
+    "generatedAt": "2026-09-29T08:49:04.945Z",
+    "revisions": [
+      {
+        "gloss": "そして彼の律法を",
+        "revisedAt": "2026-09-29T12:40:59.450Z"
+      }
+    ]
   },
   "psalms-1-2-w7": {
     "gloss": "口ずさむ",
@@ -144,10 +150,16 @@
     "generatedAt": "2026-09-29T08:49:04.945Z"
   },
   "psalms-1-3-w1": {
-    "gloss": "彼はなる",
+    "gloss": "そして彼はなる",
     "status": "draft",
     "model": "claude-opus-5-5",
-    "generatedAt": "2026-09-29T08:49:04.945Z"
+    "generatedAt": "2026-09-29T08:49:04.945Z",
+    "revisions": [
+      {
+        "gloss": "彼はなる",
+        "revisedAt": "2026-09-29T12:40:59.450Z"
+      }
+    ]
   },
   "psalms-1-3-w2": {
     "gloss": "木のように",
@@ -648,10 +660,16 @@
     "generatedAt": "2026-09-29T08:49:04.945Z"
   },
   "psalms-23-5-w7": {
-    "gloss": "油を",
+    "gloss": "油で",
     "status": "draft",
     "model": "claude-opus-5-5",
-    "generatedAt": "2026-09-29T08:49:04.945Z"
+    "generatedAt": "2026-09-29T08:49:04.945Z",
+    "revisions": [
+      {
+        "gloss": "油を",
+        "revisedAt": "2026-09-29T12:40:59.450Z"
+      }
+    ]
   },
   "psalms-23-5-w8": {
     "gloss": "私の頭に",
@@ -954,10 +972,16 @@
     "generatedAt": "2026-09-29T08:49:04.945Z"
   },
   "psalms-24-4-w12": {
-    "gloss": "欺きのために",
+    "gloss": "偽って",
     "status": "draft",
     "model": "claude-opus-5-5",
-    "generatedAt": "2026-09-29T08:49:04.945Z"
+    "generatedAt": "2026-09-29T08:49:04.945Z",
+    "revisions": [
+      {
+        "gloss": "欺きのために",
+        "revisedAt": "2026-09-29T12:40:59.450Z"
+      }
+    ]
   },
   "psalms-24-5-w1": {
     "gloss": "受ける",

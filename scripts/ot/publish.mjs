@@ -53,7 +53,13 @@ function main() {
   if (lexStats.legacy) console.warn(`注意: 旧版の辞書のまま公開される語が ${lexStats.legacy} 語あります。`);
 
   /** AI 下書きの項目に付ける、AI 校閲の指摘（確認済みの項目には付けない） */
-  const aiNote = (issue) => (issue ? { aiNote: issue.problem, ...(issue.suggestion ? { aiSuggestion: issue.suggestion } : {}) } : {});
+  const aiNote = (issue) => {
+    if (!issue || issue.resolution === 'fixed') return {};
+    const note = issue.resolution === 'disputed'
+      ? `AI の意見が分かれています。校閲: ${issue.problem} ／ 作成側: ${issue.resolutionNote}`
+      : issue.problem;
+    return { aiNote: note, ...(issue.suggestion ? { aiSuggestion: issue.suggestion } : {}) };
+  };
   const isChecked = (status) => status === 'verified' || status === 'locked';
 
   // 既存の公開データに、今回の章を上書きで追加する
