@@ -5,21 +5,20 @@ import { useSession, signIn } from "next-auth/react";
 import type { ChatMessage, ContextApiRequest } from "@/lib/context-llm";
 import type { BibleLocation } from "@/lib/bible-reference";
 import type { BookId } from "@/types";
-import {
-  clearLlmApiKey,
-  getLlmApiKey,
-  hasLlmApiKey,
-  isLikelyOpenAiKey,
-  saveLlmApiKey,
-} from "@/lib/llm-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { GrammarNoteContent } from "./GrammarNoteContent";
 import { Send, ChevronDown } from "lucide-react";
 
-const OPENAI_API_KEYS_URL = "https://platform.openai.com/api-keys";
 const COLLAPSED_KEY = "gbible-grammar-collapsed";
+
+/** 最初に表示する質問の例 */
+const EXAMPLE_QUESTIONS = [
+  "「正義」はヘブル語とギリシャ語で何？",
+  "「空の鳥を見なさい」と言っている箇所は？",
+  "敬老の日のお祝いに贈る聖書の言葉は？",
+  "クリスマスによく読まれるイザヤの言葉は？",
+];
 
 type Props = {
   contextRequest: ContextApiRequest;
@@ -84,12 +83,7 @@ export function PaneGrammarPoint({
     [contextRequest, reference],
   );
 
-  const [serverKeyAvailable, setServerKeyAvailable] = useState(false);
   const [configured, setConfigured] = useState(false);
-  const [editingKey, setEditingKey] = useState(false);
-  const [useOwnKey, setUseOwnKey] = useState(false);
-  const [draftKey, setDraftKey] = useState("");
-  const [keyError, setKeyError] = useState<string | null>(null);
 
   const [displayItems, setDisplayItems] = useState<ChatDisplayItem[]>([]);
   const [input, setInput] = useState("");
@@ -100,26 +94,12 @@ export function PaneGrammarPoint({
   const abortRef = useRef<AbortController | null>(null);
   const lastSessionKeyRef = useRef<string | null>(null);
 
-  const refreshKeyState = useCallback((serverAvailable: boolean) => {
-    const hasUserKey = hasLlmApiKey();
-    const ready = hasUserKey || serverAvailable;
-    setConfigured(ready);
-    if (!hasUserKey && !serverAvailable) {
-      setEditingKey(true);
-      setUseOwnKey(true);
-    }
-  }, []);
-
   useEffect(() => {
     fetch("/api/context")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data: { serverKeyAvailable?: boolean } | null) => {
-        const available = Boolean(data?.serverKeyAvailable);
-        setServerKeyAvailable(available);
-        refreshKeyState(available);
-      })
-      .catch(() => refreshKeyState(false));
-  }, [refreshKeyState]);
+      .then((data: { serverKeyAvailable?: boolean } | null) => setConfigured(Boolean(data?.serverKeyAvailable)))
+      .catch(() => setConfigured(false));
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -150,13 +130,9 @@ export function PaneGrammarPoint({
 
   const callChat = useCallback(
     async (request: ContextApiRequest, history: ChatMessage[], signal: AbortSignal) => {
-      const apiKey = getLlmApiKey();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
-
       const response = await fetch("/api/context", {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...request, messages: history }),
         signal,
       });
@@ -199,50 +175,23 @@ export function PaneGrammarPoint({
     }
   }
 
-  async function handleSend() {
-    if (!input.trim() || loading) return;
+  async function handleSend(text = input) {
+    if (!text.trim() || loading) return;
 
-    const userMessage: ChatMessage = { role: "user", content: input.trim() };
+    const userMessage: ChatMessage = { role: "user", content: text.trim() };
     const nextHistory = [...chatHistoryFromDisplay(displayItems), userMessage];
     setDisplayItems((prev) => [...prev, { kind: "chat", message: userMessage }]);
     setInput("");
     await sendMessages(nextHistory);
   }
 
-  function handleSaveKey() {
-    setKeyError(null);
-    const trimmed = draftKey.trim();
-    if (!trimmed) {
-      setKeyError("APIキーを入力してください。");
-      return;
-    }
-    if (!isLikelyOpenAiKey(trimmed)) {
-      setKeyError("OpenAI の API キーは通常「sk-」で始まります。");
-      return;
-    }
-    saveLlmApiKey(trimmed);
-    setDraftKey("");
-    setEditingKey(false);
-    setUseOwnKey(true);
-    refreshKeyState(serverKeyAvailable);
+  function handleNewConversation() {
+    abortRef.current?.abort();
+    setLoading(false);
+    setChatError(null);
+    setDisplayItems([]);
   }
 
-  function handleClearKey() {
-    clearLlmApiKey();
-    setDraftKey("");
-    setKeyError(null);
-    if (serverKeyAvailable) {
-      setEditingKey(false);
-      setUseOwnKey(false);
-    } else {
-      setEditingKey(true);
-      setUseOwnKey(true);
-    }
-    refreshKeyState(serverKeyAvailable);
-  }
-
-  const showKeyForm = useOwnKey && (editingKey || (!hasLlmApiKey() && !serverKeyAvailable));
-  const hasUserKey = hasLlmApiKey();
   const hasChat = displayItems.some((item) => item.kind === "chat");
 
   const chatAreaClassName = embedded
@@ -252,9 +201,24 @@ export function PaneGrammarPoint({
       : "mb-3 min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-card/40 p-3";
 
   const idleHint = (
-    <p className="text-sm leading-relaxed text-muted-foreground">
-      使い方などご質問をどうぞ。
-    </p>
+    <div className="space-y-2">
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        聖書の言葉・原語・箇所探しなど、何でもどうぞ。Gbible の本文と辞書で確かめながら答えます。
+      </p>
+      <div className="flex flex-col gap-1.5">
+        {EXAMPLE_QUESTIONS.map((q) => (
+          <button
+            key={q}
+            type="button"
+            disabled={!configured || loading}
+            onClick={() => void handleSend(q)}
+            className="rounded-md border border-border bg-background px-3 py-2 text-left text-sm text-foreground hover:bg-accent/20 disabled:opacity-50"
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 
   const loggedOutHint = (
@@ -297,69 +261,20 @@ export function PaneGrammarPoint({
 
       {!collapsed && (
       <div className={embedded ? "flex min-h-0 flex-1 flex-col p-4" : stacked ? "flex flex-col p-4" : "flex min-h-0 flex-1 flex-col p-4"}>
-        {isLoggedIn && showKeyForm && (
-              <div className="mb-3 shrink-0 space-y-2 rounded-lg border border-border bg-card/60 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="grammar-api-key" className="text-xs font-semibold">
-                    OpenAI API キー
-                  </Label>
-                  <a
-                    href={OPENAI_API_KEYS_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] text-primary underline-offset-2 hover:underline"
-                  >
-                    キーを取得
-                  </a>
-                </div>
-                <Input
-                  id="grammar-api-key"
-                  type="password"
-                  autoComplete="off"
-                  placeholder="sk-..."
-                  value={draftKey}
-                  onChange={(e) => setDraftKey(e.target.value)}
-                />
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" size="sm" onClick={handleSaveKey}>
-                    保存
-                  </Button>
-                  {hasUserKey && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditingKey(false);
-                        setDraftKey("");
-                        setKeyError(null);
-                      }}
-                    >
-                      キャンセル
-                    </Button>
-                  )}
-                </div>
-                {keyError && <p className="text-xs text-red-600">{keyError}</p>}
-                <p className="text-[11px] text-muted-foreground">
-                  キーはブラウザにのみ保存されます（gpt-4o-mini を使用）。
-                </p>
-              </div>
-            )}
-
-            {isLoggedIn && configured && !showKeyForm && serverKeyAvailable && !hasUserKey && (
-              <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                <button
-                  type="button"
-                  className="underline-offset-2 hover:text-foreground hover:underline"
-                  onClick={() => {
-                    setUseOwnKey(true);
-                    setEditingKey(true);
-                  }}
-                >
-                  独自のキーを使う
-                </button>
-              </div>
-            )}
+        {isLoggedIn && hasChat && (
+          <div className="mb-2 flex shrink-0 justify-end">
+            <button
+              type="button"
+              onClick={handleNewConversation}
+              className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            >
+              新しい会話
+            </button>
+          </div>
+        )}
+        {isLoggedIn && !configured && (
+          <p className="mb-2 shrink-0 text-xs text-muted-foreground">チャットボットは準備中です。</p>
+        )}
 
             <div ref={scrollRef} className={chatAreaClassName}>
               {!isLoggedIn ? (
@@ -411,7 +326,7 @@ export function PaneGrammarPoint({
                     );
                   })}
                   {loading && (
-                    <p className="text-sm text-muted-foreground">考え中…</p>
+                    <p className="text-sm text-muted-foreground">Gbible の本文と辞書を調べています…（数十秒かかることがあります）</p>
                   )}
                 </>
               )}
