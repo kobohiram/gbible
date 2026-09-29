@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
   title: "使用資料について",
@@ -13,14 +13,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      <header className="border-b border-primary/20 bg-primary px-6 py-3">
-        <Link
-          href="/study"
-          className="text-lg font-extrabold tracking-tight text-primary-foreground"
-        >
-          <span className="text-accent">G</span>bible
-        </Link>
-      </header>
+      <SiteHeader />
 
       <main className="mx-auto max-w-2xl space-y-10 px-6 py-12">
         <div>

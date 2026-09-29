@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { SiteHeader } from "@/components/SiteHeader";
 import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { getBook } from "@/data/bible";
@@ -73,11 +73,7 @@ export function ReviewDashboard() {
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      <header className="border-b border-primary/20 bg-primary px-4 py-3 sm:px-6">
-        <Link href="/study" className="text-lg font-extrabold tracking-tight text-primary-foreground">
-          <span className="text-accent">G</span>bible
-        </Link>
-      </header>
+      <SiteHeader />
 
       <main className="mx-auto max-w-3xl space-y-8 px-4 py-8 sm:px-6">
         <div>
