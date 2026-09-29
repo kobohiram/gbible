@@ -114,13 +114,22 @@ export function PaneVerse({
                   key={word.id}
                   type="button"
                   onClick={() => onSelectWord(word)}
-                  className={`flex min-w-[4.5rem] flex-col items-center gap-1 rounded-lg px-2 py-2 transition-colors ${
+                  className={`relative flex min-w-[4.5rem] flex-col items-center gap-1 rounded-lg px-2 py-2 transition-colors ${
                     isSelected
                       ? "bg-accent/35 ring-2 ring-primary/35"
                       : "hover:bg-accent/15"
                   }`}
                   dir="ltr"
+                  title={word.kq ? `異読あり：書かれた形 ${word.kq.ketiv}` : undefined}
                 >
+                  {word.kq && (
+                    <span
+                      className="absolute right-1 top-0.5 rounded px-1 text-[10px] font-semibold leading-tight text-[var(--variant)] ring-1 ring-[var(--variant-border)]"
+                      aria-label="異読あり（ケティブ／ケレ）"
+                    >
+                      異読
+                    </span>
+                  )}
                   <span
                     className={`text-2xl leading-none text-foreground ${
                       script === "heb" ? "font-hebrew" : "font-greek"

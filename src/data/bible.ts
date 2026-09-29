@@ -1,4 +1,5 @@
 import type { Book, BookId, CorpusId, NtBookId, OtBookId } from "@/types";
+import otPublished from "./ot-published.json";
 
 type BookDef = { id: BookId; name: string; verses: readonly number[]; corpus: CorpusId };
 
@@ -51,7 +52,7 @@ const OT_BOOKS: readonly BookDef[] = [
   { id: "nehemiah", name: "ネヘミヤ記", corpus: "ot", verses: [11,20,32,23,19,19,73,18,38,39,36,47,31] },
   { id: "esther", name: "エステル記", corpus: "ot", verses: [22,23,15,17,14,14,10,17,32,3] },
   { id: "job", name: "ヨブ記", corpus: "ot", verses: [22,13,26,21,27,30,21,22,35,22,20,25,28,22,35,22,16,21,29,29,34,30,17,25,6,14,23,28,25,31,40,22,33,37,16,33,24,41,30,24,34,17] },
-  { id: "psalms", name: "詩篇", corpus: "ot", verses: [6,12,8,8,12,10,17,9,20,18,7,8,6,5,11,15,50,15,14,9,13,31,6,10,22,12,14,9,11,12,24,11,22,22,28,12,40,22,13,17,13,11,5,26,17,11,9,14,20,23,19,9,6,7,23,13,11,11,12,9,13,11,5,7,11,12,14,20,8,36,37,6,24,20,28,23,10,12,20,72,13,19,16,8,18,12,13,17,7,18,52,17,16,15,5,23,11,13,12,9,9,5,8,28,22,35,45,48,43,13,31,7,10,10,9,8,18,19,2,29,176,7,8,9,4,8,5,6,5,6,8,8,3,18,3,3,21,26,9,8,24,13,10,7,12,15,21,10,20,14,9,6] },
+  { id: "psalms", name: "詩篇", corpus: "ot", verses: [6,12,8,8,12,10,17,9,20,18,7,8,6,7,5,11,15,50,14,9,13,31,6,10,22,12,14,9,11,12,24,11,22,22,28,12,40,22,13,17,13,11,5,26,17,11,9,14,20,23,19,9,6,7,23,13,11,11,17,12,8,12,11,10,13,20,7,35,36,5,24,20,28,23,10,12,20,72,13,19,16,8,18,12,13,17,7,18,52,17,16,15,5,23,11,13,12,9,9,5,8,28,22,35,45,48,43,13,31,7,10,10,9,8,18,19,2,29,176,7,8,9,4,8,5,6,5,6,8,8,3,18,3,3,21,26,9,8,24,13,10,7,12,15,21,10,20,14,9,6] },
   { id: "proverbs", name: "箴言", corpus: "ot", verses: [33,22,35,27,23,35,27,36,18,32,31,28,25,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,27,33,31] },
   { id: "ecclesiastes", name: "伝道者の書", corpus: "ot", verses: [18,26,22,16,20,12,29,17,18,20,10,14] },
   { id: "songofsolomon", name: "雅歌", corpus: "ot", verses: [17,17,11,16,16,13,13,14] },
@@ -128,8 +129,28 @@ export function isOtBookId(bookId: BookId): bookId is OtBookId {
   return getCorpus(bookId) === "ot";
 }
 
+type OtPublishedIndex = Partial<Record<OtBookId, { chapters: number[]; titles?: number[] }>>;
+
+/** 公開済みの旧約の書と章（scripts/ot/publish.mjs が更新する） */
+export const OT_PUBLISHED = otPublished as OtPublishedIndex;
+
 /** 節データ JSON が存在する旧約書（段階的に追加） */
-export const OT_BOOKS_WITH_DATA = new Set<OtBookId>(["genesis", "exodus"]);
+export const OT_BOOKS_WITH_DATA = new Set<OtBookId>(Object.keys(OT_PUBLISHED) as OtBookId[]);
+
+/** 詩篇の表題を「0節」として持つ章か */
+export function hasTitleVerse(bookId: BookId, chapter: number): boolean {
+  return isOtBookId(bookId) && Boolean(OT_PUBLISHED[bookId]?.titles?.includes(chapter));
+}
+
+/** 節一覧の最初の節番号（表題がある詩篇は 0） */
+export function getFirstVerse(bookId: BookId, chapter: number): number {
+  return hasTitleVerse(bookId, chapter) ? 0 : 1;
+}
+
+/** 節番号の表示（0 節は「表題」） */
+export function formatVerseLabel(chapter: number, verse: number): string {
+  return verse === 0 ? `${chapter}篇 表題` : `${chapter}:${verse}`;
+}
 
 export function bookHasOtData(bookId: BookId): boolean {
   return isOtBookId(bookId) && OT_BOOKS_WITH_DATA.has(bookId);

@@ -200,3 +200,18 @@ body {
   --match-mt-mk: oklch(0.65 0.16 145);   /* 🟩 マタイ＋マルコ */
   --match-mk-lk: oklch(0.6 0.16 250);    /* 🟦 マルコ＋ルカ */
 }
+/* 旧約の異読（ケティブ／ケレ）の表示色 */
+:root {
+  --variant: oklch(0.55 0.14 60);
+  --variant-bg: oklch(0.97 0.03 80);
+  --variant-border: oklch(0.85 0.07 75);
+  --review-ok: oklch(0.5 0.13 150);
+  --review-ok-bg: oklch(0.95 0.05 150);
+}
+.dark {
+  --variant: oklch(0.8 0.13 75);
+  --variant-bg: oklch(0.25 0.03 70);
+  --variant-border: oklch(0.42 0.06 70);
+  --review-ok: oklch(0.8 0.14 150);
+  --review-ok-bg: oklch(0.28 0.05 150);
+}

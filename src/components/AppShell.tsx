@@ -6,6 +6,7 @@ import {
   getBook,
   getBooksForCorpus,
   getCorpus,
+  formatVerseLabel,
   getVerseCount,
 } from "@/data/bible";
 import {
@@ -19,6 +20,13 @@ import { normalizeVerseWords } from "@/lib/verse-text";
 import { buildBaseContextRequest, buildContextRequest } from "@/lib/context-llm";
 import type { BibleLocation } from "@/lib/bible-reference";
 import { fetchMnspBook, type MnspBookData } from "@/lib/translations";
+import {
+  EMPTY_REVIEW_STATE,
+  applyEntryDecision,
+  applyWordDecision,
+  fetchVerseReviewState,
+  type VerseReviewState,
+} from "@/lib/lexicon-review";
 import type { BookData, BookId, CorpusId, PersonalTranslation, VerseWord } from "@/types";
 import {
   ResizableHandle,
@@ -110,11 +118,43 @@ export function AppShell() {
   }, [bookId]);
 
   const book = getBook(bookId);
-  const words =
+  const rawWords =
     bookData?.words[`${chapter}:${selectedVerse}`] ??
     getVerseWords(bookId, chapter, selectedVerse);
+
+  // みんなで作る辞書：確認状況（旧約でパイプライン公開済みの節のみ）
+  const [reviewState, setReviewState] = useState<VerseReviewState>(EMPTY_REVIEW_STATE);
+  const [reviewNonce, setReviewNonce] = useState(0);
+  const reviewable = corpus === "ot" && rawWords.some((w) => w.review);
+  const reviewKey = reviewable ? rawWords.map((w) => w.id).join(",") : "";
+  useEffect(() => {
+    if (!reviewKey) {
+      setReviewState(EMPTY_REVIEW_STATE);
+      return;
+    }
+    let cancelled = false;
+    const ids = reviewKey.split(",");
+    const strongs = [...new Set(rawWords.map((w) => w.strongs).filter((s) => s !== "H0"))];
+    void fetchVerseReviewState(bookId, ids, strongs).then((st) => {
+      if (!cancelled) setReviewState(st);
+    });
+    return () => { cancelled = true; };
+    // rawWords は reviewKey と同じ内容を表すため依存から外す
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookId, reviewKey, reviewNonce, session?.user?.email]);
+
+  const words = useMemo(
+    () => (reviewable ? rawWords.map((w) => applyWordDecision(w, reviewState)) : rawWords),
+    [rawWords, reviewable, reviewState],
+  );
+  const selectedWordView = selectedWord
+    ? (words.find((w) => w.id === selectedWord.id) ?? selectedWord)
+    : null;
   const lexiconEntry = selectedWord
-    ? (bookData?.lexicon[selectedWord.strongs] ?? getLexiconEntry(selectedWord.strongs))
+    ? applyEntryDecision(
+        bookData?.lexicon[selectedWord.strongs] ?? getLexiconEntry(selectedWord.strongs),
+        reviewState,
+      )
     : null;
 
   const refreshTranslations = useCallback(async () => {
@@ -195,7 +235,7 @@ export function AppShell() {
     [corpus],
   );
 
-  const reference = `${book.name} ${chapter}:${selectedVerse}`;
+  const reference = `${book.name} ${formatVerseLabel(chapter, selectedVerse)}`;
   const currentTranslation = translations.find((t) => t.verse === selectedVerse);
   const savedTranslation = currentTranslation?.translation ?? "";
   const savedMemo = currentTranslation?.memo ?? "";
@@ -238,23 +278,25 @@ export function AppShell() {
 
   const contextRequest = useMemo(
     () =>
-      selectedWord
+      selectedWordView
         ? buildContextRequest(
             reference,
             words,
-            selectedWord,
+            selectedWordView,
             lexiconEntry,
             corpus,
           )
         : buildBaseContextRequest(reference, words, corpus),
-    [selectedWord, reference, words, lexiconEntry, corpus],
+    [selectedWordView, reference, words, lexiconEntry, corpus],
   );
 
   const lexiconPane = (
     <PaneLexicon
       corpus={corpus}
-      word={selectedWord}
+      word={selectedWordView}
       entry={lexiconEntry}
+      reviewState={reviewable ? reviewState : null}
+      onReviewChanged={() => setReviewNonce((n) => n + 1)}
       reference={reference}
       verseWords={words}
       allVerseWords={bookData?.words ?? null}

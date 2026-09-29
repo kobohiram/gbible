@@ -1,4 +1,4 @@
-import { BOOKS, getBook, getChapterCount, getVerseCount } from "@/data/bible";
+import { BOOKS, formatVerseLabel, getBook, getChapterCount, getFirstVerse, getVerseCount } from "@/data/bible";
 import type { BookId } from "@/types";
 
 export type BibleLocation = {
@@ -86,7 +86,7 @@ const CHAPTER_VERSE_RE =
 const COLON_VERSE_RE = /^(\d{1,3}):(\d{1,3})(?:-\d{1,3})?/;
 
 function clampLocation(bookId: BookId, chapter: number, verse: number): BibleLocation | null {
-  if (chapter < 1 || verse < 1) return null;
+  if (chapter < 1 || verse < getFirstVerse(bookId, chapter)) return null;
   const maxChapter = getChapterCount(bookId);
   if (chapter > maxChapter) return null;
   const maxVerse = getVerseCount(bookId, chapter);
@@ -96,7 +96,7 @@ function clampLocation(bookId: BookId, chapter: number, verse: number): BibleLoc
 
 export function formatBibleReference(loc: BibleLocation): string {
   const book = getBook(loc.bookId);
-  return `${book.name} ${loc.chapter}:${loc.verse}`;
+  return `${book.name} ${formatVerseLabel(loc.chapter, loc.verse)}`;
 }
 
 type TextSegment =

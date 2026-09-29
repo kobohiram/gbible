@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import type { BookId, CorpusId, LexiconEntry, VerseWord } from "@/types";
 import { resolveShortGloss } from "@/lib/word-gloss";
 import { getWordScript, getWordText } from "@/lib/verse-text";
+import type { VerseReviewState } from "@/lib/lexicon-review";
+import { CommunityReview } from "./CommunityReview";
+import { KetivQereNote } from "./KetivQereNote";
 import { MorphLabels } from "./MorphLabels";
 
 type ConcordanceIndex = Record<string, { total: number; books: Record<string, number> }>;
@@ -39,6 +42,15 @@ function loadGlobalLexicon(corpus: CorpusId): Promise<GlobalLexicon> {
   return globalLexiconPromises[corpus]!;
 }
 
+/** 異読の組になっている読む形（複数語のときはまとめて）を返す */
+function qereGroupText(word: VerseWord, verseWords: VerseWord[]): string {
+  if (!word.kq || word.kq.of <= 1) return getWordText(word);
+  const idx = verseWords.findIndex((w) => w.id === word.id);
+  const start = idx - (word.kq.part - 1);
+  if (idx < 0 || start < 0) return getWordText(word);
+  return verseWords.slice(start, start + word.kq.of).map(getWordText).join(" ");
+}
+
 type Occurrence = {
   verseKey: string;
   chapter: number;
@@ -50,6 +62,9 @@ type Occurrence = {
 type Props = {
   word: VerseWord | null;
   entry: LexiconEntry | null;
+  /** みんなで作る辞書の確認状況（対象外の節では null） */
+  reviewState?: VerseReviewState | null;
+  onReviewChanged?: () => void;
   reference: string;
   verseWords: VerseWord[];
   allVerseWords: Record<string, VerseWord[]> | null;
@@ -119,7 +134,9 @@ function ConcordanceItem({ occ, isExpanded, onToggle, globalLexicon }: {
   );
 }
 
-export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords, bookId, bookName, corpus = "nt", stacked }: Props) {
+export function PaneLexicon({
+  word, entry, reviewState, onReviewChanged, reference, verseWords, allVerseWords, bookId, bookName, corpus = "nt", stacked,
+}: Props) {
   const [shown, setShown] = useState(20);
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [concordanceIndex, setConcordanceIndex] = useState<ConcordanceIndex | null>(null);
@@ -139,7 +156,11 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
     setExpandedKeys(new Set());
   }, [word?.strongs]);
 
-  const richEntry = (word && globalLexicon?.[word.strongs]) ?? entry;
+  // 旧約は書ごとの辞書（公開パイプラインで作り直したもの）を優先し、共通辞書は補助に使う
+  const richEntry =
+    corpus === "ot"
+      ? (entry ?? (word && globalLexicon?.[word.strongs]) ?? null)
+      : ((word && globalLexicon?.[word.strongs]) ?? entry);
 
   const surface = word ? getWordText(word) : "";
   const script = word ? getWordScript(word) : "grc";
@@ -215,11 +236,19 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                 </p>
               </section>
 
+              {word.kq && (
+                <KetivQereNote
+                  word={word}
+                  qereGloss={resolveShortGloss(word, richEntry)}
+                  qereText={qereGroupText(word, verseWords)}
+                />
+              )}
+
               {richEntry ? (
                 <section>
                   <h3 className="section-label">
                     辞書
-                    {richEntry.source === "bdb" ? (
+                    {richEntry.source === "bdb" || richEntry.source === "bdb-opus" ? (
                       <span className="ml-2 rounded bg-sky/60 px-1.5 py-0.5 text-[10px] font-normal normal-case text-primary">
                         BDB
                       </span>
@@ -258,6 +287,16 @@ export function PaneLexicon({ word, entry, reference, verseWords, allVerseWords,
                     辞書エントリは準備中です。
                   </p>
                 </section>
+              )}
+
+              {reviewState && word.review && (
+                <CommunityReview
+                  bookId={bookId}
+                  word={word}
+                  entry={richEntry}
+                  state={reviewState}
+                  onChanged={() => onReviewChanged?.()}
+                />
               )}
 
               {concordance.length > 0 && (

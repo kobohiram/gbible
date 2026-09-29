@@ -11,7 +11,15 @@
     "generate:ot-lexicon": "node scripts/gen-ot-lexicon.mjs --book genesis",
     "generate:ot-pane-gloss": "node scripts/gen-ot-pane-gloss.mjs",
     "build:ot-stub": "node scripts/build-genesis-stub.mjs",
-    "import:vocab-quiz": "node scripts/import-vocab-quiz.mjs --enrich-kaisetsu"
+    "import:vocab-quiz": "node scripts/import-vocab-quiz.mjs --enrich-kaisetsu",
+    "ot:text": "node scripts/ot/build-text.mjs",
+    "ot:lexicon": "node scripts/ot/gen-lexicon.mjs",
+    "ot:gloss": "node scripts/ot/gen-gloss.mjs",
+    "ot:verify": "node scripts/ot/verify.mjs",
+    "ot:check": "node scripts/ot/check.mjs",
+    "ot:apply-review": "node scripts/ot/apply-review.mjs",
+    "ot:publish": "node scripts/ot/publish.mjs",
+    "ot:pull-reviews": "node scripts/ot/pull-reviews.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -30,6 +38,7 @@
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.129.0",
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.7",
     "@types/node": "^22.15.21",

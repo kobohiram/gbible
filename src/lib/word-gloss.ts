@@ -145,11 +145,16 @@ function composeWithPrefixes(word: VerseWord, core: string): string {
   return unique.join("・");
 }
 
-/** 2ペイン原文：TBESH 訳語（pane-gloss.json）を優先し、なければ word.glossJa にフォールバック */
+/**
+ * 2ペイン原文：文脈訳（word.ctxGloss）を最優先。
+ * なければ TBESH 訳語（pane-gloss.json）、さらに word.glossJa にフォールバック
+ */
 export function resolvePaneGloss(
   word: VerseWord,
   paneGloss?: string | null,
 ): string {
+  const ctx = word.ctxGloss?.trim();
+  if (ctx) return ctx;
   const core = paneGloss?.trim() ?? "";
   if (core) return composeWithPrefixes(word, core);
   // フォールバック: word.glossJa の最初のセグメント
@@ -164,6 +169,8 @@ export function resolveShortGloss(
   word: VerseWord,
   lexicon?: LexiconEntry | null,
 ): string {
+  const ctx = word.ctxGloss?.trim();
+  if (ctx) return ctx;
   const stored = word.glossJa?.trim();
   if (stored && isShortGloss(stored)) {
     return composeWithPrefixes(word, stored);

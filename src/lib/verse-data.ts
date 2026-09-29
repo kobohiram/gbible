@@ -1,4 +1,4 @@
-import { bookHasOtData } from "@/data/bible";
+import { OT_PUBLISHED, bookHasOtData } from "@/data/bible";
 import { john1Verse1Words, lexiconSamples as lexiconJohn11 } from "@/data/john-1-1";
 import { john1Verse14Words, lexiconJohn114 } from "@/data/john-1-14";
 import { normalizeVerseWords } from "@/lib/verse-text";
@@ -36,10 +36,9 @@ export const BOOKS_WITH_FULL_DATA = new Set<NtBookId>([
 ]);
 
 /** データが揃っている旧約書の章セット */
-export const OT_CHAPTER_DATA: Partial<Record<OtBookId, Set<number>>> = {
-  genesis: new Set(Array.from({ length: 50 }, (_, i) => i + 1)),
-  exodus: new Set(Array.from({ length: 40 }, (_, i) => i + 1)),
-};
+export const OT_CHAPTER_DATA: Partial<Record<OtBookId, Set<number>>> = Object.fromEntries(
+  Object.entries(OT_PUBLISHED).map(([bookId, info]) => [bookId, new Set(info?.chapters ?? [])]),
+);
 
 const legacyLexicon: Record<string, LexiconEntry> = {
   ...lexiconJohn11,
@@ -101,7 +100,7 @@ export function loadLastLocation(corpus: CorpusId): {
     const raw = localStorage.getItem(key);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw) as { bookId: BookId; chapter: number; verse: number };
-    if (parsed.bookId && parsed.chapter && parsed.verse) return parsed;
+    if (parsed.bookId && parsed.chapter && typeof parsed.verse === "number") return parsed;
   } catch {
     // ignore
   }

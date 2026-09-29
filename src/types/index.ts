@@ -41,6 +41,34 @@ export type VerseWord = {
   /** Robinson / MorphGNT または OSHB 略語 */
   morph: string;
   glossJa: string;
+  /** 旧約：その節の文脈での短い訳（接頭辞・接尾辞を含む。2ペイン表示用） */
+  ctxGloss?: string;
+  /** 旧約：アラム語の語 */
+  lang?: "heb" | "arc";
+  /** 旧約：異読（ケティブ／ケレ）。本文は読む形（ケレ）で、ここに書かれた形（ケティブ）を持つ */
+  kq?: KetivQere;
+  /** 旧約：文脈訳の確認状況（AI 下書き／確認済み）と AI 校閲の指摘 */
+  review?: AiReviewInfo;
+};
+
+export type AiReviewInfo = {
+  status: "ai" | "checked" | "legacy";
+  /** AI 校閲が指摘した問題 */
+  aiNote?: string;
+  /** AI 校閲の修正案 */
+  aiSuggestion?: string;
+};
+
+export type KetivQere = {
+  /** 書かれた形（子音のみ） */
+  ketiv: string;
+  ketivMorph?: string;
+  ketivStrongs?: string;
+  /** 書かれた形の短い訳 */
+  ketivGloss?: string;
+  /** 読む形が複数語のとき、この語が何語目か */
+  part: number;
+  of: number;
 };
 
 export type LexiconEntry = {
@@ -52,7 +80,9 @@ export type LexiconEntry = {
   detailJa?: string;
   reviewed: boolean;
   /** TBESH 等の出典表示用 */
-  source?: "tbesh" | "tbesg" | "bdb" | "ai";
+  source?: "tbesh" | "tbesg" | "bdb" | "bdb-opus" | "ai";
+  /** 旧約：確認状況（AI 下書き／確認済み／旧版）と AI 校閲の指摘 */
+  review?: AiReviewInfo;
 };
 
 export type PersonalTranslation = {
