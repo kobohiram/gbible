@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getChapterCount, getVerseCount } from "@/data/bible";
+import { getChapterCount, getFirstVerse, getVerseCount } from "@/data/bible";
 import { hasVerseData } from "@/lib/verse-data";
 import {
   MISSING_TRANSLATION_LABEL,
@@ -51,6 +51,7 @@ export function PaneNav({
 }: Props) {
   const chapterCount = getChapterCount(bookId);
   const verseCount = getVerseCount(bookId, chapter);
+  const firstVerse = getFirstVerse(bookId, chapter);
 
   const [previewId, setPreviewId] = useState<TranslationPreviewId>("private");
 
@@ -148,7 +149,7 @@ export function PaneNav({
           stacked ? "max-h-64 overflow-y-auto px-3 py-2" : "flex-1 overflow-y-auto px-3 py-2"
         }
       >
-        {Array.from({ length: verseCount }, (_, i) => i + 1).map((verse) => {
+        {Array.from({ length: verseCount - firstVerse + 1 }, (_, i) => i + firstVerse).map((verse) => {
           const privateTranslation = translationMap.get(verse) ?? "";
           const previewText = getPreviewText(
             previewId,
@@ -179,7 +180,7 @@ export function PaneNav({
                         : "text-muted-foreground/50"
                   }`}
                 >
-                  {verse}
+                  {verse === 0 ? "表題" : verse}
                 </span>
                 {showMissing ? (
                   <span className="min-w-0 truncate text-sm font-normal text-muted-foreground/60">

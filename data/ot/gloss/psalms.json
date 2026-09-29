@@ -1,0 +1,1281 @@
+{
+  "psalms-1-1-w1": {
+    "gloss": "幸いなことよ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w2": {
+    "gloss": "その人",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w3": {
+    "gloss": "（関係詞）",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w4": {
+    "gloss": "ない",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w5": {
+    "gloss": "歩んだ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w6": {
+    "gloss": "はかりごとに",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w7": {
+    "gloss": "悪しき者たちの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w8": {
+    "gloss": "そして道に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w9": {
+    "gloss": "罪人たちの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w10": {
+    "gloss": "ない",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w11": {
+    "gloss": "立った",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w12": {
+    "gloss": "そして座に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w13": {
+    "gloss": "嘲る者たちの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w14": {
+    "gloss": "ない",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-1-w15": {
+    "gloss": "座った",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-2-w1": {
+    "gloss": "そうではなく",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-2-w2": {
+    "gloss": "むしろ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-2-w3": {
+    "gloss": "律法に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-2-w4": {
+    "gloss": "主の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-2-w5": {
+    "gloss": "彼の喜び",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-2-w6": {
+    "gloss": "そして彼の律法を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-2-w7": {
+    "gloss": "口ずさむ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-2-w8": {
+    "gloss": "昼に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-2-w9": {
+    "gloss": "また夜に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w1": {
+    "gloss": "彼はなる",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w2": {
+    "gloss": "木のように",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w3": {
+    "gloss": "植えられた",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w4": {
+    "gloss": "ほとりに",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w5": {
+    "gloss": "流れの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w6": {
+    "gloss": "水の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w7": {
+    "gloss": "（関係詞）",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w8": {
+    "gloss": "その実を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w9": {
+    "gloss": "結ぶ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w10": {
+    "gloss": "その時に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w11": {
+    "gloss": "そしてその葉は",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w12": {
+    "gloss": "ない",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w13": {
+    "gloss": "しおれる",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w14": {
+    "gloss": "そしてすべて",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w15": {
+    "gloss": "（関係詞）",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w16": {
+    "gloss": "彼が行う",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-3-w17": {
+    "gloss": "栄える",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-4-w1": {
+    "gloss": "ない",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-4-w2": {
+    "gloss": "そのようで",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-4-w3": {
+    "gloss": "悪しき者たちは",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-4-w4": {
+    "gloss": "そうではなく",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-4-w5": {
+    "gloss": "むしろ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-4-w6": {
+    "gloss": "もみがらのように",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-4-w7": {
+    "gloss": "（関係詞）",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-4-w8": {
+    "gloss": "それを吹き散らす",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-4-w9": {
+    "gloss": "風が",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-5-w1": {
+    "gloss": "それゆえ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-5-w2": {
+    "gloss": "（それゆえ）",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-5-w3": {
+    "gloss": "ない",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-5-w4": {
+    "gloss": "立つ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-5-w5": {
+    "gloss": "悪しき者たちは",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-5-w6": {
+    "gloss": "さばきに",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-5-w7": {
+    "gloss": "また罪人たちも",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-5-w8": {
+    "gloss": "集いに",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-5-w9": {
+    "gloss": "正しい者たちの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-6-w1": {
+    "gloss": "なぜなら",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-6-w2": {
+    "gloss": "知っている",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-6-w3": {
+    "gloss": "主は",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-6-w4": {
+    "gloss": "道を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-6-w5": {
+    "gloss": "正しい者たちの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-6-w6": {
+    "gloss": "しかし道は",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-6-w7": {
+    "gloss": "悪しき者たちの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-1-6-w8": {
+    "gloss": "滅びる",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-1-w1": {
+    "gloss": "賛歌",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-1-w2": {
+    "gloss": "ダビデの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-1-w3": {
+    "gloss": "主は",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-1-w4": {
+    "gloss": "私の羊飼い",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-1-w5": {
+    "gloss": "ない",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-1-w6": {
+    "gloss": "私は乏しくなる",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-2-w1": {
+    "gloss": "牧場に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-2-w2": {
+    "gloss": "緑の草の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-2-w3": {
+    "gloss": "私を伏させる",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-2-w4": {
+    "gloss": "ほとりに",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-2-w5": {
+    "gloss": "水の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-2-w6": {
+    "gloss": "いこいの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-2-w7": {
+    "gloss": "私を導く",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-3-w1": {
+    "gloss": "私の魂を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-3-w2": {
+    "gloss": "生き返らせる",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-3-w3": {
+    "gloss": "私を導く",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-3-w4": {
+    "gloss": "道筋に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-3-w5": {
+    "gloss": "義の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-3-w6": {
+    "gloss": "ために",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-3-w7": {
+    "gloss": "その名の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w1": {
+    "gloss": "たとえ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w2": {
+    "gloss": "としても",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w3": {
+    "gloss": "私が歩く",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w4": {
+    "gloss": "谷を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w5": {
+    "gloss": "死の陰の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w6": {
+    "gloss": "ない",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w7": {
+    "gloss": "私は恐れる",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w8": {
+    "gloss": "わざわいを",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w9": {
+    "gloss": "なぜなら",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w10": {
+    "gloss": "あなたが",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w11": {
+    "gloss": "私と共に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w12": {
+    "gloss": "あなたのむち",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w13": {
+    "gloss": "そしてあなたの杖",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w14": {
+    "gloss": "それらが",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-4-w15": {
+    "gloss": "私を慰める",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-5-w1": {
+    "gloss": "あなたは整える",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-5-w2": {
+    "gloss": "私の前に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-5-w3": {
+    "gloss": "食卓を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-5-w4": {
+    "gloss": "面前で",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-5-w5": {
+    "gloss": "私の敵たちの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-5-w6": {
+    "gloss": "あなたは注いだ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-5-w7": {
+    "gloss": "油を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-5-w8": {
+    "gloss": "私の頭に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-5-w9": {
+    "gloss": "私の杯は",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-5-w10": {
+    "gloss": "あふれる",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w1": {
+    "gloss": "まことに",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w2": {
+    "gloss": "いつくしみ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w3": {
+    "gloss": "そして恵み",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w4": {
+    "gloss": "私を追う",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w5": {
+    "gloss": "すべての",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w6": {
+    "gloss": "日々",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w7": {
+    "gloss": "私のいのちの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w8": {
+    "gloss": "そして私は住む",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w9": {
+    "gloss": "家に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w10": {
+    "gloss": "主の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w11": {
+    "gloss": "長く",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-23-6-w12": {
+    "gloss": "日々",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-1-w1": {
+    "gloss": "ダビデの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-1-w2": {
+    "gloss": "賛歌",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-1-w3": {
+    "gloss": "主のもの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-1-w4": {
+    "gloss": "地",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-1-w5": {
+    "gloss": "とそれに満ちるもの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-1-w6": {
+    "gloss": "世界",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-1-w7": {
+    "gloss": "と住む者たち",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-1-w8": {
+    "gloss": "そこに",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-2-w1": {
+    "gloss": "なぜなら",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-2-w2": {
+    "gloss": "彼が",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-2-w3": {
+    "gloss": "上に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-2-w4": {
+    "gloss": "海",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-2-w5": {
+    "gloss": "その基を据えた",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-2-w6": {
+    "gloss": "また上に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-2-w7": {
+    "gloss": "川",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-2-w8": {
+    "gloss": "それを堅く立てた",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-3-w1": {
+    "gloss": "誰が",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-3-w2": {
+    "gloss": "登るのか",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-3-w3": {
+    "gloss": "山に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-3-w4": {
+    "gloss": "主の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-3-w5": {
+    "gloss": "また誰が",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-3-w6": {
+    "gloss": "立つのか",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-3-w7": {
+    "gloss": "場所に",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-3-w8": {
+    "gloss": "彼の聖なる",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w1": {
+    "gloss": "清い者",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w2": {
+    "gloss": "両手の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w3": {
+    "gloss": "また清い者",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w4": {
+    "gloss": "心の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w5": {
+    "gloss": "（関係詞）",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w6": {
+    "gloss": "ない",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w7": {
+    "gloss": "上げた",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w8": {
+    "gloss": "むなしいものに",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w9": {
+    "gloss": "私の魂を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w10": {
+    "gloss": "また〜ない",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w11": {
+    "gloss": "誓った",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-4-w12": {
+    "gloss": "欺きのために",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-5-w1": {
+    "gloss": "受ける",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-5-w2": {
+    "gloss": "祝福を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-5-w3": {
+    "gloss": "のもとから",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-5-w4": {
+    "gloss": "主",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-5-w5": {
+    "gloss": "また義を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-5-w6": {
+    "gloss": "神から",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-5-w7": {
+    "gloss": "彼の救いの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-6-w1": {
+    "gloss": "これこそ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-6-w2": {
+    "gloss": "世代",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-6-w3": {
+    "gloss": "彼を求める者たちの",
+    "ketivGloss": "彼を求める者の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-6-w4": {
+    "gloss": "求める者たち",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-6-w5": {
+    "gloss": "あなたの御顔を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-6-w6": {
+    "gloss": "ヤコブ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-6-w7": {
+    "gloss": "セラ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-7-w1": {
+    "gloss": "上げよ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-7-w2": {
+    "gloss": "門よ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-7-w3": {
+    "gloss": "あなたがたの頭を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-7-w4": {
+    "gloss": "そして上がれ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-7-w5": {
+    "gloss": "戸口よ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-7-w6": {
+    "gloss": "永遠の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-7-w7": {
+    "gloss": "そして入る",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-7-w8": {
+    "gloss": "王が",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-7-w9": {
+    "gloss": "栄光の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-8-w1": {
+    "gloss": "誰か",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-8-w2": {
+    "gloss": "この",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-8-w3": {
+    "gloss": "王",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-8-w4": {
+    "gloss": "栄光の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-8-w5": {
+    "gloss": "主",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-8-w6": {
+    "gloss": "強い",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-8-w7": {
+    "gloss": "また勇士",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-8-w8": {
+    "gloss": "主",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-8-w9": {
+    "gloss": "勇士",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-8-w10": {
+    "gloss": "戦いの",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-9-w1": {
+    "gloss": "上げよ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-9-w2": {
+    "gloss": "門よ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-9-w3": {
+    "gloss": "あなたがたの頭を",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-9-w4": {
+    "gloss": "そして上げよ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-9-w5": {
+    "gloss": "戸口よ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-9-w6": {
+    "gloss": "永遠の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-9-w7": {
+    "gloss": "そして入る",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-9-w8": {
+    "gloss": "王が",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-9-w9": {
+    "gloss": "栄光の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w1": {
+    "gloss": "誰か",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w2": {
+    "gloss": "それは",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w3": {
+    "gloss": "この",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w4": {
+    "gloss": "王",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w5": {
+    "gloss": "栄光の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w6": {
+    "gloss": "主",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w7": {
+    "gloss": "万軍の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w8": {
+    "gloss": "彼こそ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w9": {
+    "gloss": "王",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w10": {
+    "gloss": "栄光の",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  },
+  "psalms-24-10-w11": {
+    "gloss": "セラ",
+    "status": "draft",
+    "model": "claude-opus-5-5",
+    "generatedAt": "2026-09-29T08:49:04.945Z"
+  }
+}

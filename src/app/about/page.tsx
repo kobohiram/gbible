@@ -186,6 +186,15 @@ export default function AboutPage() {
           </p>
         </Section>
 
+        <Section title="みんなで作る辞書（旧約）">
+          <p>
+            旧約の原文ペインの短い訳（文脈訳）と辞書の説明は、AI（Claude）が英語辞典資料をもとに下書きし、別の AI が点検したものです。その後、ヘブル語が分かる方に確かめていただき、運営者が指名した確認者が承認したものから「確認済み」と表示されます。
+          </p>
+          <p>
+            ログインした方は「この訳で正しい」の確認や修正の提案ができます。送っていただいた内容は Gbible の辞書として CC BY 4.0 で公開され、改良されることがあります。日本語訳聖書の本文は著作権のため投稿しないでください。
+          </p>
+        </Section>
+
         <Section title="ライセンスまとめ">
           <table className="w-full text-sm border-collapse">
             <thead>
@@ -222,6 +231,10 @@ export default function AboutPage() {
               <tr>
                 <td className="py-2 pr-4">日本語語義・定義</td>
                 <td className="py-2">Gbible（TBESG/TBESH ベース AI 日本語化）</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4">みんなで作る辞書（投稿内容）</td>
+                <td className="py-2">CC BY 4.0</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4">みんなの聖書（超訳・素訳）</td>

@@ -43,3 +43,7 @@ next-env.d.ts
 .nt-cache/
 .ot-cache/
 scripts/.genesis1-tbesh-extract.json
+
+# 旧約パイプラインの中間生成物（再生成できる）
+/data/ot/work/
+/data/ot/review/
