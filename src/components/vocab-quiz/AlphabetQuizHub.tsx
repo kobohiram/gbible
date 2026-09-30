@@ -107,6 +107,23 @@ export function AlphabetQuizHub() {
             </div>
           )}
 
+          <div className="mx-auto max-w-2xl">
+            <p className="mb-2 text-center text-sm font-semibold text-foreground">
+              まずは歌で覚えよう
+            </p>
+            <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
+              <iframe
+                src="https://www.youtube-nocookie.com/embed/7yoTaPnAceI"
+                title="ギリシャ語アルファベットを歌って覚えよう（工房ヒラム）"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full"
+              />
+            </div>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {units.map((u) => (
               <button
