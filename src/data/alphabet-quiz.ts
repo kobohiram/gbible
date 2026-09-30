@@ -149,20 +149,74 @@ const UNIT_LETTERS: Item[] = [
   }),
 ];
 
-const SYLLABLE_LIST: [string, Vowel][] = [
-  ["κ", "α"], ["γ", "α"], ["χ", "α"], ["κ", "ι"], ["χ", "ι"], ["γ", "ε"], ["κ", "υ"], ["χ", "ω"], ["γ", "η"], ["κ", "ο"],
-  ["τ", "α"], ["δ", "α"], ["θ", "α"], ["τ", "ι"], ["δ", "ι"], ["θ", "ε"], ["τ", "υ"], ["δ", "υ"], ["θ", "η"], ["τ", "ω"],
-  ["π", "α"], ["β", "α"], ["φ", "α"], ["π", "ι"], ["β", "η"], ["φ", "ι"], ["π", "υ"], ["β", "ο"], ["φ", "ω"], ["ψ", "υ"],
-  ["λ", "α"], ["ρ", "α"], ["μ", "η"], ["ν", "υ"], ["σ", "ι"], ["ζ", "ω"], ["ξ", "ε"], ["λ", "υ"], ["σ", "υ"], ["ν", "ο"],
+// ---------------------------------------------------------------------------
+// 50音（子音1文字＋ α ι υ ε ο を、日本語の50音の順に出す）
+
+/** 50音の母音の順（あ い う え お） */
+const GOJUON_VOWELS: Vowel[] = ["α", "ι", "υ", "ε", "ο"];
+
+type GojuonRow = { label: string; items: Item[] };
+
+function consonantRow(label: string, c: string): GojuonRow {
+  return {
+    label,
+    items: GOJUON_VOWELS.map((v) => ({
+      greek: c + v,
+      answer: syllable(c, v),
+      distractors: syllableDistractors(c, v),
+      kaisetsu: syllableNote(c, v),
+      hint: `50音: ${label}`,
+    })),
+  };
+}
+
+const VOWEL_ROW: GojuonRow = {
+  label: "あ行",
+  items: [
+    { greek: "α", answer: "ア〔a〕", distractors: ["エ〔e〕", "オ〔o〕", "イ〔i〕"], kaisetsu: "α（アルファ）は「ア」。", hint: "50音: あ行" },
+    { greek: "ι", answer: "イ〔i〕", distractors: ["エ〔e〕", "ユ〔y〕", "ウ〔u〕"], kaisetsu: "ι（イオータ）は「イ」。", hint: "50音: あ行" },
+    { greek: "υ", answer: "ユ〔y〕", distractors: ["ウ〔u〕", "イ〔i〕", "オ〔o〕"], kaisetsu: "υ（ユプシロン）は日本語の「う」の位置に来るが、読みは「ウ」ではなく「ユ」（唇を丸めた ü）。「ウー」の音は ου と書く。", hint: "50音: あ行" },
+    { greek: "ε", answer: "エ〔e〕", distractors: ["エー〔ē〕", "イ〔i〕", "ア〔a〕"], kaisetsu: "ε（エプシロン）は短い「エ」。長い「エー」は η。", hint: "50音: あ行" },
+    { greek: "ο", answer: "オ〔o〕", distractors: ["オー〔ō〕", "ア〔a〕", "ウ〔u〕"], kaisetsu: "ο（オミクロン）は短い「オ」。長い「オー」は ω。", hint: "50音: あ行" },
+  ],
+};
+
+const BREATHING_NOTE = "母音の上の ῾（強い気息記号）は h の音を加える。ギリシャ語には h の文字がないので、は行はこの記号で書く。";
+
+const H_ROW: GojuonRow = {
+  label: "は行",
+  items: [
+    { greek: "ἁ", answer: "ハ〔ha〕", distractors: ["ア〔a〕", "カ〔ka〕", "ハー〔hā〕"], kaisetsu: `${BREATHING_NOTE}ἁμαρτία（ハマルティア）の ἁ。`, hint: "50音: は行" },
+    { greek: "ἱ", answer: "ヒ〔hi〕", distractors: ["イ〔i〕", "キ〔ki〕", "シ〔si〕"], kaisetsu: `${BREATHING_NOTE}ἱερόν（ヒエロン、神殿）の ἱ。`, hint: "50音: は行" },
+    { greek: "ὑ", answer: "ヒュ〔hy〕", distractors: ["ユ〔y〕", "フ〔hu〕", "ウ〔u〕"], kaisetsu: `${BREATHING_NOTE}語頭の υ にはいつも ῾ が付き「ヒュ」。ὕδωρ（ヒュドール、水）。`, hint: "50音: は行" },
+    { greek: "ἑ", answer: "ヘ〔he〕", distractors: ["エ〔e〕", "ケ〔ke〕", "ヘー〔hē〕"], kaisetsu: `${BREATHING_NOTE}ἑπτά（ヘプタ、7）の ἑ。`, hint: "50音: は行" },
+    { greek: "ὁ", answer: "ホ〔ho〕", distractors: ["オ〔o〕", "コ〔ko〕", "ホー〔hō〕"], kaisetsu: `${BREATHING_NOTE}冠詞 ὁ（ホ）。`, hint: "50音: は行" },
+  ],
+};
+
+const GOJUON_ROWS: GojuonRow[] = [
+  VOWEL_ROW,
+  consonantRow("か行", "κ"),
+  consonantRow("さ行", "σ"),
+  consonantRow("た行", "τ"),
+  consonantRow("な行", "ν"),
+  H_ROW,
+  consonantRow("ま行", "μ"),
+  consonantRow("ら行（λ）", "λ"),
+  consonantRow("ら行（ρ）", "ρ"),
+  consonantRow("が行", "γ"),
+  consonantRow("ざ行", "ζ"),
+  consonantRow("だ行", "δ"),
+  consonantRow("ば行", "β"),
+  consonantRow("ぱ行", "π"),
+  consonantRow("か行（息を強く χ）", "χ"),
+  consonantRow("た行（息を強く θ）", "θ"),
+  consonantRow("ふぁ行（φ）", "φ"),
+  consonantRow("くさ行（ξ）", "ξ"),
+  consonantRow("ぷさ行（ψ）", "ψ"),
 ];
 
-const UNIT_SYLLABLES: Item[] = SYLLABLE_LIST.map(([c, v]) => ({
-  greek: c + v,
-  answer: syllable(c, v),
-  distractors: syllableDistractors(c, v),
-  kaisetsu: syllableNote(c, v),
-  hint: "この音節の読みは？",
-}));
+const UNIT_GOJUON: Item[] = GOJUON_ROWS.flatMap((r) => r.items);
 
 const UNIT_SPECIAL: Item[] = [
   { greek: "αι", answer: "アイ〔ai〕", distractors: ["エ〔e〕", "アー〔ā〕", "エイ〔ei〕"], kaisetsu: "二重母音 αι は「アイ」。現代ギリシャ語では「エ」になる。", hint: "二重母音の読みは？" },
@@ -228,12 +282,19 @@ const UNIT_WORDS: Item[] = WORDS.map(([greek, answer, distractors, note]) => ({
   hint: "この単語の読みは？",
 }));
 
+/**
+ * ステップ一覧。key は問題番号（進み具合の保存）に使うので変えない。
+ * ordered のステップは、並び順どおりに出題する。
+ */
 export const ALPHABET_UNITS = [
-  { unitNum: 1, label: "文字", preview: "α β γ", description: "24文字の名前と音", items: UNIT_LETTERS },
-  { unitNum: 2, label: "音節", preview: "κα θε", description: "子音＋母音の読み", items: UNIT_SYLLABLES },
-  { unitNum: 3, label: "二重母音と記号", preview: "αι ἁ", description: "二重母音・気息記号・γγ", items: UNIT_SPECIAL },
-  { unitNum: 4, label: "単語を読む", preview: "λόγος", description: "聖書の大切な単語", items: UNIT_WORDS },
+  { unitNum: 1, key: "g", label: "50音", preview: "α ι υ ε ο", description: "あいうえお順に子音＋母音", items: UNIT_GOJUON, ordered: true },
+  { unitNum: 2, key: "1", label: "文字", preview: "α β γ", description: "24文字の名前と音", items: UNIT_LETTERS, ordered: false },
+  { unitNum: 3, key: "3", label: "二重母音と記号", preview: "αι ἁ", description: "二重母音・気息記号・γγ", items: UNIT_SPECIAL, ordered: false },
+  { unitNum: 4, key: "4", label: "単語を読む", preview: "λόγος", description: "聖書の大切な単語", items: UNIT_WORDS, ordered: false },
 ] as const;
+
+/** 並び順どおりに出題するステップ（unitNum） */
+export const ORDERED_UNITS = new Set<number>(ALPHABET_UNITS.filter((u) => u.ordered).map((u) => u.unitNum));
 
 const CHUNK = 10;
 
@@ -243,10 +304,10 @@ function buildDataset(): VocabQuizDataset {
   for (const unit of ALPHABET_UNITS) {
     const unitLabel = `${unit.unitNum}:${unit.label}`;
     for (let start = 0, chunk = 0; start < unit.items.length; start += CHUNK, chunk++) {
-      const groupId = `abc-${unit.unitNum}-${chunk}`;
+      const groupId = `abc-${unit.key}-${chunk}`;
       const ids: string[] = [];
       unit.items.slice(start, start + CHUNK).forEach((item, i) => {
-        const id = `abc-${unit.unitNum}-${start + i}`;
+        const id = `abc-${unit.key}-${start + i}`;
         ids.push(id);
         words.push({
           id,
@@ -292,8 +353,19 @@ export const ALPHABET_TABLE = LETTERS.map((l) => ({
   kana: l.kana,
 }));
 
-/** 音節の一覧表（子音 × 母音） */
+/** 50音の一覧表（行 × α ι υ ε ο、続けて η ω） */
+const TABLE_VOWELS: Vowel[] = [...GOJUON_VOWELS, "η", "ω"];
+
+function tableRow(c: string) {
+  return { label: c, kana: TABLE_VOWELS.map((v) => SYLLABLE_KANA[c][VOWELS.indexOf(v)]) };
+}
+
 export const SYLLABLE_TABLE = {
-  vowels: VOWELS,
-  rows: Object.keys(SYLLABLE_KANA).map((c) => ({ consonant: c, kana: SYLLABLE_KANA[c] })),
+  vowels: TABLE_VOWELS,
+  rows: [
+    { label: "（母音）", kana: ["ア", "イ", "ユ", "エ", "オ", "エー", "オー"] },
+    ...["κ", "σ", "τ", "ν"].map(tableRow),
+    { label: "῾（h）", kana: ["ハ", "ヒ", "ヒュ", "ヘ", "ホ", "ヘー", "ホー"] },
+    ...["μ", "λ", "ρ", "γ", "ζ", "δ", "β", "π", "χ", "θ", "φ", "ξ", "ψ"].map(tableRow),
+  ],
 };

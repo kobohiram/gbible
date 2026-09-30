@@ -7,6 +7,7 @@ import {
   ALPHABET_DATASET,
   ALPHABET_TABLE,
   ALPHABET_UNITS,
+  ORDERED_UNITS,
   SYLLABLE_TABLE,
 } from "@/data/alphabet-quiz";
 import {
@@ -167,6 +168,7 @@ export function AlphabetQuizHub() {
             onSessionComplete={() => {}}
             onExit={() => setGroupId(null)}
             stageLabel={stageLabel}
+            ordered={ORDERED_UNITS.has(dataset.groupsById[groupId]?.unitNum ?? 0)}
             countUnit="問"
             nextSessionLabel={nextSession?.label}
             onContinueNext={
@@ -206,7 +208,7 @@ function ReadingTables() {
       </div>
 
       <div>
-        <h3 className="mb-2 font-bold text-foreground">子音＋母音の読み方</h3>
+        <h3 className="mb-2 font-bold text-foreground">50音の読み方（子音＋母音）</h3>
         <p className="mb-2 text-xs text-muted-foreground">
           θ・χ・φ は息を強く出す音です。カタカナでは τ・κ・π と同じ行になるので、ローマ字（th・kh・ph）で区別して覚えましょう。
         </p>
@@ -224,8 +226,8 @@ function ReadingTables() {
             </thead>
             <tbody>
               {SYLLABLE_TABLE.rows.map((r) => (
-                <tr key={r.consonant}>
-                  <th className={`${cell} bg-muted/50 font-greek text-base`}>{r.consonant}</th>
+                <tr key={r.label}>
+                  <th className={`${cell} bg-muted/50 font-greek text-base`}>{r.label}</th>
                   {r.kana.map((k, i) => (
                     <td key={i} className={cell}>
                       {k}

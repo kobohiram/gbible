@@ -168,6 +168,8 @@ export function buildSession(
   options: {
     groupId?: string;
     coarsePos?: CoarsePos;
+    /** true のとき、グループの問題だけを並び順どおりに出す（復習で10問に埋めない） */
+    ordered?: boolean;
   } = {},
 ): SessionQuestion[] {
   const exclude = new Set<string>();
@@ -192,6 +194,10 @@ export function buildSession(
       nativeWords = shufflePool(dataset.words).slice(0, 10);
     }
     preferUnit = nativeWords[0]?.unitNum ?? preferUnit;
+  }
+
+  if (options.ordered) {
+    return nativeWords.map((w, i) => ({ wordId: w.id, isReview: false, slotIndex: i }));
   }
 
   nativeWords.forEach((w) => exclude.add(w.id));
