@@ -24,6 +24,8 @@ type Props = {
   onContinueNext?: () => void;
   /** 進み具合の数の単位（既定は「語」） */
   countUnit?: string;
+  /** true のとき、グループの問題を並び順どおりに出す */
+  ordered?: boolean;
 };
 
 function normalizeChoice(s: string): string {
@@ -75,14 +77,15 @@ export function VocabQuizPlayer({
   nextSessionLabel,
   onContinueNext,
   countUnit,
+  ordered = false,
 }: Props) {
   const { data: session } = useSession();
 
   // セッション開始時の learned で固定（正解後の再構築で UI がリセットされないようにする）
   const learnedAtStart = useRef(learned);
   const sessionQuestions = useMemo(
-    () => buildSession(dataset, learnedAtStart.current, mode, { groupId, coarsePos }),
-    [dataset, mode, groupId, coarsePos],
+    () => buildSession(dataset, learnedAtStart.current, mode, { groupId, coarsePos, ordered }),
+    [dataset, mode, groupId, coarsePos, ordered],
   );
 
   const [pending, setPending] = useState<SessionQuestion[]>([]);
@@ -93,7 +96,7 @@ export function VocabQuizPlayer({
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    const initial = shuffleSession(sessionQuestions);
+    const initial = ordered ? sessionQuestions : shuffleSession(sessionQuestions);
     const { item, queue } = dequeueNext(initial, new Set());
     setPending(queue);
     setCurrent(item);
@@ -101,7 +104,7 @@ export function VocabQuizPlayer({
     setDone(false);
     setFeedback(null);
     setSelectedChoice(null);
-  }, [sessionQuestions]);
+  }, [sessionQuestions, ordered]);
 
   const word: VocabQuizWord | undefined = current
     ? dataset.wordsById[current.wordId]
@@ -216,7 +219,7 @@ export function VocabQuizPlayer({
               {stageLabel && (
                 <p className="mt-1 text-sm font-semibold text-emerald-700">{stageLabel}</p>
               )}
-              <p className="mt-2 text-xs text-muted-foreground">10問完了 · 進捗を保存しました</p>
+              <p className="mt-2 text-xs text-muted-foreground">{totalSlots}問完了 · 進捗を保存しました</p>
             </div>
 
             <div className="mt-5 w-full">
