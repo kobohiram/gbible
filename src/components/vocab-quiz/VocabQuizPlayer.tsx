@@ -22,6 +22,8 @@ type Props = {
   stageLabel?: string;
   nextSessionLabel?: string;
   onContinueNext?: () => void;
+  /** 進み具合の数の単位（既定は「語」） */
+  countUnit?: string;
 };
 
 function normalizeChoice(s: string): string {
@@ -72,6 +74,7 @@ export function VocabQuizPlayer({
   stageLabel,
   nextSessionLabel,
   onContinueNext,
+  countUnit,
 }: Props) {
   const { data: session } = useSession();
 
@@ -221,6 +224,7 @@ export function VocabQuizPlayer({
                 current={learnedCount}
                 total={totalWords}
                 showLabel
+                unit={countUnit}
               />
             </div>
 

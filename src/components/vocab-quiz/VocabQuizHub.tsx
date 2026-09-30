@@ -78,22 +78,30 @@ export function VocabQuizHub() {
     setUnitPickerOpen(false);
   }, []);
 
+  /** アルファベットクイズ側で進んだ分も含めて、最新の保存内容を読み直す */
+  const refreshLearned = useCallback(() => {
+    setLearned((prev) => ({ ...loadVocabProgress(), ...prev }));
+  }, []);
+
   const startLevel = useCallback((groupId: string) => {
+    refreshLearned();
     setUnitPickerOpen(false);
     setSessionKey((k) => k + 1);
     setPlay({ mode: "level", groupId });
-  }, []);
+  }, [refreshLearned]);
 
   const startRandom = useCallback(() => {
+    refreshLearned();
     setSessionKey((k) => k + 1);
     setPlay({ mode: "random" });
-  }, []);
+  }, [refreshLearned]);
 
   const startPos = useCallback((pos: CoarsePos) => {
+    refreshLearned();
     setPosPickerOpen(false);
     setSessionKey((k) => k + 1);
     setPlay({ mode: "pos", coarsePos: pos });
-  }, []);
+  }, [refreshLearned]);
 
   const nextSession = useMemo(() => {
     if (!dataset || !play) return null;

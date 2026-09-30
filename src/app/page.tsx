@@ -3,6 +3,7 @@ import { auth, signIn } from "@/auth";
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
+import { AlphabetQuizHub } from "@/components/vocab-quiz/AlphabetQuizHub";
 import { VocabQuizHub } from "@/components/vocab-quiz/VocabQuizHub";
 
 export const metadata: Metadata = {
@@ -86,6 +87,8 @@ export default async function Home({
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <SiteHeader />
+
+      <AlphabetQuizHub />
 
       <VocabQuizHub />
 
