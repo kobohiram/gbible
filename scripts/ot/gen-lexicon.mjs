@@ -17,7 +17,7 @@ import { getBook } from './books.mjs';
 import { buildParams, clearJob, estimate, runRequests, MODEL } from './batch.mjs';
 import { textPath } from './build-text.mjs';
 import {
-  MASTER_LEXICON, PUBLIC_OT, STYLE_DIR, loadLexiconSources, parseArgs, parseChapterSpec, readJson, writeJson,
+  MASTER_LEXICON, PUBLIC_OT, ROOT, STYLE_DIR, loadLexiconSources, parseArgs, parseChapterSpec, readJson, writeJson,
 } from './lib.mjs';
 
 const STYLE_GUIDE = readFileSync(join(STYLE_DIR, 'style-guide.md'), 'utf-8');
@@ -78,30 +78,36 @@ function importLegacy() {
   console.log(`✓ 旧版の辞書を ${added} 語取り込みました → ${MASTER_LEXICON}`);
 }
 
-/** 書の本文から、見出し語ごとの出現回数と用例（最大3節）を集める */
-function collectOccurrences(bookId, chapters) {
-  const text = readJson(textPath(bookId));
-  if (!text) throw new Error(`本文データがありません。先に build-text.mjs ${bookId} を実行してください。`);
-  const book = getBook(bookId);
+/**
+ * 書の本文から、見出し語ごとの出現回数と用例（最大3節）を集める。
+ * bookIds は複数可。chaptersFor(bookId) が配列を返すときはその章だけを数える。
+ */
+function collectOccurrences(bookIds, chaptersFor) {
   const occ = new Map();
-  for (const [key, words] of Object.entries(text.verses)) {
-    const c = Number(key.split(':')[0]);
-    if (chapters && !chapters.includes(c)) continue;
-    const verseText = words.map((w) => w.text).join(' ');
-    for (const w of words) {
-      if (w.strongs === 'H0') continue;
-      if (!occ.has(w.strongs)) occ.set(w.strongs, { count: 0, examples: [], lang: w.lang });
-      const o = occ.get(w.strongs);
-      o.count++;
-      if (o.examples.length < 3 && !o.examples.some((e) => e.ref === key)) {
-        o.examples.push({ ref: `${book.abbr}${key}`, word: w.text, verse: verseText });
+  for (const bookId of bookIds) {
+    const text = readJson(textPath(bookId));
+    if (!text) throw new Error(`本文データがありません。先に build-text.mjs ${bookId} を実行してください。`);
+    const book = getBook(bookId);
+    const chapters = chaptersFor(bookId);
+    for (const [key, words] of Object.entries(text.verses)) {
+      const c = Number(key.split(':')[0]);
+      if (chapters && !chapters.includes(c)) continue;
+      const verseText = words.map((w) => w.text).join(' ');
+      for (const w of words) {
+        if (w.strongs === 'H0') continue;
+        if (!occ.has(w.strongs)) occ.set(w.strongs, { count: 0, examples: [], lang: w.lang });
+        const o = occ.get(w.strongs);
+        o.count++;
+        if (o.examples.length < 3 && !o.examples.some((e) => e.ref === `${book.abbr}${key}`)) {
+          o.examples.push({ ref: `${book.abbr}${key}`, word: w.text, verse: verseText });
+        }
       }
     }
   }
   return occ;
 }
 
-function buildUser(src, occ, book) {
+function buildUser(src, occ, scopeName) {
   const examples = occ.examples.map((e) => `- ${e.ref}（語形 ${e.word}）: ${e.verse}`).join('\n');
   return `見出し語: ${src.lemma}（${src.translit}）Strong's ${src.strongs}${src.isAramaic || occ.lang === 'arc' ? '　※アラム語' : ''}
 TBESH 品詞: ${src.tbeshMorph || '不明'}
@@ -109,7 +115,7 @@ TBESH 品詞: ${src.tbeshMorph || '不明'}
 【英語辞典資料】
 ${src.sourceText || '（資料なし。確実に言えることだけを書くこと）'}
 
-【${book.name}での出現例（${occ.count}回）】
+【${scopeName}での出現例（${occ.count}回）】
 ${examples}
 
 この語の辞書項目を作ってください。`;
@@ -119,15 +125,19 @@ async function main() {
   const { flags, positional } = parseArgs();
   if (flags['import-legacy']) return importLegacy();
 
-  const bookId = positional[0];
-  if (!bookId) {
-    console.error('使い方: node scripts/ot/gen-lexicon.mjs <書ID> [--chapters 1-41] [--dry-run] [--direct]');
+  const bookIds = (positional[0] ?? '').split(',').filter(Boolean);
+  if (!bookIds.length) {
+    console.error('使い方: node scripts/ot/gen-lexicon.mjs <書ID[,書ID…]> [--chapters 1-41] [--published-only] [--top 600] [--redo-legacy] [--dry-run] [--direct]');
     process.exit(1);
   }
-  const book = getBook(bookId);
-  const chapters = parseChapterSpec(flags.chapters);
+  const books = bookIds.map(getBook);
+  const chapterSpec = parseChapterSpec(flags.chapters);
+  const published = readJson(join(ROOT, 'src', 'data', 'ot-published.json'), {});
+  // --published-only: 公開済みの章だけを数える（読者の目に触れる範囲で頻度を測る）
+  const chaptersFor = (id) => (flags['published-only'] ? published[id]?.chapters ?? [] : chapterSpec);
+  const scopeName = books.length === 1 ? books[0].name : 'Gbible 収録範囲';
   const master = loadMaster();
-  const occ = collectOccurrences(bookId, chapters);
+  const occ = collectOccurrences(bookIds, chaptersFor);
   const lookup = await loadLexiconSources();
 
   let targets;
@@ -142,18 +152,22 @@ async function main() {
     });
   }
   targets = targets.filter((s) => master[s]?.status !== 'locked');
+  // --top N: 出現回数の多い順に N 語だけ（予算を抑えるとき）
+  if (flags.top) {
+    targets = targets.sort((a, b) => occ.get(b).count - occ.get(a).count).slice(0, Number(flags.top));
+  }
 
   const requests = targets.map((s) => ({
     custom_id: `lex-${s}`,
-    params: buildParams({ system: SYSTEM, user: buildUser(lookup(s), occ.get(s), book), schema: SCHEMA, effort: 'high' }),
+    params: buildParams({ system: SYSTEM, user: buildUser(lookup(s), occ.get(s), scopeName), schema: SCHEMA, effort: 'high' }),
   }));
 
   const est = estimate(requests, { outputTokensPerRequest: 2500 });
-  console.log(`${book.name}${chapters ? `（${flags.chapters}章）` : ''}: 見出し語 ${occ.size} / 生成対象 ${requests.length} 語`);
+  console.log(`${scopeName}${chapterSpec ? `（${flags.chapters}章）` : ''}: 見出し語 ${occ.size} / 生成対象 ${requests.length} 語`);
   console.log(`  概算: 約 $${est.usd.toFixed(2)}（Batch 半額・思考分を含む大まかな見積もり）`);
   if (flags['dry-run'] || requests.length === 0) return;
 
-  const job = `lexicon-${bookId}${flags.chapters ? `-${flags.chapters}` : ''}`;
+  const job = `lexicon-${bookIds.join('+')}${flags.chapters ? `-${flags.chapters}` : ''}${flags.top ? `-top${flags.top}` : ''}`;
   const results = await runRequests(job, requests, { direct: Boolean(flags.direct) });
 
   const now = new Date().toISOString();

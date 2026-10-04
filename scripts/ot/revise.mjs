@@ -25,7 +25,7 @@ import {
 const STYLE_GUIDE = readFileSync(join(STYLE_DIR, 'style-guide.md'), 'utf-8');
 const NAMES = readJson(join(STYLE_DIR, 'names-ja.json')).entries;
 
-const SYSTEM = `あなたは旧約聖書ヘブル語の辞書編纂者で、自分が作った訳・辞書項目に対する校閲者の指摘を受けて、最終版を決めます。
+export const SYSTEM = `あなたは旧約聖書ヘブル語の辞書編纂者で、自分が作った訳・辞書項目に対する校閲者の指摘を受けて、最終版を決めます。
 
 判断の基準は次のスタイルガイドです。
 
@@ -63,7 +63,7 @@ const GLOSS_SCHEMA = {
   },
 };
 
-const LEX_SCHEMA = {
+export const LEX_SCHEMA = {
   type: 'object',
   additionalProperties: false,
   required: ['decision', 'glossJa', 'definitionJa', 'detailJa', 'reason'],

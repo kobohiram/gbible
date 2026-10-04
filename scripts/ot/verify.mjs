@@ -24,13 +24,13 @@ import {
 
 const STYLE_GUIDE = readFileSync(join(STYLE_DIR, 'style-guide.md'), 'utf-8');
 const NAMES = readJson(join(STYLE_DIR, 'names-ja.json')).entries;
-const LEX_PER_REQUEST = 8;
+export const LEX_PER_REQUEST = 8;
 
 export function verifyPath(bookId) {
   return join(WORK_DIR, 'verify', `${bookId}.json`);
 }
 
-const SYSTEM = `あなたは旧約聖書ヘブル語の校閲者です。別の担当者が作った日本語の訳・辞書項目を点検し、**誤りや基準違反だけ**を指摘します。問題のない項目には何も書きません。
+export const SYSTEM = `あなたは旧約聖書ヘブル語の校閲者です。別の担当者が作った日本語の訳・辞書項目を点検し、**誤りや基準違反だけ**を指摘します。問題のない項目には何も書きません。
 
 点検の基準は次のスタイルガイドです。
 
@@ -45,7 +45,7 @@ ${Object.entries(NAMES).map(([k, v]) => `${k}: ${v}`).join('\n')}
 - 好みの違いだけのものは指摘しない。
 - suggestion には、そのまま差し替えられる修正案を書く（辞書は該当フィールド名と修正案）。`;
 
-const SCHEMA = {
+export const SCHEMA = {
   type: 'object',
   additionalProperties: false,
   required: ['issues'],
