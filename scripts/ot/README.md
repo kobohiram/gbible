@@ -32,6 +32,22 @@ npm run ot:publish -- psalms --chapters 1-41               # 7. 公開（訳・�
 - 数件だけ試すときは `--direct` を付けると即時に実行します（料金は通常）。
 - API キーは `.env.local` の `ANTHROPIC_API_KEY` を使います。
 
+## 辞書だけを先に作り直す（予算を抑えるとき）
+
+本文の文脈訳を作る前に、よく出てくる語の辞書だけを作り直して公開できます。
+
+```bash
+npm run ot:lexicon -- genesis,exodus,leviticus,psalms --published-only --redo-legacy --top 600 --dry-run
+npm run ot:lexicon -- genesis,exodus,leviticus,psalms --published-only --redo-legacy --top 600
+node scripts/ot/lexicon-qa.mjs verify --limit 400     # 点検（出現回数の多い語から）
+node scripts/ot/lexicon-qa.mjs revise --limit 100     # 指摘を受けて自動修正
+node scripts/ot/publish.mjs genesis,exodus,leviticus,psalms --lexicon-only   # 辞書だけ差し替え
+npm run build:chat-index                               # チャット用の検索索引も更新
+```
+
+- 実費の目安（2026年10月）: 600語の作り直し 約12ドル、400語の点検 約4.4ドル、100語の自動修正 約2.4ドル。
+- 点検していない作り直し済みの語は `lexicon-qa.mjs verify` を再実行すると続きから点検します。
+
 ## みんなで作る辞書（公開後の人の確認）
 
 公開した訳・辞書は「AI下書き」と表示され、3ペインの「みんなで作る辞書」で確認を集めます。

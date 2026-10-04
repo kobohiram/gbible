@@ -16,6 +16,7 @@ import { collectReview } from './check.mjs';
 import { textPath } from './build-text.mjs';
 import { glossPath } from './gen-gloss.mjs';
 import { verifyPath } from './verify.mjs';
+import { loadLexiconQa } from './lexicon-qa.mjs';
 import {
   MASTER_LEXICON, PUBLIC_OT, ROOT, STYLE_DIR, compareVerseKeys, parseArgs, parseChapterSpec, readJson, writeJson,
 } from './lib.mjs';
@@ -23,12 +24,71 @@ import {
 const PUBLISHED_INDEX = join(ROOT, 'src', 'data', 'ot-published.json');
 const NAMES = readJson(join(STYLE_DIR, 'names-ja.json')).entries;
 
+/** AI 下書きの項目に付ける、AI 校閲の指摘（直したものには付けない） */
+function aiNote(issue) {
+  if (!issue || issue.resolution === 'fixed') return {};
+  const note = issue.resolution === 'disputed'
+    ? `AI の意見が分かれています。校閲: ${issue.problem} ／ 作成側: ${issue.resolutionNote}`
+    : issue.problem;
+  return { aiNote: note, ...(issue.suggestion ? { aiSuggestion: issue.suggestion } : {}) };
+}
+
+function isChecked(status) {
+  return status === 'verified' || status === 'locked';
+}
+
+/** 公開データの辞書項目（作り直したものだけ。旧版は今のまま残す） */
+function lexiconEntry(e, fallbackLemma, issue) {
+  return {
+    strongs: e.strongs,
+    lemma: e.lemma || fallbackLemma,
+    glossJa: NAMES[e.strongs] ?? e.glossJa,
+    definitionJa: e.definitionJa,
+    detailJa: e.detailJa,
+    reviewed: isChecked(e.status),
+    source: e.status === 'legacy' ? 'bdb' : 'bdb-opus',
+    review: isChecked(e.status)
+      ? { status: 'checked' }
+      : { status: e.status === 'legacy' ? 'legacy' : 'ai', ...aiNote(issue) },
+  };
+}
+
+/**
+ * --lexicon-only: 本文・訳には触れず、公開データの辞書項目だけを、作り直した辞書に差し替える。
+ * 文脈訳がまだない書（創世記など）でも、辞書の改善を先に公開できる。
+ */
+function publishLexiconOnly(bookId) {
+  const outPath = join(PUBLIC_OT, `${bookId}.json`);
+  const data = readJson(outPath);
+  if (!data) throw new Error(`公開データがありません: ${outPath}`);
+  const master = readJson(MASTER_LEXICON, {});
+  const qa = loadLexiconQa();
+  const verify = readJson(verifyPath(bookId), { lexicon: {} });
+  let replaced = 0;
+  let legacy = 0;
+  for (const [s, prev] of Object.entries(data.lexicon)) {
+    const e = master[s];
+    if (!e || e.status === 'legacy' || e.status === 'redo') {
+      legacy++;
+      continue;
+    }
+    data.lexicon[s] = lexiconEntry(e, prev.lemma, verify.lexicon?.[s] ?? qa.lexicon[s]);
+    replaced++;
+  }
+  writeJson(outPath, data, { pretty: false });
+  console.log(`✓ ${getBook(bookId).name}: 辞書 ${replaced} 語を作り直し版に差し替え（旧版のまま ${legacy} 語）→ ${outPath}`);
+}
+
 function main() {
   const { flags, positional } = parseArgs();
   const bookId = positional[0];
   if (!bookId) {
-    console.error('使い方: node scripts/ot/publish.mjs <書ID> [--chapters 1-41] [--force]');
+    console.error('使い方: node scripts/ot/publish.mjs <書ID> [--chapters 1-41] [--force] [--lexicon-only]');
     process.exit(1);
+  }
+  if (flags['lexicon-only']) {
+    for (const id of bookId.split(',')) publishLexiconOnly(id);
+    return;
   }
   const book = getBook(bookId);
   const text = readJson(textPath(bookId));
@@ -52,15 +112,7 @@ function main() {
   }
   if (lexStats.legacy) console.warn(`注意: 旧版の辞書のまま公開される語が ${lexStats.legacy} 語あります。`);
 
-  /** AI 下書きの項目に付ける、AI 校閲の指摘（確認済みの項目には付けない） */
-  const aiNote = (issue) => {
-    if (!issue || issue.resolution === 'fixed') return {};
-    const note = issue.resolution === 'disputed'
-      ? `AI の意見が分かれています。校閲: ${issue.problem} ／ 作成側: ${issue.resolutionNote}`
-      : issue.problem;
-    return { aiNote: note, ...(issue.suggestion ? { aiSuggestion: issue.suggestion } : {}) };
-  };
-  const isChecked = (status) => status === 'verified' || status === 'locked';
+  const qa = loadLexiconQa();
 
   // 既存の公開データに、今回の章を上書きで追加する
   const outPath = join(PUBLIC_OT, `${bookId}.json`);
@@ -112,18 +164,7 @@ function main() {
     for (const w of text.verses[key]) {
       const e = master[w.strongs];
       if (!e) continue;
-      lexicon[w.strongs] = {
-        strongs: w.strongs,
-        lemma: e.lemma || w.text,
-        glossJa: NAMES[w.strongs] ?? e.glossJa,
-        definitionJa: e.definitionJa,
-        detailJa: e.detailJa,
-        reviewed: isChecked(e.status),
-        source: e.status === 'legacy' ? 'bdb' : 'bdb-opus',
-        review: isChecked(e.status)
-          ? { status: 'checked' }
-          : { status: e.status === 'legacy' ? 'legacy' : 'ai', ...aiNote(verify.lexicon[w.strongs]) },
-      };
+      lexicon[w.strongs] = lexiconEntry(e, w.text, verify.lexicon?.[w.strongs] ?? qa.lexicon[w.strongs]);
     }
   }
 
