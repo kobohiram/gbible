@@ -89,10 +89,8 @@ export function AlphabetQuizHub() {
       <section id="alphabet-quiz" className="border-b border-primary/20 bg-background px-6 py-10">
         <div className="mx-auto max-w-4xl space-y-6">
           <div className="text-center">
-            <h2 className="text-2xl font-extrabold tracking-tight text-foreground">
-              アルファベット 読み方クイズ
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            {/* 見出し（h1）はページ側に置く */}
+            <p className="text-sm text-muted-foreground">
               ギリシャ語の文字を正しく読めるように。学問的発音（エラスムス式）・全{dataset.words.length}問
             </p>
             <div className="mx-auto mt-4 max-w-md">

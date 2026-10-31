@@ -41,20 +41,20 @@ export function SiteHeader({ onDataImported }: Props) {
           >
             <span className="font-extrabold text-accent">G</span>BIBLE
           </Link>
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <SiteNavLinks onDark />
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
           {userCount != null && userCount > 0 && (
-            <span className="hidden text-xs text-primary-foreground/60 lg:inline">{userCount}人が利用中</span>
+            <span className="hidden text-xs text-primary-foreground/60 xl:inline">{userCount}人が利用中</span>
           )}
           <DataBackupMenu onImported={onDataImported ?? (() => {})} />
           <AuthButton />
         </div>
       </div>
-      {/* スマホではメニューを2段目に置き、すべての項目が見えるようにする */}
-      <div className="-mx-1 overflow-x-auto pb-2 md:hidden">
+      {/* 画面が狭いときはメニューを2段目に置き、横にスクロールしてすべての項目を見られるようにする */}
+      <div className="-mx-1 overflow-x-auto pb-2 lg:hidden">
         <SiteNavLinks onDark />
       </div>
     </header>

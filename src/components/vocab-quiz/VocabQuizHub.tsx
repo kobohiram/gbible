@@ -151,10 +151,8 @@ export function VocabQuizHub() {
       <section id="vocab-quiz" className="border-b border-primary/20 bg-gradient-to-b from-primary/5 to-background px-6 py-10">
         <div className="mx-auto max-w-4xl space-y-6">
           <div className="text-center">
-            <h2 className="text-2xl font-extrabold tracking-tight text-foreground">
-              ギリシャ語 単語クイズ
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            {/* 見出し（h1）はページ側に置く */}
+            <p className="text-sm text-muted-foreground">
               新約ギリシャ語エレメンツ準拠・全{dataset.meta.totalWords}語
             </p>
             <div className="mx-auto mt-4 max-w-md">
