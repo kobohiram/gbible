@@ -5,6 +5,9 @@
  * 使い方:
  *   node scripts/import-mnsp-spreadsheet.mjs genesis 11
  *   node scripts/import-mnsp-spreadsheet.mjs mark 1 --spreadsheet-id=1vsLCSLMIT1rQuKEqrLjnSj9owlnFPfcH
+ *
+ * 列は各シートの見出し行（「素訳」または「原訳」、「超訳」または「超訳１」）から探す。
+ * 見出しが見つからないときだけ BOOK_META の列番号を使う。
  */
 
 import { writeFileSync, readFileSync, mkdirSync } from "fs";
@@ -32,7 +35,7 @@ const BOOK_META = {
     name: "マルコによる福音書",
     spreadsheetId: "1vsLCSLMIT1rQuKEqrLjnSj9owlnFPfcH",
     sotakuCol: 2, // 素訳（C列）
-    chouyakuCol: 4, // 超訳１（E列）
+    chouyakuCol: 3, // 超訳１（D列）
   },
 };
 
@@ -92,13 +95,24 @@ function parseCsv(text) {
 }
 
 function cleanSotaku(text) {
-  return text.replace(/^[0-9０-９]+\s*[　\s]+/, "").trim();
+  return text.replace(/^(?:[0-9０-９]+[:：])?[0-9０-９]+\s*[　\s]+/, "").trim();
 }
 
 function verseFromSotaku(text) {
-  const m = text.match(/^([0-9０-９]+)\s*[　\s]+/);
+  const m = text.match(/^(?:[0-9０-９]+[:：])?([0-9０-９]+)\s*[　\s]+/);
   if (!m) return null;
   return Number(m[1].replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0)));
+}
+
+/** 見出し行から素訳（原訳）と超訳の列を探す。章ごとに列の並びが違うことがあるため。 */
+function detectColumns(header, meta) {
+  const names = header.map((h) => h.trim());
+  const sotakuCol = names.findIndex((h) => h === "素訳" || h === "原訳");
+  const chouyakuCol = names.findIndex((h) => /^超訳[1１]?$/.test(h));
+  return {
+    sotakuCol: sotakuCol >= 0 ? sotakuCol : (meta.sotakuCol ?? 2),
+    chouyakuCol: chouyakuCol >= 0 ? chouyakuCol : meta.chouyakuCol,
+  };
 }
 
 async function fetchChapterCsv(spreadsheetId, chapter) {
@@ -120,6 +134,7 @@ async function importBook(bookId, maxChapter, spreadsheetIdOverride) {
   for (let ch = 1; ch <= maxChapter; ch++) {
     const csv = await fetchChapterCsv(spreadsheetId, ch);
     const rows = parseCsv(csv);
+    const { sotakuCol, chouyakuCol } = detectColumns(rows[0] ?? [], meta);
     let minVerse = Infinity;
     let maxVerse = 0;
     let lastVerse = 0;
@@ -128,8 +143,8 @@ async function importBook(bookId, maxChapter, spreadsheetIdOverride) {
       const row = rows[r];
       let chapter = Number(row[0]);
       let verse = Number(row[1]);
-      const rawSotaku = (row[meta.sotakuCol ?? 2] ?? "").trim();
-      const chouyaku = (row[meta.chouyakuCol] ?? "").trim();
+      const rawSotaku = (row[sotakuCol] ?? "").trim();
+      const chouyaku = (row[chouyakuCol] ?? "").trim();
 
       if (!chapter) chapter = ch;
       if (!verse) {
